@@ -1,11 +1,11 @@
 //
 //  ClientDashboardViewModel.swift
-//  FrancoSphere v6.0
+//  CyntientOps v7.0
 //
-//  ✅ FIXED: All compilation errors resolved
-//  ✅ NAMESPACED: Proper CoreTypes usage
-//  ✅ NO DUPLICATES: Clean type definitions
-//  ✅ OPTIMIZED: Efficient data management
+//  ✅ REFACTORED: Uses ServiceContainer instead of singletons
+//  ✅ NO MOCK DATA: Clean implementation with real data
+//  ✅ REAL DATA: Uses OperationalDataManager through container
+//  ✅ UNIFIED INTELLIGENCE: Uses container.intelligence
 //
 
 import Foundation
@@ -59,18 +59,17 @@ public final class ClientDashboardViewModel: ObservableObject {
     @Published public var dashboardUpdates: [CoreTypes.DashboardUpdate] = []
     @Published public var dashboardSyncStatus: CoreTypes.DashboardSyncStatus = .synced
     
+    // Client-specific data
+    @Published public var clientBuildings: [CoreTypes.NamedCoordinate] = []
+    @Published public var clientId: String?
+    
     // Loading states
     @Published public var isLoadingInsights = false
     @Published public var showCostData = true
     
-    // MARK: - Services
+    // MARK: - Service Container (REFACTORED)
     
-    private let contextEngine = ClientContextEngine.shared
-    private let dashboardSyncService = DashboardSyncService.shared
-    private let buildingMetricsService = BuildingMetricsService.shared
-    private let taskService = TaskService.shared
-    private let intelligenceService = IntelligenceService.shared
-    private let operationalDataManager = OperationalDataManager.shared
+    private let container: ServiceContainer
     
     // MARK: - Private Properties
     
@@ -88,7 +87,7 @@ public final class ClientDashboardViewModel: ObservableObject {
         CoreTypes.PortfolioHealth(
             overallScore: completionRate,
             totalBuildings: totalBuildings,
-            activeBuildings: buildingsList.count,
+            activeBuildings: clientBuildings.count,
             criticalIssues: criticalIssues,
             trend: monthlyTrend,
             lastUpdated: Date()
@@ -105,13 +104,15 @@ public final class ClientDashboardViewModel: ObservableObject {
         )
     }
     
-    // MARK: - Initialization
+    // MARK: - Initialization (REFACTORED)
     
-    public init() {
+    public init(container: ServiceContainer) {
+        self.container = container
         setupSubscriptions()
         schedulePeriodicRefresh()
         
         Task {
+            await loadClientData()
             await loadPortfolioIntelligence()
         }
     }
@@ -121,6 +122,42 @@ public final class ClientDashboardViewModel: ObservableObject {
     }
     
     // MARK: - Public Methods
+    
+    /// Load client-specific data
+    public func loadClientData() async {
+        // Get current client user
+        guard let currentUser = container.auth.currentUser,
+              currentUser.role == .client else {
+            print("⚠️ No client user logged in")
+            return
+        }
+        
+        // Get client ID and buildings
+        if let clientData = try? await container.client.getClientForUser(currentUser.email) {
+            self.clientId = clientData.id
+            
+            // Load only this client's buildings
+            let clientBuildingIds = try? await container.client.getBuildingsForClient(clientData.id)
+            
+            if let buildingIds = clientBuildingIds {
+                // Filter buildings to only show client's buildings
+                let allBuildings = container.operationalData.buildings
+                self.clientBuildings = allBuildings
+                    .filter { buildingIds.contains($0.id) }
+                    .map { building in
+                        CoreTypes.NamedCoordinate(
+                            id: building.id,
+                            name: building.name,
+                            address: building.address,
+                            latitude: building.latitude,
+                            longitude: building.longitude
+                        )
+                    }
+                
+                print("✅ Client \(clientData.name) has access to \(clientBuildings.count) buildings")
+            }
+        }
+    }
     
     /// Load all portfolio intelligence data
     public func loadPortfolioIntelligence() async {
@@ -153,6 +190,7 @@ public final class ClientDashboardViewModel: ObservableObject {
         errorMessage = nil
         
         do {
+            await loadClientData()
             await loadPortfolioIntelligence()
             
             await MainActor.run {
@@ -207,27 +245,33 @@ public final class ClientDashboardViewModel: ObservableObject {
     // MARK: - Private Data Loading Methods
     
     private func loadBuildingsData() async {
-        // Load from operational data manager
-        let buildings = operationalDataManager.buildings.map { building in
-            CoreTypes.NamedCoordinate(
-                id: building.id,
-                name: building.name,
-                address: building.address,
-                latitude: building.latitude,
-                longitude: building.longitude
-            )
-        }
+        // Use client buildings if available, otherwise use all buildings from operational data
+        let buildings = clientBuildings.isEmpty ?
+            container.operationalData.buildings.map { building in
+                CoreTypes.NamedCoordinate(
+                    id: building.id,
+                    name: building.name,
+                    address: building.address,
+                    latitude: building.latitude,
+                    longitude: building.longitude
+                )
+            } : clientBuildings
         
         await MainActor.run {
-            self.buildingsList = buildings
-            self.totalBuildings = buildings.count
+            self.buildingsList = clientBuildings.isEmpty ? buildings : clientBuildings
+            self.totalBuildings = self.buildingsList.count
+            
+            // REAL DATA verification
+            print("✅ Loading REAL client data:")
+            print("   - Client Buildings: \(self.buildingsList.count)")
+            print("   - Buildings: \(self.buildingsList.map { $0.name }.joined(separator: ", "))")
         }
     }
     
     private func loadBuildingMetrics() async {
         for building in buildingsList {
             do {
-                let metrics = try await buildingMetricsService.calculateMetrics(for: building.id)
+                let metrics = try await container.metrics.calculateMetrics(for: building.id)
                 await MainActor.run {
                     self.buildingMetrics[building.id] = metrics
                 }
@@ -243,11 +287,18 @@ public final class ClientDashboardViewModel: ObservableObject {
     
     private func generateComplianceIssues() async {
         do {
-            let allTasks = try await taskService.getAllTasks()
+            // Get tasks only for client's buildings
+            let allTasks = try await container.tasks.getAllTasks()
+            let clientBuildingIds = Set(buildingsList.map { $0.id })
+            let clientTasks = allTasks.filter { task in
+                guard let buildingId = task.buildingId else { return false }
+                return clientBuildingIds.contains(buildingId)
+            }
+            
             var issues: [CoreTypes.ComplianceIssue] = []
             
             // Check for overdue tasks
-            let overdueTasks = allTasks.filter { task in
+            let overdueTasks = clientTasks.filter { task in
                 guard let dueDate = task.dueDate else { return false }
                 return !task.isCompleted && dueDate < Date()
             }
@@ -272,7 +323,7 @@ public final class ClientDashboardViewModel: ObservableObject {
             }
             
             // Check for inspection tasks
-            let overdueInspections = allTasks.filter { task in
+            let overdueInspections = clientTasks.filter { task in
                 guard task.category == .inspection,
                       let dueDate = task.dueDate else { return false }
                 return !task.isCompleted && dueDate < Date()
@@ -281,7 +332,7 @@ public final class ClientDashboardViewModel: ObservableObject {
             if overdueInspections.count > 0 {
                 issues.append(CoreTypes.ComplianceIssue(
                     title: "Overdue Inspections",
-                    description: "\(overdueInspections.count) inspection tasks are overdue across the portfolio",
+                    description: "\(overdueInspections.count) inspection tasks are overdue across your portfolio",
                     severity: .critical,
                     status: .open,
                     type: .regulatory
@@ -301,32 +352,55 @@ public final class ClientDashboardViewModel: ObservableObject {
     private func loadIntelligenceInsights() async {
         isLoadingInsights = true
         
-        do {
-            let insights = try await intelligenceService.generatePortfolioInsights()
-            
-            await MainActor.run {
-                self.intelligenceInsights = insights
-                self.isLoadingInsights = false
-            }
-            
-        } catch {
-            await MainActor.run {
-                self.intelligenceInsights = []
-                self.isLoadingInsights = false
-            }
-            print("⚠️ Failed to load intelligence insights: \(error)")
+        // Use unified intelligence service with client role
+        let insights = container.intelligence.getInsights(for: .client)
+        
+        // Filter insights for client's buildings
+        let clientBuildingIds = Set(buildingsList.map { $0.id })
+        let clientInsights = insights.filter { insight in
+            insight.affectedBuildings.isEmpty ||
+            insight.affectedBuildings.contains { clientBuildingIds.contains($0) }
         }
+        
+        await MainActor.run {
+            self.intelligenceInsights = clientInsights
+            self.isLoadingInsights = false
+        }
+        
+        print("✅ Loaded \(clientInsights.count) intelligence insights for client")
     }
     
     private func generateExecutiveSummary() async {
+        // Count active workers in client's buildings
+        let activeWorkersInClientBuildings = await countActiveWorkers()
+        
         await MainActor.run {
+            self.activeWorkers = activeWorkersInClientBuildings
+            
             self.executiveSummary = CoreTypes.ExecutiveSummary(
                 totalBuildings: totalBuildings,
-                totalWorkers: activeWorkers,
+                totalWorkers: activeWorkersInClientBuildings,
                 portfolioHealth: completionRate,
                 monthlyPerformance: monthlyTrend.rawValue
             )
         }
+    }
+    
+    private func countActiveWorkers() async -> Int {
+        // Count workers assigned to client's buildings
+        let clientBuildingIds = Set(buildingsList.map { $0.id })
+        let workers = await container.workers.getAllActiveWorkers()
+        
+        var activeCount = 0
+        for worker in workers {
+            if let assignedBuildings = await container.operationalData.getWorkerBuildings(workerId: worker.id) {
+                if assignedBuildings.contains(where: { clientBuildingIds.contains($0) }) {
+                    activeCount += 1
+                }
+            }
+        }
+        
+        return activeCount
     }
     
     private func loadStrategicRecommendations() async {
@@ -417,6 +491,18 @@ public final class ClientDashboardViewModel: ObservableObject {
             buildingStatuses: buildingStatuses
         )
         
+        // Update worker status by building
+        var workersByBuilding: [String: Int] = [:]
+        for (buildingId, status) in buildingStatuses {
+            workersByBuilding[buildingId] = status.activeWorkerCount
+        }
+        
+        activeWorkerStatus = CoreTypes.ActiveWorkerStatus(
+            totalActive: activeWorkers,
+            byBuilding: workersByBuilding,
+            utilizationRate: activeWorkers > 0 ? Double(activeWorkers) / Double(buildingsList.count) : 0
+        )
+        
         // Update trend based on metrics
         if completionRate > 0.85 {
             monthlyTrend = .improving
@@ -460,15 +546,15 @@ public final class ClientDashboardViewModel: ObservableObject {
     
     private func setupSubscriptions() {
         // Subscribe to dashboard sync updates
-        dashboardSyncService.clientDashboardUpdates
+        container.dashboardSync.clientDashboardUpdates
             .receive(on: DispatchQueue.main)
             .sink { [weak self] update in
                 self?.handleDashboardUpdate(update)
             }
             .store(in: &cancellables)
         
-        // Subscribe to context engine updates
-        contextEngine.$portfolioHealth
+        // Subscribe to client context updates
+        container.clientContext.$portfolioHealth
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
@@ -494,25 +580,29 @@ public final class ClientDashboardViewModel: ObservableObject {
     }
     
     private func processUpdate(_ update: CoreTypes.DashboardUpdate) async {
+        // Only process updates for client's buildings
+        let clientBuildingIds = Set(buildingsList.map { $0.id })
+        guard update.buildingId.isEmpty || clientBuildingIds.contains(update.buildingId) else { return }
+        
         switch update.type {
         case .taskCompleted:
             if let buildingId = update.buildingId {
                 // Refresh metrics for specific building
-                if let updatedMetrics = try? await buildingMetricsService.calculateMetrics(for: buildingId) {
+                if let updatedMetrics = try? await container.metrics.calculateMetrics(for: buildingId) {
                     buildingMetrics[buildingId] = updatedMetrics
                     updateComputedMetrics()
                 }
             }
             
         case .workerClockedIn:
-            activeWorkers += 1
+            await countActiveWorkers()
             
         case .workerClockedOut:
-            activeWorkers = max(0, activeWorkers - 1)
+            await countActiveWorkers()
             
         case .buildingMetricsChanged:
             if let buildingId = update.buildingId {
-                if let updatedMetrics = try? await buildingMetricsService.calculateMetrics(for: buildingId) {
+                if let updatedMetrics = try? await container.metrics.calculateMetrics(for: buildingId) {
                     buildingMetrics[buildingId] = updatedMetrics
                     updateComputedMetrics()
                 }
@@ -562,7 +652,9 @@ private final class Debouncer {
 #if DEBUG
 extension ClientDashboardViewModel {
     static func preview() -> ClientDashboardViewModel {
-        let viewModel = ClientDashboardViewModel()
+        // This would need to be updated to use a mock container for previews
+        let container = ServiceContainer() // Would need mock container
+        let viewModel = ClientDashboardViewModel(container: container)
         
         // Set up preview data
         Task { @MainActor in

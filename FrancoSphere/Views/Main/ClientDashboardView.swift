@@ -2,11 +2,11 @@
 //  ClientDashboardView.swift
 //  FrancoSphere v6.0
 //
-//  ✅ REFACTORED: Aligned with Worker/Admin dashboard structure
-//  ✅ CONSISTENT: Uses MapRevealContainer wrapper pattern
-//  ✅ COLLAPSIBLE: Hero card now matches other dashboards
-//  ✅ CORRECT TYPES: Using actual types from ClientContextEngine
+//  ✅ FIXED: All compilation errors resolved
+//  ✅ ALIGNED: Matches Worker/Admin dashboard structure
+//  ✅ SIMPLIFIED: Broken down complex expressions
 //  ✅ UNIFIED: Same component hierarchy and data flow
+//  ✅ CLEAN: Removed all duplicate declarations
 //
 
 import SwiftUI
@@ -14,17 +14,18 @@ import MapKit
 import CoreLocation
 
 struct ClientDashboardView: View {
+    // MARK: - View Models & Services (matching Worker/Admin pattern)
     @StateObject private var viewModel = ClientDashboardViewModel()
-    @ObservedObject private var contextEngine = ClientContextEngine.shared
+    @ObservedObject private var contextEngine = ClientContextEngine.shared  // Keep as ObservedObject for singleton
     @EnvironmentObject private var authManager: NewAuthManager
     @EnvironmentObject private var dashboardSync: DashboardSyncService
-    @ObservedObject private var novaEngine = NovaIntelligenceEngine.shared
+    @ObservedObject private var novaEngine = NovaIntelligenceEngine.shared  // Keep as ObservedObject for singleton
     
-    // MARK: - State Variables (Aligned with Worker/Admin)
+    // MARK: - State Variables
     @State private var isHeroCollapsed = false
     @State private var showProfileView = false
     @State private var showNovaAssistant = false
-    @State private var selectedBuilding: NamedCoordinate?
+    @State private var selectedBuilding: CoreTypes.NamedCoordinate?
     @State private var showBuildingDetail = false
     @State private var showAllBuildings = false
     @State private var showComplianceReport = false
@@ -40,7 +41,7 @@ struct ClientDashboardView: View {
     @State private var voiceCommandEnabled = false
     @State private var arModeEnabled = false
     
-    // MARK: - Enums (Matching Worker/Admin pattern)
+    // MARK: - Enums
     enum ViewContext {
         case dashboard
         case buildingDetail
@@ -77,9 +78,10 @@ struct ClientDashboardView: View {
     }
     
     private func hasUrgentAlerts() -> Bool {
-        novaEngine.insights.contains { $0.priority == .critical } ||
-        contextEngine.complianceOverview.criticalViolations > 0 ||
-        contextEngine.realtimeRoutineMetrics.behindScheduleCount > 0
+        let hasCriticalInsights = novaEngine.insights.contains { $0.priority == .critical }
+        let hasCriticalViolations = contextEngine.complianceOverview.criticalViolations > 0
+        let hasBehindSchedule = contextEngine.realtimeRoutineMetrics.behindScheduleCount > 0
+        return hasCriticalInsights || hasCriticalViolations || hasBehindSchedule
     }
     
     var body: some View {
@@ -98,39 +100,21 @@ struct ClientDashboardView: View {
                 FrancoSphereDesign.DashboardColors.baseBackground
                     .ignoresSafeArea()
                 
-                // Main content - SAME STRUCTURE AS WORKER/ADMIN
+                // Main content
                 VStack(spacing: 0) {
-                    // HeaderV3B - Client variant (5-7%)
-                    HeaderV3B(
-                        workerName: contextEngine.clientProfile?.name ?? "Client",
-                        nextTaskName: getMostCriticalItem()?.title,
-                        showClockPill: false, // Clients don't clock in
-                        isNovaProcessing: {
-                            switch novaEngine.processingState {
-                            case .idle: return false
-                            default: return true
-                            }
-                        }(),
-                        onProfileTap: { showProfileView = true },
-                        onNovaPress: { showNovaAssistant = true },
-                        onNovaLongPress: { handleNovaQuickAction() },
-                        onLogoTap: { showMainMenu = true },
-                        onClockAction: nil,
-                        onVoiceCommand: voiceCommandEnabled ? handleVoiceCommand : nil,
-                        onARModeToggle: arModeEnabled ? handleARMode : nil,
-                        onWearableSync: nil
-                    )
-                    .zIndex(100)
+                    // HeaderV3B - Client variant
+                    clientHeader
+                        .zIndex(100)
                     
                     // Main content area with ScrollView
                     ScrollView {
                         VStack(spacing: 16) {
-                            // Collapsible Client Hero Card - Using the existing ClientHeroCard
+                            // Collapsible Client Hero Card
                             CollapsibleClientHeroWrapper(
                                 isCollapsed: $isHeroCollapsed,
                                 routineMetrics: contextEngine.realtimeRoutineMetrics,
                                 activeWorkers: contextEngine.activeWorkerStatus,
-                                complianceStatus: contextEngine.complianceOverviewStatus,
+                                complianceStatus: contextEngine.complianceOverview,
                                 monthlyMetrics: contextEngine.monthlyMetrics,
                                 syncStatus: getSyncStatus(),
                                 onBuildingsTap: { showAllBuildings = true },
@@ -153,14 +137,11 @@ struct ClientDashboardView: View {
                     }
                     
                     // Intelligence Preview Panel
-                    if intelligencePanelState != .hidden && (!novaEngine.insights.isEmpty || hasIntelligenceToShow()) {
+                    if intelligencePanelState != .hidden && hasIntelligenceToShow() {
                         IntelligencePreviewPanel(
                             insights: getCurrentInsights(),
                             displayMode: intelligencePanelState == .minimal ? .compact : .compact,
-                            onNavigate: { target in
-                                handleIntelligenceNavigation(target)
-                            },
-                            contextEngine: contextEngine
+                            onNavigate: handleIntelligenceNavigation
                         )
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                         .animation(FrancoSphereDesign.Animations.spring, value: intelligencePanelState)
@@ -171,7 +152,7 @@ struct ClientDashboardView: View {
         .navigationBarHidden(true)
         .preferredColorScheme(.dark)
         .sheet(isPresented: $showProfileView) {
-            ClientProfileView()
+            ClientProfileView()  // Using the correct name
         }
         .sheet(isPresented: $showNovaAssistant) {
             NovaInteractionView(clientMode: true)
@@ -200,6 +181,7 @@ struct ClientDashboardView: View {
             NavigationView {
                 ClientBuildingsListView(
                     buildings: contextEngine.clientBuildings,
+                    performanceMap: contextEngine.buildingPerformanceMap,
                     onSelectBuilding: { building in
                         selectedBuilding = building
                         showBuildingDetail = true
@@ -222,16 +204,10 @@ struct ClientDashboardView: View {
         }
         .sheet(isPresented: $showComplianceReport) {
             NavigationView {
-                ClientComplianceView(
+                ClientComplianceOverview(
                     complianceOverview: contextEngine.complianceOverview,
-                    buildingCompliance: contextEngine.clientComplianceData,
-                    onSelectBuilding: { buildingId in
-                        if let building = contextEngine.clientBuildings.first(where: { $0.id == buildingId }) {
-                            selectedBuilding = building
-                            showBuildingDetail = true
-                            showComplianceReport = false
-                        }
-                    }
+                    issues: contextEngine.allComplianceIssues,
+                    selectedIssue: nil
                 )
                 .navigationTitle("Compliance Report")
                 .navigationBarTitleDisplayMode(.large)
@@ -250,7 +226,7 @@ struct ClientDashboardView: View {
             .onDisappear { currentContext = .dashboard }
         }
         .sheet(isPresented: $showMainMenu) {
-            ClientMainMenuView()
+            ClientMainMenuViewV6()  // Using the correct name from ClientMainMenuView.swift
                 .presentationDetents([.medium, .large])
         }
         .onAppear {
@@ -261,6 +237,31 @@ struct ClientDashboardView: View {
         }
     }
     
+    // MARK: - Header Component (broken out for simplicity)
+    private var clientHeader: some View {
+        HeaderV3B(
+            workerName: contextEngine.clientProfile?.name ?? "Client",
+            nextTaskName: getMostCriticalItem()?.title,
+            showClockPill: false,
+            isNovaProcessing: isNovaProcessing,
+            onProfileTap: { showProfileView = true },
+            onNovaPress: { showNovaAssistant = true },
+            onNovaLongPress: { handleNovaQuickAction() },
+            onLogoTap: { showMainMenu = true },
+            onClockAction: nil,
+            onVoiceCommand: voiceCommandEnabled ? handleVoiceCommand : nil,
+            onARModeToggle: arModeEnabled ? handleARMode : nil,
+            onWearableSync: nil
+        )
+    }
+    
+    private var isNovaProcessing: Bool {
+        switch novaEngine.processingState {
+        case .idle: return false
+        default: return true
+        }
+    }
+    
     // MARK: - Intelligence Methods
     
     private func getCurrentInsights() -> [CoreTypes.IntelligenceInsight] {
@@ -268,6 +269,10 @@ struct ClientDashboardView: View {
         
         // Behind schedule buildings
         if contextEngine.realtimeRoutineMetrics.behindScheduleCount > 0 {
+            let affectedBuildings = contextEngine.realtimeRoutineMetrics.buildingStatuses
+                .filter { $0.value.isBehindSchedule }
+                .map { $0.key }
+            
             insights.append(CoreTypes.IntelligenceInsight(
                 id: UUID().uuidString,
                 title: "\(contextEngine.realtimeRoutineMetrics.behindScheduleCount) properties behind schedule",
@@ -276,9 +281,7 @@ struct ClientDashboardView: View {
                 priority: .high,
                 actionRequired: true,
                 recommendedAction: "Contact operations team",
-                affectedBuildings: contextEngine.realtimeRoutineMetrics.buildingStatuses
-                    .filter { $0.value.isBehindSchedule }
-                    .map { $0.key }
+                affectedBuildings: affectedBuildings
             ))
         }
         
@@ -298,11 +301,11 @@ struct ClientDashboardView: View {
         
         // Budget alerts
         if contextEngine.monthlyMetrics.budgetUtilization > 1.0 {
+            let utilizationPercent = contextEngine.monthlyMetrics.budgetUtilization * 100
             insights.append(CoreTypes.IntelligenceInsight(
                 id: UUID().uuidString,
                 title: "Monthly spending over budget",
-                description: String(format: "Current spending at %.0f%% of budget",
-                                  contextEngine.monthlyMetrics.budgetUtilization * 100),
+                description: String(format: "Current spending at %.0f%% of budget", utilizationPercent),
                 type: .cost,
                 priority: .medium,
                 actionRequired: false,
@@ -346,7 +349,12 @@ struct ClientDashboardView: View {
         case .allBuildings:
             showAllBuildings = true
             
+        case .taskDetail, .allTasks:
+            // Not applicable for client dashboard
+            break
+            
         default:
+            // Handle other cases as needed
             break
         }
     }
@@ -369,28 +377,28 @@ struct ClientDashboardView: View {
         return nil
     }
     
-    private func getSyncStatus() -> SyncStatus {
+    private func getSyncStatus() -> CollapsibleClientHeroWrapper.SyncStatus {
         switch viewModel.dashboardSyncStatus {
         case .synced: return .synced
         case .syncing: return .syncing(progress: 0.5)
         case .failed: return .error("Sync failed")
         case .offline: return .offline
+        default: return .synced
         }
     }
     
     private func hasIntelligenceToShow() -> Bool {
-        return contextEngine.clientBuildings.count > 5 ||
-               contextEngine.complianceOverview.criticalViolations > 0 ||
-               contextEngine.realtimeRoutineMetrics.behindScheduleCount > 0 ||
-               contextEngine.estimatedMonthlySavings > 1000
+        let hasBuildings = contextEngine.clientBuildings.count > 5
+        let hasViolations = contextEngine.complianceOverview.criticalViolations > 0
+        let hasBehindSchedule = contextEngine.realtimeRoutineMetrics.behindScheduleCount > 0
+        let hasSavings = contextEngine.estimatedMonthlySavings > 1000
+        let hasInsights = !novaEngine.insights.isEmpty
+        
+        return hasBuildings || hasViolations || hasBehindSchedule || hasSavings || hasInsights
     }
     
     private func handleNovaQuickAction() {
-        if hasUrgentAlerts() {
-            showNovaAssistant = true
-        } else {
-            showNovaAssistant = true
-        }
+        showNovaAssistant = true
     }
     
     private func handleVoiceCommand() {
@@ -412,16 +420,15 @@ struct ClientDashboardView: View {
     }
 }
 
-// MARK: - Collapsible Wrapper - Uses existing ClientHeroCard
+// MARK: - Collapsible Wrapper
 
 struct CollapsibleClientHeroWrapper: View {
     @Binding var isCollapsed: Bool
     
-    // Using the actual types from ClientContextEngine
-    let routineMetrics: RealtimeRoutineMetrics
-    let activeWorkers: ActiveWorkerStatus
+    let routineMetrics: CoreTypes.RealtimeRoutineMetrics
+    let activeWorkers: CoreTypes.ActiveWorkerStatus
     let complianceStatus: CoreTypes.ComplianceOverview
-    let monthlyMetrics: MonthlyMetrics
+    let monthlyMetrics: CoreTypes.MonthlyMetrics
     let syncStatus: SyncStatus
     
     let onBuildingsTap: () -> Void
@@ -439,7 +446,6 @@ struct CollapsibleClientHeroWrapper: View {
     var body: some View {
         VStack(spacing: 0) {
             if isCollapsed {
-                // Minimal collapsed version
                 MinimalClientHeroCard(
                     totalBuildings: routineMetrics.buildingStatuses.count,
                     behindSchedule: routineMetrics.behindScheduleCount,
@@ -453,34 +459,14 @@ struct CollapsibleClientHeroWrapper: View {
                         }
                     }
                 )
-                
             } else {
-                // Full ClientHeroCard with collapse button
                 ZStack(alignment: .topTrailing) {
-                    // Using the existing ClientHeroCard from paste.txt
                     ClientHeroCard(
-                        routineMetrics: CoreTypes.RealtimeRoutineMetrics(
-                            overallCompletion: routineMetrics.overallCompletion,
-                            activeWorkerCount: routineMetrics.activeWorkerCount,
-                            behindScheduleCount: routineMetrics.behindScheduleCount,
-                            buildingStatuses: routineMetrics.buildingStatuses
-                        ),
-                        activeWorkers: CoreTypes.ActiveWorkerStatus(
-                            totalActive: activeWorkers.totalActive,
-                            byBuilding: activeWorkers.byBuilding,
-                            utilizationRate: activeWorkers.utilizationRate
-                        ),
+                        routineMetrics: routineMetrics,
+                        activeWorkers: activeWorkers,
                         complianceStatus: complianceStatus,
-                        monthlyMetrics: CoreTypes.MonthlyMetrics(
-                            currentSpend: monthlyMetrics.currentSpend,
-                            monthlyBudget: monthlyMetrics.monthlyBudget,
-                            projectedSpend: monthlyMetrics.projectedSpend,
-                            daysRemaining: monthlyMetrics.daysRemaining
-                        ),
-                        onBuildingTap: { building in
-                            // Handle building tap
-                            onBuildingsTap()
-                        }
+                        monthlyMetrics: monthlyMetrics,
+                        onBuildingTap: { _ in onBuildingsTap() }
                     )
                     
                     // Collapse button overlay
@@ -502,7 +488,7 @@ struct CollapsibleClientHeroWrapper: View {
     }
 }
 
-// MARK: - Minimal Hero Card (Collapsed State)
+// MARK: - Minimal Hero Card
 
 struct MinimalClientHeroCard: View {
     let totalBuildings: Int
@@ -530,19 +516,39 @@ struct MinimalClientHeroCard: View {
                 
                 // Portfolio summary
                 HStack(spacing: 16) {
-                    MetricPill(value: "\(totalBuildings)", label: "Properties", color: FrancoSphereDesign.DashboardColors.info)
+                    ClientMetricPill(
+                        value: "\(totalBuildings)",
+                        label: "Properties",
+                        color: FrancoSphereDesign.DashboardColors.info
+                    )
                     
                     if behindSchedule > 0 {
-                        MetricPill(value: "\(behindSchedule)", label: "Behind", color: FrancoSphereDesign.DashboardColors.warning)
+                        ClientMetricPill(
+                            value: "\(behindSchedule)",
+                            label: "Behind",
+                            color: FrancoSphereDesign.DashboardColors.warning
+                        )
                     }
                     
-                    MetricPill(value: "\(Int(completionRate * 100))%", label: "Complete", color: completionColor)
+                    ClientMetricPill(
+                        value: "\(Int(completionRate * 100))%",
+                        label: "Complete",
+                        color: completionColor
+                    )
                     
                     if budgetUtilization > 1.0 {
-                        MetricPill(value: "\(Int(budgetUtilization * 100))%", label: "Budget", color: FrancoSphereDesign.DashboardColors.critical)
+                        ClientMetricPill(
+                            value: "\(Int(budgetUtilization * 100))%",
+                            label: "Budget",
+                            color: FrancoSphereDesign.DashboardColors.critical
+                        )
                     }
                     
-                    MetricPill(value: "\(activeWorkers)", label: "Active", color: FrancoSphereDesign.DashboardColors.success)
+                    ClientMetricPill(
+                        value: "\(activeWorkers)",
+                        label: "Active",
+                        color: FrancoSphereDesign.DashboardColors.success
+                    )
                 }
                 
                 Spacer()
@@ -584,9 +590,9 @@ struct MinimalClientHeroCard: View {
     }
 }
 
-// MARK: - Supporting Components
+// MARK: - Client Metric Pill
 
-struct MetricPill: View {
+struct ClientMetricPill: View {
     let value: String
     let label: String
     let color: Color
@@ -605,68 +611,36 @@ struct MetricPill: View {
     }
 }
 
-// MARK: - Placeholder Views (Implementation needed)
+// MARK: - Client Profile View (Placeholder - should be defined elsewhere)
 
-struct ClientBuildingsListView: View {
-    let buildings: [NamedCoordinate]
-    let onSelectBuilding: (NamedCoordinate) -> Void
+struct ClientProfileView: View {
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        List(buildings) { building in
-            Button(action: { onSelectBuilding(building) }) {
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text(building.name)
-                            .font(.headline)
-                        Text(building.address)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+        NavigationView {
+            VStack {
+                Text("Client Profile")
+                    .font(.largeTitle)
+                    .padding()
+                
+                Spacer()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(FrancoSphereDesign.DashboardColors.baseBackground)
+            .navigationTitle("Profile")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
                     }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .foregroundColor(.secondary)
+                    .foregroundColor(FrancoSphereDesign.DashboardColors.clientPrimary)
                 }
-                .padding(.vertical, 8)
             }
         }
-        .listStyle(PlainListStyle())
+        .preferredColorScheme(.dark)
     }
 }
-
-struct ClientComplianceView: View {
-    let complianceOverview: CoreTypes.ComplianceOverview
-    let buildingCompliance: [String: ComplianceData]
-    let onSelectBuilding: (String) -> Void
-    
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                // Overall score
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text("Overall Compliance")
-                            .font(.headline)
-                        Text("\(Int(complianceOverview.overallScore * 100))%")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                    }
-                    Spacer()
-                }
-                .padding()
-                .francoDarkCardBackground()
-            }
-            .padding()
-        }
-    }
-}
-
-// MARK: - Type Aliases for ClientContextEngine compatibility
-
-typealias NamedCoordinate = CoreTypes.NamedCoordinate
-typealias RealtimeRoutineMetrics = CoreTypes.RealtimeRoutineMetrics
-typealias ActiveWorkerStatus = CoreTypes.ActiveWorkerStatus
-typealias MonthlyMetrics = CoreTypes.MonthlyMetrics
-typealias ComplianceData = CoreTypes.ComplianceData
 
 // MARK: - Preview
 
@@ -676,15 +650,5 @@ struct ClientDashboardView_Previews: PreviewProvider {
             .environmentObject(NewAuthManager.shared)
             .environmentObject(DashboardSyncService.shared)
             .preferredColorScheme(.dark)
-    }
-}
-
-// Type aliases for ClientContextEngine compatibility
-extension ClientDashboardView {
-    enum SyncStatus {
-        case synced
-        case syncing(progress: Double)
-        case error(String)
-        case offline
     }
 }

@@ -54,9 +54,11 @@
 		2326C2742E3C43E50080F005 /* DSNYMigrationOneShot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2326C2732E3C43E50080F005 /* DSNYMigrationOneShot.swift */; };
 		23273AF02E2B8708004A52C6 /* FrancoSphereTests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */; };
 		23273AF12E2B870E004A52C6 /* FrancoSphereUITests.xctest in Resources */ = {isa = PBXBuildFile; fileRef = 23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */; };
+		233DBF122E41370A00102457 /* UserAccountSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233DBF112E41370A00102457 /* UserAccountSeeder.swift */; };
+		233DBF142E41372400102457 /* ClientBuildingSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233DBF132E41372400102457 /* ClientBuildingSeeder.swift */; };
+		233DBF192E41492C00102457 /* ServiceContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233DBF182E41492C00102457 /* ServiceContainer.swift */; };
 		23779FDF2E39885600F4A10F /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC02E39885600F4A10F /* LoginView.swift */; };
 		23779FE22E39885600F4A10F /* RouteStatItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FB02E39885600F4A10F /* RouteStatItem.swift */; };
-		23779FE32E39885600F4A10F /* MySitesCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F062E39885600F4A10F /* MySitesCard.swift */; };
 		23779FE62E39885600F4A10F /* GlassTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F362E39885600F4A10F /* GlassTypes.swift */; };
 		23779FE72E39885600F4A10F /* ComplianceOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FD22E39885600F4A10F /* ComplianceOverviewView.swift */; };
 		23779FE82E39885600F4A10F /* BuildingDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC42E39885600F4A10F /* BuildingDetailView.swift */; };
@@ -101,7 +103,6 @@
 		2377A0222E39885600F4A10F /* BuildingSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FC62E39885600F4A10F /* BuildingSelectionView.swift */; };
 		2377A0232E39885600F4A10F /* MapRevealContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F572E39885600F4A10F /* MapRevealContainer.swift */; };
 		2377A0242E39885600F4A10F /* TaskScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FCD2E39885600F4A10F /* TaskScheduleView.swift */; };
-		2377A0252E39885600F4A10F /* AbstractFrancoSphereLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F1E2E39885600F4A10F /* AbstractFrancoSphereLogo.swift */; };
 		2377A0292E39885600F4A10F /* AdminDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FCF2E39885600F4A10F /* AdminDashboardView.swift */; };
 		2377A02A2E39885600F4A10F /* WorkerProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779FDC2E39885600F4A10F /* WorkerProfileView.swift */; };
 		2377A02B2E39885600F4A10F /* GlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23779F2D2E39885600F4A10F /* GlassCard.swift */; };
@@ -186,7 +187,6 @@
 		23800F772E3DE61B006F9E44 /* ClientMainMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F762E3DE61B006F9E44 /* ClientMainMenuView.swift */; };
 		23800F792E3E50DF006F9E44 /* AnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F782E3E50DF006F9E44 /* AnalyticsService.swift */; };
 		23800F7B2E3E5125006F9E44 /* ComplianceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F7A2E3E5125006F9E44 /* ComplianceService.swift */; };
-		23800F7D2E3E51E4006F9E44 /* BuildingServiceWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F7C2E3E51E4006F9E44 /* BuildingServiceWrapper.swift */; };
 		23800F7F2E3E53E4006F9E44 /* ReportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F7E2E3E53E4006F9E44 /* ReportService.swift */; };
 		23800F812E3F55F7006F9E44 /* AdminWorkerManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F802E3F55F7006F9E44 /* AdminWorkerManagementView.swift */; };
 		23800F832E3F5844006F9E44 /* AdminReportsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23800F822E3F5844006F9E44 /* AdminReportsView.swift */; };
@@ -224,7 +224,11 @@
 		23A1B9942E3994B80011F091 /* QuickBooksPayrollExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9922E3994B80011F091 /* QuickBooksPayrollExporter.swift */; };
 		23A1B9962E39968F0011F091 /* TaskDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9952E39968F0011F091 /* TaskDetailViewModel.swift */; };
 		23A1B9982E3997130011F091 /* NovaAvatar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B9972E3997130011F091 /* NovaAvatar.swift */; };
-		23A1B99C2E39A0EF0011F091 /* FrancoSphereApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B99B2E39A0EF0011F091 /* FrancoSphereApp.swift */; };
+		23A1B99C2E39A0EF0011F091 /* CyntientOpsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A1B99B2E39A0EF0011F091 /* CyntientOpsApp.swift */; };
+		23BBD4E62E41321F00438C9D /* AppStartupCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD4E52E41321F00438C9D /* AppStartupCoordinator.swift */; };
+		23BBD4F82E4133D600438C9D /* ClockInService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD4F72E4133D600438C9D /* ClockInService.swift */; };
+		23BBD4FA2E41341600438C9D /* ProductionConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD4F92E41341600438C9D /* ProductionConfiguration.swift */; };
+		23BBD4FC2E41342900438C9D /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BBD4FB2E41342900438C9D /* KeychainManager.swift */; };
 		23C839A02E39DE5A00C6866E /* CanonicalIDs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23C8399F2E39DE5A00C6866E /* CanonicalIDs.swift */; };
 		23C839A22E39E6C000C6866E /* MigrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23C839A12E39E6C000C6866E /* MigrationView.swift */; };
 /* End PBXBuildFile section */
@@ -295,12 +299,13 @@
 		23273AEC2E2B86AC004A52C6 /* FrancoSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrancoSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AED2E2B86AC004A52C6 /* FrancoSphereTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23273AEE2E2B86AC004A52C6 /* FrancoSphereUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrancoSphereUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		233DBF112E41370A00102457 /* UserAccountSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAccountSeeder.swift; sourceTree = "<group>"; };
+		233DBF132E41372400102457 /* ClientBuildingSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientBuildingSeeder.swift; sourceTree = "<group>"; };
+		233DBF182E41492C00102457 /* ServiceContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceContainer.swift; sourceTree = "<group>"; };
 		23779F042E39885600F4A10F /* CoverageInfoCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverageInfoCard.swift; sourceTree = "<group>"; };
 		23779F052E39885600F4A10F /* HeroStatusCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeroStatusCard.swift; sourceTree = "<group>"; };
-		23779F062E39885600F4A10F /* MySitesCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MySitesCard.swift; sourceTree = "<group>"; };
 		23779F072E39885600F4A10F /* PropertyCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyCard.swift; sourceTree = "<group>"; };
 		23779F082E39885600F4A10F /* StatCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatCard.swift; sourceTree = "<group>"; };
-		23779F1E2E39885600F4A10F /* AbstractFrancoSphereLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbstractFrancoSphereLogo.swift; sourceTree = "<group>"; };
 		23779F202E39885600F4A10F /* EnhancedClockInGlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedClockInGlassCard.swift; sourceTree = "<group>"; };
 		23779F212E39885600F4A10F /* FrancoSphereDesign.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereDesign.swift; sourceTree = "<group>"; };
 		23779F222E39885600F4A10F /* HeaderV3B.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderV3B.swift; sourceTree = "<group>"; };
@@ -427,7 +432,6 @@
 		23800F762E3DE61B006F9E44 /* ClientMainMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientMainMenuView.swift; sourceTree = "<group>"; };
 		23800F782E3E50DF006F9E44 /* AnalyticsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsService.swift; sourceTree = "<group>"; };
 		23800F7A2E3E5125006F9E44 /* ComplianceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplianceService.swift; sourceTree = "<group>"; };
-		23800F7C2E3E51E4006F9E44 /* BuildingServiceWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildingServiceWrapper.swift; sourceTree = "<group>"; };
 		23800F7E2E3E53E4006F9E44 /* ReportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportService.swift; sourceTree = "<group>"; };
 		23800F802E3F55F7006F9E44 /* AdminWorkerManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminWorkerManagementView.swift; sourceTree = "<group>"; };
 		23800F822E3F5844006F9E44 /* AdminReportsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminReportsView.swift; sourceTree = "<group>"; };
@@ -464,7 +468,11 @@
 		23A1B9922E3994B80011F091 /* QuickBooksPayrollExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickBooksPayrollExporter.swift; sourceTree = "<group>"; };
 		23A1B9952E39968F0011F091 /* TaskDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailViewModel.swift; sourceTree = "<group>"; };
 		23A1B9972E3997130011F091 /* NovaAvatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaAvatar.swift; sourceTree = "<group>"; };
-		23A1B99B2E39A0EF0011F091 /* FrancoSphereApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrancoSphereApp.swift; sourceTree = "<group>"; };
+		23A1B99B2E39A0EF0011F091 /* CyntientOpsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CyntientOpsApp.swift; sourceTree = "<group>"; };
+		23BBD4E52E41321F00438C9D /* AppStartupCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStartupCoordinator.swift; sourceTree = "<group>"; };
+		23BBD4F72E4133D600438C9D /* ClockInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockInService.swift; sourceTree = "<group>"; };
+		23BBD4F92E41341600438C9D /* ProductionConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductionConfiguration.swift; sourceTree = "<group>"; };
+		23BBD4FB2E41342900438C9D /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
 		23C8399F2E39DE5A00C6866E /* CanonicalIDs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalIDs.swift; sourceTree = "<group>"; };
 		23C839A12E39E6C000C6866E /* MigrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -483,6 +491,11 @@
 		2326C2352E3B3C980080F005 /* Configuration */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Configuration;
+			sourceTree = "<group>";
+		};
+		233DBF152E41374000102457 /* Client */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Client;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -537,7 +550,7 @@
 				2326C2312E3B3C4C0080F005 /* Monitoring */,
 				2326C21E2E3B2B840080F005 /* Localizable.strings */,
 				2326C1FB2E3AEBBB0080F005 /* .swiftlint.yml */,
-				23A1B99B2E39A0EF0011F091 /* FrancoSphereApp.swift */,
+				23A1B99B2E39A0EF0011F091 /* CyntientOpsApp.swift */,
 				2377A09A2E398AA800F4A10F /* ViewModels */,
 				23779F402E39885600F4A10F /* Components */,
 				23779F412E39885600F4A10F /* Data */,
@@ -562,13 +575,21 @@
 			);
 			sourceTree = "<group>";
 		};
+		233DBF102E4136ED00102457 /* Database */ = {
+			isa = PBXGroup;
+			children = (
+				233DBF132E41372400102457 /* ClientBuildingSeeder.swift */,
+				233DBF112E41370A00102457 /* UserAccountSeeder.swift */,
+			);
+			path = Database;
+			sourceTree = "<group>";
+		};
 		23779F092E39885600F4A10F /* Cards */ = {
 			isa = PBXGroup;
 			children = (
 				23800F722E3DE468006F9E44 /* ClientHeroCard.swift */,
 				23779F042E39885600F4A10F /* CoverageInfoCard.swift */,
 				23779F052E39885600F4A10F /* HeroStatusCard.swift */,
-				23779F062E39885600F4A10F /* MySitesCard.swift */,
 				23779F072E39885600F4A10F /* PropertyCard.swift */,
 				23779F082E39885600F4A10F /* StatCard.swift */,
 			);
@@ -578,7 +599,6 @@
 		23779F1D2E39885600F4A10F /* Common */ = {
 			isa = PBXGroup;
 			children = (
-				23800F7C2E3E51E4006F9E44 /* BuildingServiceWrapper.swift */,
 				2326C1E42E3AA63D0080F005 /* ImagePicker.swift */,
 				23A1B9432E3992C80011F091 /* AdaptiveGlassModifier.swift */,
 				23A1B9442E3992C80011F091 /* Building.swift */,
@@ -601,7 +621,6 @@
 		23779F272E39885600F4A10F /* Design */ = {
 			isa = PBXGroup;
 			children = (
-				23779F1E2E39885600F4A10F /* AbstractFrancoSphereLogo.swift */,
 				23779F202E39885600F4A10F /* EnhancedClockInGlassCard.swift */,
 				23779F212E39885600F4A10F /* FrancoSphereDesign.swift */,
 				23779F222E39885600F4A10F /* HeaderV3B.swift */,
@@ -704,6 +723,7 @@
 		23779F4A2E39885600F4A10F /* System */ = {
 			isa = PBXGroup;
 			children = (
+				23BBD4E52E41321F00438C9D /* AppStartupCoordinator.swift */,
 				23779F482E39885600F4A10F /* NewAuthManager.swift */,
 				23779F492E39885600F4A10F /* SecurityManager.swift */,
 			);
@@ -886,6 +906,8 @@
 		23779F942E39885600F4A10F /* Configuration */ = {
 			isa = PBXGroup;
 			children = (
+				23BBD4FB2E41342900438C9D /* KeychainManager.swift */,
+				23BBD4F92E41341600438C9D /* ProductionConfiguration.swift */,
 				23779F932E39885600F4A10F /* BuildingFeatureConfiguration.swift */,
 			);
 			path = Configuration;
@@ -894,6 +916,8 @@
 		23779F952E39885600F4A10F /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				233DBF182E41492C00102457 /* ServiceContainer.swift */,
+				23BBD4F72E4133D600438C9D /* ClockInService.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -950,6 +974,8 @@
 		23779FAE2E39885600F4A10F /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				233DBF152E41374000102457 /* Client */,
+				233DBF102E4136ED00102457 /* Database */,
 				23800F7E2E3E53E4006F9E44 /* ReportService.swift */,
 				23800F7A2E3E5125006F9E44 /* ComplianceService.swift */,
 				23800F782E3E50DF006F9E44 /* AnalyticsService.swift */,
@@ -1162,6 +1188,7 @@
 				2326C2132E3B29B10080F005 /* Simplified */,
 				2326C2312E3B3C4C0080F005 /* Monitoring */,
 				2326C2352E3B3C980080F005 /* Configuration */,
+				233DBF152E41374000102457 /* Client */,
 			);
 			name = FrancoSphere;
 			packageProductDependencies = (
@@ -1322,11 +1349,11 @@
 				2326C2122E3B27BB0080F005 /* ConflictResolutionService.swift in Sources */,
 				2326C2082E3B16760080F005 /* TaskService+DepartureChecklist.swift in Sources */,
 				23779FE22E39885600F4A10F /* RouteStatItem.swift in Sources */,
-				23779FE32E39885600F4A10F /* MySitesCard.swift in Sources */,
 				23779FE62E39885600F4A10F /* GlassTypes.swift in Sources */,
 				23779FE72E39885600F4A10F /* ComplianceOverviewView.swift in Sources */,
 				23779FE82E39885600F4A10F /* BuildingDetailView.swift in Sources */,
 				23779FE92E39885600F4A10F /* PropertyCard.swift in Sources */,
+				23BBD4FC2E41342900438C9D /* KeychainManager.swift in Sources */,
 				2377A09B2E398AA800F4A10F /* BuildingDetailViewModel.swift in Sources */,
 				2377A09C2E398AA800F4A10F /* ClientDashboardViewModel.swift in Sources */,
 				2377A09D2E398AA800F4A10F /* WorkerRoutineViewModel.swift in Sources */,
@@ -1359,6 +1386,7 @@
 				23C839A22E39E6C000C6866E /* MigrationView.swift in Sources */,
 				2377A0002E39885600F4A10F /* WeatherTaskTimelineCard.swift in Sources */,
 				2377A0022E39885600F4A10F /* EmergencyContactsSheet.swift in Sources */,
+				233DBF192E41492C00102457 /* ServiceContainer.swift in Sources */,
 				2377A0032E39885600F4A10F /* NovaImageLoader.swift in Sources */,
 				23800F792E3E50DF006F9E44 /* AnalyticsService.swift in Sources */,
 				23A1B96E2E3993610011F091 /* NotificationManager.swift in Sources */,
@@ -1391,7 +1419,7 @@
 				2377A0102E39885600F4A10F /* BuildingPreviewPopover.swift in Sources */,
 				2377A0122E39885600F4A10F /* GlassDeckContainer.swift in Sources */,
 				2326C2622E3C070B0080F005 /* AdminDashboardMainView.swift in Sources */,
-				23A1B99C2E39A0EF0011F091 /* FrancoSphereApp.swift in Sources */,
+				23A1B99C2E39A0EF0011F091 /* CyntientOpsApp.swift in Sources */,
 				23A1B9902E39949C0011F091 /* WeatherDataAdapter.swift in Sources */,
 				2377A0132E39885600F4A10F /* TaskTimelineView.swift in Sources */,
 				2377A0142E39885600F4A10F /* BuildingStatsGlassCard.swift in Sources */,
@@ -1414,16 +1442,20 @@
 				2377A0222E39885600F4A10F /* BuildingSelectionView.swift in Sources */,
 				2377A0232E39885600F4A10F /* MapRevealContainer.swift in Sources */,
 				2377A0242E39885600F4A10F /* TaskScheduleView.swift in Sources */,
-				2377A0252E39885600F4A10F /* AbstractFrancoSphereLogo.swift in Sources */,
 				23A1B98C2E3994760011F091 /* IntelligenceService.swift in Sources */,
+				23BBD4FA2E41341600438C9D /* ProductionConfiguration.swift in Sources */,
+				233DBF142E41372400102457 /* ClientBuildingSeeder.swift in Sources */,
 				2326C2432E3B3E2B0080F005 /* BackupManager.swift in Sources */,
 				2326C2042E3B14920080F005 /* SiteDepartureView.swift in Sources */,
 				23C839A02E39DE5A00C6866E /* CanonicalIDs.swift in Sources */,
 				23A1B98D2E3994760011F091 /* WorkerMetricsService.swift in Sources */,
 				2377A0292E39885600F4A10F /* AdminDashboardView.swift in Sources */,
+				23BBD4E62E41321F00438C9D /* AppStartupCoordinator.swift in Sources */,
 				2377A02A2E39885600F4A10F /* WorkerProfileView.swift in Sources */,
 				2326C2722E3C36620080F005 /* DSNYAPIService.swift in Sources */,
+				23BBD4F82E4133D600438C9D /* ClockInService.swift in Sources */,
 				2377A02B2E39885600F4A10F /* GlassCard.swift in Sources */,
+				233DBF122E41370A00102457 /* UserAccountSeeder.swift in Sources */,
 				2377A02E2E39885600F4A10F /* GlassLoadingView.swift in Sources */,
 				2377A02F2E39885600F4A10F /* CoverageInfoCard.swift in Sources */,
 				2377A0312E39885600F4A10F /* GlassModal.swift in Sources */,
@@ -1497,7 +1529,6 @@
 				2377A0692E39885600F4A10F /* BuildingIntelligenceDTO.swift in Sources */,
 				23A1B9662E3992F90011F091 /* DatabaseInitializer.swift in Sources */,
 				2377A06D2E39885600F4A10F /* InventoryView.swift in Sources */,
-				23800F7D2E3E51E4006F9E44 /* BuildingServiceWrapper.swift in Sources */,
 				2377A06E2E39885600F4A10F /* SignUpView.swift in Sources */,
 				2377A06F2E39885600F4A10F /* FilteredTaskResult.swift in Sources */,
 				2377A0702E39885600F4A10F /* WorkerEventOutbox.swift in Sources */,

@@ -1,20 +1,26 @@
 //
-//  FrancoSphereApp.swift
-//  FrancoSphere v6.0
+//  CyntientOpsApp.swift
+//  CyntientOps (formerly FrancoSphere) v6.0
 //
-//  ✅ ENHANCED: Complete initialization flow with DatabaseInitializer
-//  ✅ PRODUCTION READY: Handles database init, migration, and daily ops
-//  ✅ WIRED: All initialization components properly connected
-//  ✅ SENTRY INTEGRATED: Full crash reporting and performance monitoring
-//  ✅ FIXED: Corrected Sentry integration and all compiler errors.
+//  ✅ PHASE 0-2 INTEGRATED: ServiceContainer + Nova AI + Existing Features
+//  ✅ PRESERVED: All Sentry, database init, migration, and daily ops functionality
+//  ✅ ENHANCED: Added ServiceContainer architecture and Nova AI persistence
+//  ✅ PRODUCTION READY: Complete initialization flow maintained
 //
 
 import SwiftUI
 import Sentry
 
 @main
-struct FrancoSphereApp: App {
+struct CyntientOpsApp: App {
     // MARK: - State Management & Services
+    
+    // Phase 0-2 Additions
+    @StateObject private var novaAI = NovaAIManager.shared
+    @StateObject private var coordinator = AppStartupCoordinator()
+    @State private var serviceContainer: ServiceContainer?
+    
+    // Existing Services (keeping for compatibility during transition)
     @StateObject private var dailyOps = DailyOpsReset.shared
     @StateObject private var authManager = NewAuthManager.shared
     @StateObject private var notificationManager = NotificationManager.shared
@@ -25,10 +31,14 @@ struct FrancoSphereApp: App {
     
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var showingSplash = true
+    @State private var containerError: Error?
     
     init() {
         // Initialize Sentry as the very first step of the app's lifecycle.
         initializeSentry()
+        
+        // Log production configuration
+        ProductionConfiguration.logConfiguration()
     }
     
     // MARK: - App Body
@@ -56,6 +66,8 @@ struct FrancoSphereApp: App {
                             if !initViewModel.isInitializing && !initViewModel.isComplete {
                                 Task {
                                     await initViewModel.startInitialization()
+                                    // After database init, create service container
+                                    await createServiceContainer()
                                 }
                             }
                         }
@@ -65,20 +77,36 @@ struct FrancoSphereApp: App {
                         .transition(.opacity)
                 } else if !hasCompletedOnboarding {
                     // Step 3: Show the onboarding flow for first-time users.
-                    // This now correctly refers to the OnboardingView in its own file.
                     OnboardingView(onComplete: {
                         hasCompletedOnboarding = true
                     })
                     .transition(.opacity)
                 } else if authManager.isAuthenticated {
                     // Step 4: If the user is authenticated, show the main app content.
-                    ContentView()
-                        .environmentObject(authManager)
-                        .environmentObject(notificationManager)
-                        .environmentObject(locationManager)
-                        .environmentObject(contextEngine)
-                        .environmentObject(databaseInitializer)
-                        .transition(.opacity)
+                    if let container = serviceContainer {
+                        ContentView()
+                            .environmentObject(authManager)
+                            .environmentObject(notificationManager)
+                            .environmentObject(locationManager)
+                            .environmentObject(contextEngine)
+                            .environmentObject(databaseInitializer)
+                            .environmentObject(novaAI) // Phase 0: Nova AI persistence
+                            .environmentObject(container) // Phase 2: Service Container
+                            .transition(.opacity)
+                    } else {
+                        // Show loading while container initializes
+                        VStack {
+                            ProgressView("Initializing services...")
+                            if let error = containerError {
+                                Text("Error: \(error.localizedDescription)")
+                                    .foregroundColor(.red)
+                                    .padding()
+                            }
+                        }
+                        .task {
+                            await createServiceContainer()
+                        }
+                    }
                 } else {
                     // Step 5: If none of the above, show the login screen.
                     LoginView()
@@ -92,6 +120,7 @@ struct FrancoSphereApp: App {
             .animation(.easeInOut(duration: 0.3), value: dailyOps.needsMigration())
             .animation(.easeInOut(duration: 0.3), value: hasCompletedOnboarding)
             .animation(.easeInOut(duration: 0.3), value: authManager.isAuthenticated)
+            .animation(.easeInOut(duration: 0.3), value: serviceContainer != nil)
             .onAppear(perform: setupApp)
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                 checkDailyOperations()
@@ -108,18 +137,60 @@ struct FrancoSphereApp: App {
         }
     }
     
-    // MARK: - Sentry Initialization
+    // MARK: - Phase 0-2: Service Container Creation
+    
+    private func createServiceContainer() async {
+        guard serviceContainer == nil else { return }
+        
+        do {
+            // Use coordinator for initialization
+            if !coordinator.isReady {
+                try await coordinator.startInitialization()
+            }
+            
+            // Create service container
+            let container = try await ServiceContainer()
+            
+            // Connect Nova AI to intelligence service
+            container.setNovaManager(novaAI)
+            
+            // Set container
+            await MainActor.run {
+                self.serviceContainer = container
+            }
+            
+            print("✅ Service container created successfully")
+            
+        } catch {
+            await MainActor.run {
+                self.containerError = error
+            }
+            SentrySDK.capture(error: error) { scope in
+                scope.setLevel(.error)
+                scope.setTag(value: "service_container", key: "initialization")
+            }
+            print("❌ Failed to create service container: \(error)")
+        }
+    }
+    
+    // MARK: - Sentry Initialization (PRESERVED)
     
     private func initializeSentry() {
+        let dsn = ProductionConfiguration.Analytics.sentryDSN
+        guard !dsn.isEmpty else {
+            print("⚠️ Sentry DSN not configured for \(ProductionConfiguration.environment.rawValue)")
+            return
+        }
+        
         SentrySDK.start { options in
-            options.dsn = "https://c77b2dddf9eca868ead5142d23a438cf@o4509764891901952.ingest.us.sentry.io/4509764893081600"
+            options.dsn = dsn
             
             #if DEBUG
             options.debug = true
             options.environment = "debug"
             #else
             options.debug = false
-            options.environment = "production"
+            options.environment = ProductionConfiguration.environment.rawValue
             #endif
             
             options.tracesSampleRate = 0.2
@@ -131,7 +202,7 @@ struct FrancoSphereApp: App {
             
             if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
                let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
-                options.releaseName = "francosphere@\(version)+\(build)"
+                options.releaseName = "cyntientops@\(version)+\(build)"
             }
             
             options.enableAutoBreadcrumbTracking = true
@@ -163,14 +234,15 @@ struct FrancoSphereApp: App {
             scope.setContext(value: [
                 "initialized": databaseInitializer.isInitialized,
                 "migrationNeeded": dailyOps.needsMigration(),
-                "onboardingCompleted": hasCompletedOnboarding
+                "onboardingCompleted": hasCompletedOnboarding,
+                "environment": ProductionConfiguration.environment.rawValue
             ], key: "app_state")
         }
         
         print("✅ Sentry initialized successfully")
     }
     
-    // MARK: - Sentry Helper Methods
+    // MARK: - Sentry Helper Methods (PRESERVED)
     
     private func sanitizeEvent(_ event: Event) -> Event? {
         if let message = event.message {
@@ -218,7 +290,7 @@ struct FrancoSphereApp: App {
         }
     }
     
-    // MARK: - App Setup & Lifecycle
+    // MARK: - App Setup & Lifecycle (PRESERVED + ENHANCED)
     
     private func setupApp() {
         configureAppearance()
@@ -233,6 +305,21 @@ struct FrancoSphereApp: App {
         
         if databaseInitializer.isInitialized {
             checkDailyOperations()
+        }
+        
+        // Phase 0A: Seed user accounts if needed
+        if ProductionConfiguration.environment == .development {
+            Task {
+                do {
+                    let seeder = UserAccountSeeder()
+                    await seeder.seedAccounts()
+                    
+                    let clientSeeder = ClientBuildingSeeder()
+                    await clientSeeder.seedClientStructure()
+                } catch {
+                    print("⚠️ Seeding error: \(error)")
+                }
+            }
         }
     }
     
@@ -313,7 +400,7 @@ struct FrancoSphereApp: App {
     }
 }
 
-// MARK: - Sentry Crash Reporter Wrapper (for backward compatibility)
+// MARK: - Sentry Crash Reporter Wrapper (PRESERVED)
 
 enum CrashReporter {
     static func captureError(_ error: Error, context: [String: Any]? = nil) {
@@ -325,7 +412,7 @@ enum CrashReporter {
     }
 }
 
-// MARK: - Placeholder Views (These should live in their own files)
+// MARK: - Placeholder SplashView (PRESERVED)
 
 struct SplashView: View {
     @State private var animate = false
@@ -356,7 +443,7 @@ struct SplashView: View {
                         .scaleEffect(animate ? 1.0 : 0.8)
                 }
                 
-                Text("FrancoSphere")
+                Text("CyntientOps")
                     .font(.system(size: 36, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .opacity(animate ? 1.0 : 0.0)
