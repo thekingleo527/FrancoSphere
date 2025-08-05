@@ -224,10 +224,7 @@ public struct CoreTypes {
             return location1.distance(from: location2)
         }
         
-        public var shortName: String {
-            // Return first part of name or abbreviation
-            name.components(separatedBy: " ").first ?? name
-        }
+        // Note: shortName is defined in Building.swift extension
     }
     
     public enum BuildingType: String, Codable, CaseIterable {
@@ -507,6 +504,88 @@ public struct CoreTypes {
         }
         
         public var progressPercentage: Double { completionPercentage }
+    }
+    
+    // MARK: - Maintenance Types
+    
+    public struct MaintenanceTask: Codable, Identifiable {
+        public let id: String
+        public let title: String
+        public let description: String
+        public let category: TaskCategory
+        public let urgency: TaskUrgency
+        public let status: TaskStatus
+        public let buildingId: String
+        public let assignedWorkerId: String?
+        public let estimatedDuration: TimeInterval
+        public let createdDate: Date
+        public let dueDate: Date?
+        public let completedDate: Date?
+        
+        public init(
+            id: String = UUID().uuidString,
+            title: String,
+            description: String,
+            category: TaskCategory,
+            urgency: TaskUrgency,
+            status: TaskStatus = .pending,
+            buildingId: String,
+            assignedWorkerId: String? = nil,
+            estimatedDuration: TimeInterval = 3600,
+            createdDate: Date = Date(),
+            dueDate: Date? = nil,
+            completedDate: Date? = nil
+        ) {
+            self.id = id
+            self.title = title
+            self.description = description
+            self.category = category
+            self.urgency = urgency
+            self.status = status
+            self.buildingId = buildingId
+            self.assignedWorkerId = assignedWorkerId
+            self.estimatedDuration = estimatedDuration
+            self.createdDate = createdDate
+            self.dueDate = dueDate
+            self.completedDate = completedDate
+        }
+    }
+    
+    public struct MaintenanceRecord: Codable, Identifiable {
+        public let id: String
+        public let buildingId: String
+        public let taskId: String
+        public let workerId: String
+        public let category: TaskCategory
+        public let description: String
+        public let completedAt: Date
+        public let duration: TimeInterval
+        public let cost: Double?
+        public let notes: String?
+        
+        public init(
+            id: String = UUID().uuidString,
+            buildingId: String,
+            taskId: String,
+            workerId: String,
+            category: TaskCategory,
+            description: String,
+            completedAt: Date = Date(),
+            duration: TimeInterval,
+            cost: Double? = nil,
+            notes: String? = nil
+        ) {
+            self.id = id
+            self.buildingId = buildingId
+            self.taskId = taskId
+            self.workerId = workerId
+            self.category = category
+            self.description = description
+            self.completedAt = completedAt
+            self.duration = duration
+            self.cost = cost
+            self.notes = notes
+        }
     }
     
     // MARK: - Dashboard & Sync Types
@@ -1093,15 +1172,6 @@ public struct CoreTypes {
             self.trend = trend
             self.lastUpdated = lastUpdated
         }
-        
-        public static let empty = PortfolioHealth(
-            overallScore: 0,
-            totalBuildings: 0,
-            activeBuildings: 0,
-            criticalIssues: 0,
-            trend: .stable,
-            lastUpdated: Date()
-        )
     }
     
     public struct PortfolioIntelligence: Codable, Identifiable {
@@ -1950,86 +2020,6 @@ public struct CoreTypes {
         }
     }
     
-    public struct MaintenanceRecord: Codable, Identifiable {
-        public let id: String
-        public let buildingId: String
-        public let taskId: String
-        public let workerId: String
-        public let category: TaskCategory
-        public let description: String
-        public let completedAt: Date
-        public let duration: TimeInterval
-        public let cost: Double?
-        public let notes: String?
-        
-        public init(
-            id: String = UUID().uuidString,
-            buildingId: String,
-            taskId: String,
-            workerId: String,
-            category: TaskCategory,
-            description: String,
-            completedAt: Date = Date(),
-            duration: TimeInterval,
-            cost: Double? = nil,
-            notes: String? = nil
-        ) {
-            self.id = id
-            self.buildingId = buildingId
-            self.taskId = taskId
-            self.workerId = workerId
-            self.category = category
-            self.description = description
-            self.completedAt = completedAt
-            self.duration = duration
-            self.cost = cost
-            self.notes = notes
-        }
-    }
-    
-    public struct MaintenanceTask: Codable, Identifiable {
-        public let id: String
-        public let title: String
-        public let description: String
-        public let category: TaskCategory
-        public let urgency: TaskUrgency
-        public let status: TaskStatus
-        public let buildingId: String
-        public let assignedWorkerId: String?
-        public let estimatedDuration: TimeInterval
-        public let createdDate: Date
-        public let dueDate: Date?
-        public let completedDate: Date?
-        
-        public init(
-            id: String = UUID().uuidString,
-            title: String,
-            description: String,
-            category: TaskCategory,
-            urgency: TaskUrgency,
-            status: TaskStatus = .pending,
-            buildingId: String,
-            assignedWorkerId: String? = nil,
-            estimatedDuration: TimeInterval = 3600,
-            createdDate: Date = Date(),
-            dueDate: Date? = nil,
-            completedDate: Date? = nil
-        ) {
-            self.id = id
-            self.title = title
-            self.description = description
-            self.category = category
-            self.urgency = urgency
-            self.status = status
-            self.buildingId = buildingId
-            self.assignedWorkerId = assignedWorkerId
-            self.estimatedDuration = estimatedDuration
-            self.createdDate = createdDate
-            self.dueDate = dueDate
-            self.completedDate = completedDate
-        }
-    }
-    
     // MARK: - Client Activity Types
     
     public struct ClientActivity: Codable, Identifiable {
@@ -2254,6 +2244,8 @@ public typealias TaskCategory = CoreTypes.TaskCategory
 public typealias TaskUrgency = CoreTypes.TaskUrgency
 public typealias TaskFrequency = CoreTypes.TaskFrequency
 public typealias TaskProgress = CoreTypes.TaskProgress
+public typealias MaintenanceTask = CoreTypes.MaintenanceTask
+public typealias MaintenanceRecord = CoreTypes.MaintenanceRecord
 
 // Location & Building Types
 public typealias NamedCoordinate = CoreTypes.NamedCoordinate
@@ -2267,22 +2259,29 @@ public typealias CrossDashboardUpdate = CoreTypes.CrossDashboardUpdate
 
 // Client-specific Types
 public typealias RealtimeRoutineMetrics = CoreTypes.RealtimeRoutineMetrics
+public typealias BuildingRoutineStatus = CoreTypes.BuildingRoutineStatus
 public typealias ActiveWorkerStatus = CoreTypes.ActiveWorkerStatus
 public typealias MonthlyMetrics = CoreTypes.MonthlyMetrics
 public typealias ComplianceStatus = CoreTypes.ComplianceStatus
 public typealias ComplianceOverview = CoreTypes.ComplianceOverview
+public typealias ComplianceSeverity = CoreTypes.ComplianceSeverity
+public typealias ComplianceIssueType = CoreTypes.ComplianceIssueType
 
 // Intelligence Types
 public typealias IntelligenceInsight = CoreTypes.IntelligenceInsight
 public typealias InsightCategory = CoreTypes.InsightCategory
 public typealias AIPriority = CoreTypes.AIPriority
+public typealias AIScenario = CoreTypes.AIScenario
+public typealias AIScenarioType = CoreTypes.AIScenarioType
+public typealias AISuggestion = CoreTypes.AISuggestion
+
+// Photo Types
+public typealias ActionEvidence = CoreTypes.ActionEvidence
+public typealias FrancoPhotoCategory = CoreTypes.FrancoPhotoCategory
 
 // Other Essential Types
-public typealias ActionEvidence = CoreTypes.ActionEvidence
 public typealias UserRole = CoreTypes.UserRole
 public typealias TrendDirection = CoreTypes.TrendDirection
-
-// Additional Type Aliases as needed by the project
 public typealias User = CoreTypes.User
 public typealias WorkerID = CoreTypes.WorkerID
 public typealias BuildingID = CoreTypes.BuildingID
@@ -2293,5 +2292,41 @@ public typealias ComplianceIssue = CoreTypes.ComplianceIssue
 public typealias ClientPortfolioIntelligence = CoreTypes.ClientPortfolioIntelligence
 public typealias StrategicRecommendation = CoreTypes.StrategicRecommendation
 public typealias WeatherData = CoreTypes.WeatherData
+public typealias WeatherCondition = CoreTypes.WeatherCondition
+public typealias OutdoorWorkRisk = CoreTypes.OutdoorWorkRisk
 public typealias PerformanceMetrics = CoreTypes.PerformanceMetrics
 public typealias InventoryItem = CoreTypes.InventoryItem
+public typealias InventoryCategory = CoreTypes.InventoryCategory
+public typealias RestockStatus = CoreTypes.RestockStatus
+
+// Route Types
+public typealias WorkerDailyRoute = CoreTypes.WorkerDailyRoute
+public typealias RouteOptimization = CoreTypes.RouteOptimization
+public typealias RouteStop = CoreTypes.RouteStop
+public typealias WorkerRoutineSummary = CoreTypes.WorkerRoutineSummary
+public typealias WorkerAssignment = CoreTypes.WorkerAssignment
+public typealias FrancoWorkerAssignment = CoreTypes.FrancoWorkerAssignment
+
+// Portfolio Types
+public typealias ExecutiveSummary = CoreTypes.ExecutiveSummary
+public typealias PortfolioBenchmark = CoreTypes.PortfolioBenchmark
+public typealias PortfolioHealth = CoreTypes.PortfolioHealth
+public typealias PortfolioIntelligence = CoreTypes.PortfolioIntelligence
+public typealias BuildingAnalytics = CoreTypes.BuildingAnalytics
+public typealias BuildingIntelligence = CoreTypes.BuildingIntelligence
+public typealias ExecutiveIntelligence = CoreTypes.ExecutiveIntelligence
+
+// Client Activity Types
+public typealias ClientAlert = CoreTypes.ClientAlert
+public typealias RealtimeActivity = CoreTypes.RealtimeActivity
+public typealias RealtimePortfolioMetrics = CoreTypes.PortfolioMetrics
+public typealias CostInsight = CoreTypes.CostInsight
+public typealias WorkerProductivityInsight = CoreTypes.WorkerProductivityInsight
+
+// Verification Types
+public typealias VerificationStatus = CoreTypes.VerificationStatus
+public typealias TaskCompletionRecord = CoreTypes.TaskCompletionRecord
+
+// Misc Types
+public typealias SkillLevel = CoreTypes.SkillLevel
+public typealias DataHealthStatus = CoreTypes.DataHealthStatus
