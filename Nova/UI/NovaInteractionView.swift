@@ -87,15 +87,16 @@ struct NovaInteractionView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItemGroup(placement: .navigationBarLeading) {
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(.white.opacity(0.7))
                     }
                 }
                 
-                ToolbarItem(placement: .principal) {
+                ToolbarItemGroup(placement: .principal) {
                     HStack(spacing: 8) {
                         Image(systemName: "brain")
                             .font(.caption)
@@ -106,7 +107,7 @@ struct NovaInteractionView: View {
                     }
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Button(action: { showContextualData.toggle() }) {
                         Image(systemName: showContextualData ? "info.circle.fill" : "info.circle")
                             .foregroundColor(.white.opacity(0.7))
@@ -120,22 +121,26 @@ struct NovaInteractionView: View {
             checkForActiveScenarios()
         }
         .sheet(isPresented: $showingHolographicView) {
-            if #available(iOS 15.0, *) {
-                NovaHolographicView()
-                    .environmentObject(novaManager)
-            } else {
-                VStack(spacing: 20) {
-                    Text("🔮 Holographic Mode")
-                        .font(.title)
-                    Text("This feature requires iOS 15 or later")
-                        .foregroundColor(.secondary)
-                    Button("Close") {
-                        showingHolographicView = false
-                    }
-                    .buttonStyle(.borderedProminent)
+            // NovaHolographicView temporarily disabled due to module visibility
+            VStack(spacing: 20) {
+                Image(systemName: "cube.transparent")
+                    .font(.system(size: 60))
+                    .foregroundColor(.cyan)
+                
+                Text("🔮 Holographic Mode")
+                    .font(.title)
+                    .foregroundColor(.white)
+                
+                Text("Holographic interface coming soon...")
+                    .foregroundColor(.secondary)
+                
+                Button("Close") {
+                    showingHolographicView = false
                 }
-                .padding()
+                .buttonStyle(.borderedProminent)
             }
+            .padding()
+            .background(.black)
         }
     }
     
