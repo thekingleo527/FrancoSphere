@@ -130,7 +130,7 @@ public class AutomatedWorkflows: ObservableObject {
         taskId: String,
         workerId: String,
         buildingId: String,
-        completionData: TaskCompletionData
+        completionData: WorkflowTaskCompletionData
     ) async throws -> String {
         
         let workflowId = UUID().uuidString
@@ -619,7 +619,7 @@ public class AutomatedWorkflows: ObservableObject {
         taskId: String,
         workerId: String,
         buildingId: String,
-        completionData: TaskCompletionData
+        completionData: WorkflowTaskCompletionData
     ) -> [WorkflowStep] {
         return [
             WorkflowStep(
@@ -907,7 +907,7 @@ public struct WorkflowStats {
     }
 }
 
-public struct TaskCompletionData {
+public struct WorkflowTaskCompletionData {
     public let taskId: String
     public let workerId: String
     public let completedAt: Date
@@ -963,7 +963,7 @@ public enum WorkflowError: LocalizedError {
 
 // MARK: - Notification Service Placeholder
 
-private class NotificationService {
+public class NotificationService {
     func scheduleNotification(id: String, title: String, body: String, date: Date, userInfo: [String: Any]) async {
         print("📅 Scheduled notification: \(title) for \(date)")
     }

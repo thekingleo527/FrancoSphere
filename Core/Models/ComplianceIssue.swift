@@ -351,14 +351,14 @@ extension Array where Element == CoreTypes.ComplianceIssue {
         return filter { $0.severity == .critical }
     }
     
-    /// Get compliance summary statistics
-    var summary: ComplianceSummary {
+    /// Get compliance summary statistics  
+    var localComplianceSummary: LocalComplianceSummary {
         let total = count
         let compliant = filter { $0.status == .compliant }.count
         let overdue = self.overdue.count
         let critical = self.critical.count
         
-        return ComplianceSummary(
+        return LocalComplianceSummary(
             total: total,
             compliant: compliant,
             overdue: overdue,
@@ -370,7 +370,7 @@ extension Array where Element == CoreTypes.ComplianceIssue {
 
 // MARK: - Compliance Summary Helper
 
-struct ComplianceSummary {
+internal struct LocalComplianceSummary {
     let total: Int
     let compliant: Int
     let overdue: Int

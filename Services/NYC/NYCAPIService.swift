@@ -42,7 +42,7 @@ public final class NYCAPIService: ObservableObject {
     }
     
     // MARK: - API Endpoints
-    public enum APIEndpoint: CaseIterable, Hashable {
+    public enum APIEndpoint: Hashable {
         case hpdViolations(bin: String)
         case dobPermits(bin: String)
         case dsnySchedule(district: String)

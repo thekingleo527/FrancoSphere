@@ -22,6 +22,11 @@ public final class NovaAIManager: ObservableObject {
     @Published public var hasUrgentInsights = false
     @Published public var thinkingParticles: [Particle] = []
     
+    // MARK: - Computed Properties
+    public var isThinking: Bool {
+        return novaState == .thinking
+    }
+    
     // MARK: - Nova State Enum
     public enum NovaState {
         case idle, thinking, active, urgent, error

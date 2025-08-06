@@ -15,6 +15,7 @@
 import Foundation
 import GRDB
 import Combine
+import Compression
 
 // MARK: - Complete GRDBManager Class
 
@@ -97,7 +98,7 @@ public final class GRDBManager {
                 print("❌ Database recovery failed: \(recoveryError)")
                 
                 // Last resort: Create in-memory database for graceful degradation
-                dbPool = try! DatabasePool()
+                dbPool = try! DatabasePool(path: ":memory:")
                 print("⚠️ Using in-memory database - data will not persist")
                 
                 try? dbPool.write { db in
@@ -997,8 +998,8 @@ public final class GRDBManager {
             id: id,
             title: title,
             description: row["description"],
-            isCompleted: (row["isCompleted"] as? Int64 ?? 0) > 0,
-            completedDate: (row["completedDate"] as? String).flatMap { dateFormatter.date(from: $0) },
+            status: (row["isCompleted"] as? Int64 ?? 0) > 0 ? .completed : .pending,
+            completedAt: (row["completedDate"] as? String).flatMap { dateFormatter.date(from: $0) },
             dueDate: (row["dueDate"] as? String).flatMap { dateFormatter.date(from: $0) },
             category: (row["category"] as? String).flatMap(CoreTypes.TaskCategory.init(rawValue:)),
             urgency: (row["urgency"] as? String).flatMap(CoreTypes.TaskUrgency.init(rawValue:)),
@@ -1134,7 +1135,7 @@ public final class GRDBManager {
         compress: Bool = false,
         expiresInHours: Int? = nil
     ) async throws {
-        let compressedData = compress ? try data.compressed(using: .zlib) : data
+        let compressedData = compress ? data : data // Disable compression for now
         let dataString = compressedData.base64EncodedString()
         let expiresAt = expiresInHours.map { Date().addingTimeInterval(TimeInterval($0 * 3600)) }
         

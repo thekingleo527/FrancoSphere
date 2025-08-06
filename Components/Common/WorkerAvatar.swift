@@ -16,7 +16,7 @@ public struct WorkerAvatar: View {
     let workerName: String
     let size: AvatarSize
     let showStatus: Bool
-    let status: WorkerStatus?
+    let status: CoreTypes.WorkerStatus?
     let customGradient: [Color]?
     
     // MARK: - Initialization
@@ -25,7 +25,7 @@ public struct WorkerAvatar: View {
         workerName: String,
         size: AvatarSize = .medium,
         showStatus: Bool = false,
-        status: WorkerStatus? = nil,
+        status: CoreTypes.WorkerStatus? = nil,
         customGradient: [Color]? = nil
     ) {
         self.workerName = workerName
@@ -87,7 +87,7 @@ public struct WorkerAvatar: View {
     
     // MARK: - Status Indicator
     
-    private func statusIndicator(_ status: WorkerStatus) -> some View {
+    private func statusIndicator(_ status: CoreTypes.WorkerStatus) -> some View {
         HStack {
             Spacer()
             VStack {
@@ -191,40 +191,7 @@ public enum AvatarSize {
 
 // MARK: - Worker Status
 
-public enum WorkerStatus {
-    case available
-    case busy
-    case clockedIn
-    case clockedOut
-    case onBreak
-    case emergency
-    case offline
-    
-    var color: Color {
-        switch self {
-        case .available, .clockedIn:
-            return CyntientOpsDesign.DashboardColors.success
-        case .busy, .onBreak:
-            return CyntientOpsDesign.DashboardColors.warning
-        case .clockedOut, .offline:
-            return CyntientOpsDesign.DashboardColors.secondaryText
-        case .emergency:
-            return CyntientOpsDesign.DashboardColors.critical
-        }
-    }
-    
-    var displayText: String {
-        switch self {
-        case .available: return "Available"
-        case .busy: return "Busy"
-        case .clockedIn: return "Clocked In"
-        case .clockedOut: return "Clocked Out"
-        case .onBreak: return "On Break"
-        case .emergency: return "Emergency"
-        case .offline: return "Offline"
-        }
-    }
-}
+// Note: Using CoreTypes.WorkerStatus instead of local enum
 
 // MARK: - Worker Avatar Group (For displaying multiple workers)
 
@@ -275,13 +242,13 @@ public struct WorkerAvatarGroup: View {
 public struct WorkerInfoRow: View {
     let workerName: String
     let subtitle: String
-    let status: WorkerStatus?
+    let status: CoreTypes.WorkerStatus?
     let showAvatar: Bool
     
     public init(
         workerName: String,
         subtitle: String = "Worker",
-        status: WorkerStatus? = nil,
+        status: CoreTypes.WorkerStatus? = nil,
         showAvatar: Bool = true
     ) {
         self.workerName = workerName
@@ -364,5 +331,24 @@ struct WorkerAvatar_Previews: PreviewProvider {
         .padding()
         .background(CyntientOpsDesign.DashboardColors.baseBackground)
         .preferredColorScheme(.dark)
+    }
+}
+
+// MARK: - CoreTypes.WorkerStatus Extensions
+
+extension CoreTypes.WorkerStatus {
+    var color: Color {
+        switch self {
+        case .available, .clockedIn:
+            return CyntientOpsDesign.DashboardColors.success
+        case .onBreak:
+            return CyntientOpsDesign.DashboardColors.warning
+        case .offline:
+            return CyntientOpsDesign.DashboardColors.secondaryText
+        }
+    }
+    
+    var displayText: String {
+        return self.rawValue
     }
 }

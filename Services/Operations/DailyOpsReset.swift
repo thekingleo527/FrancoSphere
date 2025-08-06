@@ -13,7 +13,7 @@ import UIKit
 import GRDB
 
 @MainActor
-class DailyOpsReset: ObservableObject {
+public class DailyOpsReset: ObservableObject {
     static let shared = DailyOpsReset()
     
     // MARK: - Migration Tracking

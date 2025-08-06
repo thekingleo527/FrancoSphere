@@ -13,7 +13,7 @@ import Foundation
 import GRDB
 import CoreLocation // Added for CLLocationCoordinate2D
 
-actor TaskService {
+public actor TaskService {
     static let shared = TaskService()
     
     private let grdbManager = GRDBManager.shared
@@ -63,7 +63,7 @@ actor TaskService {
         
         guard let row = rows.first,
               let task = convertRowToContextualTask(row) else {
-            throw TaskServiceError.taskNotFound(taskId)
+            throw TaskServiceError.taskNotFound
         }
         
         return task
@@ -111,8 +111,8 @@ actor TaskService {
                 data: [
                     "taskId": taskId,
                     "completionTime": ISO8601DateFormatter().string(from: Date()),
-                    "evidence": evidence.description,
-                    "photoCount": String(evidence.photoURLs.count)
+                    "evidence": evidence.description ?? "",
+                    "photoCount": String(evidence.photoURLs?.count ?? 0)
                 ]
             )
             
@@ -298,8 +298,8 @@ actor TaskService {
             id: String(id),
             title: title,
             description: row["description"] as? String,
-            isCompleted: (row["isCompleted"] as? Int64) == 1,
-            completedDate: parseDate(row["completedDate"] as? String),
+            status: (row["isCompleted"] as? Int64) == 1 ? .completed : .pending,
+            completedAt: parseDate(row["completedDate"] as? String),
             dueDate: parseDate(row["dueDate"] as? String),
             category: category,
             urgency: urgency,
@@ -386,8 +386,8 @@ extension TaskService {
             id: UUID().uuidString,
             title: template.name,
             description: template.description,
-            isCompleted: false,
-            completedDate: nil,
+            status: .pending,
+            completedAt: nil,
             dueDate: scheduledDate.addingTimeInterval(template.estimatedDuration),
             category: template.category,
             urgency: template.defaultUrgency,

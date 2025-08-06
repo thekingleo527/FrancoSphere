@@ -20,6 +20,11 @@ import Foundation
 import SwiftUI
 import Combine
 
+// Forward declaration to avoid circular dependency
+public protocol AdminContextEngineProtocol: AnyObject {
+    func setNovaManager(_ nova: NovaAIManager)
+}
+
 @MainActor
 public final class ServiceContainer: ObservableObject {
     
@@ -47,7 +52,7 @@ public final class ServiceContainer: ObservableObject {
     
     // MARK: - Layer 4: Context Engines
     public let workerContext: WorkerContextEngine
-    public let adminContext: AdminContextEngine
+    public private(set) var adminContext: AdminContextEngineProtocol?
     public let clientContext: ClientContextEngine
     
     // MARK: - Layer 5: Command Chains
@@ -155,7 +160,7 @@ public final class ServiceContainer: ObservableObject {
         print("🎯 Layer 4: Initializing context engines...")
         
         self.workerContext = WorkerContextEngine(container: self)
-        self.adminContext = AdminContextEngine(container: self)
+        // AdminContextEngine will be initialized after container is fully created
         self.clientContext = ClientContextEngine(container: self)
         
         print("✅ Layer 4: Context engines initialized")
@@ -186,7 +191,19 @@ public final class ServiceContainer: ObservableObject {
         // Start background services
         await startBackgroundServices()
         
+        // Initialize AdminContextEngine after container is fully created
+        await initializeAdminContext()
+        
         print("✅ ServiceContainer initialization complete!")
+    }
+    
+    // MARK: - AdminContext Initialization
+    
+    /// Initialize AdminContextEngine after container is fully created (solves circular dependency)
+    private func initializeAdminContext() async {
+        print("🎯 Initializing AdminContextEngine...")
+        self.adminContext = AdminContextEngine(container: self)
+        print("✅ AdminContextEngine initialized")
     }
     
     // MARK: - Nova AI Integration
@@ -198,7 +215,7 @@ public final class ServiceContainer: ObservableObject {
         
         // Also connect to context engines if they need Nova
         self.workerContext.setNovaManager(nova)
-        self.adminContext.setNovaManager(nova)
+        self.adminContext?.setNovaManager(nova)
         self.clientContext.setNovaManager(nova)
         
         print("🧠 Nova AI Manager connected to services")

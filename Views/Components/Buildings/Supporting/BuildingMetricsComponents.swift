@@ -658,17 +658,6 @@ struct CostAnalysisData {
 // MARK: - CoreTypes Extensions for UI
 
 extension CoreTypes.TrendDirection {
-    var icon: String {
-        switch self {
-        case .up: return "arrow.up"
-        case .down: return "arrow.down"
-        case .stable: return "minus"
-        case .improving: return "arrow.up.right"
-        case .declining: return "arrow.down.right"
-        case .unknown: return "questionmark"
-        }
-    }
-    
     var color: Color {
         switch self {
         case .up, .improving: return .green

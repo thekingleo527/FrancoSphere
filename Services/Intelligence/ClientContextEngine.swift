@@ -16,7 +16,7 @@ import Combine
 import SwiftUI
 
 @MainActor
-final class ClientContextEngine: ObservableObject {
+public final class ClientContextEngine: ObservableObject {
     
     // MARK: - ServiceContainer Integration
     private weak var container: ServiceContainer?

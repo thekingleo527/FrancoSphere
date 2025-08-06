@@ -230,7 +230,7 @@ public actor SiteLogService {
     ) async {
         let update = CoreTypes.DashboardUpdate(
             source: .worker,
-            type: .custom("siteDeparture"),
+            type: .buildingUpdate,
             buildingId: buildingId,
             workerId: workerId,
             data: [

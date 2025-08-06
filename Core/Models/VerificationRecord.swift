@@ -56,9 +56,10 @@ extension VerificationRecord {
     func createCompletionRecord() -> CoreTypes.TaskCompletionRecord {
         return CoreTypes.TaskCompletionRecord(
             taskId: taskId,
-            completedDate: verificationDate,
             workerId: workerId,
-            verificationStatus: status
+            completedAt: verificationDate,
+            verificationStatus: status,
+            evidence: nil
         )
     }
     
@@ -110,6 +111,8 @@ extension VerificationRecord {
             return "Verified and approved"
         case .rejected:
             return "Rejected - needs revision"
+        case .needsReview:
+            return "Needs additional review"
         case .notRequired:
             return "Verification not required"
         }
@@ -224,6 +227,8 @@ extension VerificationRecord {
             return .green
         case .rejected:
             return .red
+        case .needsReview:
+            return .yellow
         case .notRequired:
             return .gray
         }
@@ -237,6 +242,8 @@ extension VerificationRecord {
             return "checkmark.circle.fill"
         case .rejected:
             return "xmark.circle.fill"
+        case .needsReview:
+            return "eye.circle.fill"
         case .notRequired:
             return "minus.circle.fill"
         }

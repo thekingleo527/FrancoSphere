@@ -474,18 +474,4 @@ extension TimeInterval {
     }
 }
 
-// MARK: - KeychainManager Placeholder
-
-private class KeychainManager {
-    static let shared = KeychainManager()
-    
-    func storeKey(key: Data, identifier: String) {
-        // TODO: Implement proper keychain storage
-        UserDefaults.standard.set(key, forKey: "keychain_\(identifier)")
-    }
-    
-    func getKey(identifier: String) -> Data? {
-        // TODO: Implement proper keychain retrieval
-        return UserDefaults.standard.data(forKey: "keychain_\(identifier)")
-    }
-}
+// Note: Using KeychainManager from Services/Configuration/KeychainManager.swift

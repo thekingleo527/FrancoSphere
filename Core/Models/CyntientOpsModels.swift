@@ -133,7 +133,7 @@ extension CoreTypes.ContextualTask {
         switch urgency {
         case .emergency, .critical: return .red
         case .urgent, .high: return .orange
-        case .medium: return .yellow
+        case .medium, .normal: return .yellow
         case .low, .none: return .green
         }
     }
@@ -150,6 +150,7 @@ extension CoreTypes.TaskUrgency {
         switch self {
         case .low: return 1
         case .medium: return 2
+        case .normal: return 2
         case .high: return 3
         case .urgent: return 4
         case .critical: return 5

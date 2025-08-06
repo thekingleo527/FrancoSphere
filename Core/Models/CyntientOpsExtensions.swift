@@ -21,12 +21,12 @@ extension CoreTypes.RouteStop {
     public var estimatedTaskDuration: TimeInterval {
         // Calculate real duration based on task complexity
         let baseDuration: TimeInterval = 1800 // 30 minutes base
-        let complexityMultiplier = Double(taskIds.count) * 0.5 // More tasks = longer
+        let complexityMultiplier = Double(tasks.count) * 0.5 // More tasks = longer
         return baseDuration * max(1.0, complexityMultiplier)
     }
     
-    public var arrivalTime: Date {
-        expectedArrival // Use the correct property name
+    public var arrivalTime: Date? {
+        estimatedArrival // Use the correct property name
     }
     
     public var buildingName: String {
@@ -66,15 +66,15 @@ extension CoreTypes.MaintenanceTask {
 extension CoreTypes.WorkerDailyRoute {
     public var totalDistance: Double {
         // Calculate real distance using building coordinates
-        guard buildings.count > 1 else { return 0 }
+        guard let buildings = buildings, buildings.count > 1 else { return 0 }
         
         var totalDistance: Double = 0
         for i in 1..<buildings.count {
-            let prevBuildingId = buildings[i-1]
-            let currentBuildingId = buildings[i]
+            let prevBuilding = buildings[i-1]
+            let currentBuilding = buildings[i]
             
-            let prevCoord = getRealBuildingCoordinate(for: prevBuildingId)
-            let currentCoord = getRealBuildingCoordinate(for: currentBuildingId)
+            let prevCoord = CLLocationCoordinate2D(latitude: prevBuilding.latitude, longitude: prevBuilding.longitude)
+            let currentCoord = CLLocationCoordinate2D(latitude: currentBuilding.latitude, longitude: currentBuilding.longitude)
             
             let prevLocation = CLLocation(latitude: prevCoord.latitude, longitude: prevCoord.longitude)
             let currentLocation = CLLocation(latitude: currentCoord.latitude, longitude: currentCoord.longitude)
@@ -105,7 +105,7 @@ extension CoreTypes.WorkerDailyRoute {
 // MARK: - WorkerRoutineSummary Extensions
 extension CoreTypes.WorkerRoutineSummary {
     public var dailyTasks: Int {
-        tasksCompleted // Use the correct property name
+        completedTasks // Use the correct property name
     }
 }
 

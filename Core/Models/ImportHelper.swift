@@ -22,7 +22,7 @@ public enum CyntientOpsTypes {
         let _ = WorkerContextEngineAdapter.self
         let _ = ContextualTask.self
         let _ = MaintenanceTask.self
-        let _ = CoreTypes.WorkerSkill.self
+        let _ = CoreTypes.WorkerProfile.self
         let _ = TaskUrgency.self
         let _ = TaskCategory.self
         return true

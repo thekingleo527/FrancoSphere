@@ -11,7 +11,7 @@
 import Foundation
 import GRDB
 
-actor ComplianceService {
+public actor ComplianceService {
     static let shared = ComplianceService()
     
     private let grdbManager = GRDBManager.shared

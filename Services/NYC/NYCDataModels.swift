@@ -455,20 +455,6 @@ public struct RequiredAction {
 
 // MARK: - Extensions
 
-extension Date {
-    var iso8601String: String {
-        let formatter = ISO8601DateFormatter()
-        return formatter.string(from: self)
-    }
-}
+// Date extension is in OperationalDataManager.swift
 
-extension CoreTypes.ComplianceSeverity {
-    var rawValue: Int {
-        switch self {
-        case .critical: return 4
-        case .high: return 3
-        case .medium: return 2
-        case .low: return 1
-        }
-    }
-}
+// ComplianceSeverity extensions moved to ComplianceIssue.swift to avoid duplicates
