@@ -206,16 +206,26 @@ struct AdminHeroMetricsCard_Previews: PreviewProvider {
         
         let mockMetrics = [
             "1": CoreTypes.BuildingMetrics(
+                buildingId: "1",
                 completionRate: 0.85,
-                activeWorkers: 2,
                 overdueTasks: 1,
-                efficiency: 0.88
+                totalTasks: 10,
+                activeWorkers: 2,
+                overallScore: 0.85,
+                pendingTasks: 2,
+                urgentTasksCount: 1,
+                criticalIssues: 0
             ),
             "2": CoreTypes.BuildingMetrics(
+                buildingId: "2", 
                 completionRate: 0.72,
-                activeWorkers: 1,
                 overdueTasks: 3,
-                efficiency: 0.75
+                totalTasks: 15,
+                activeWorkers: 1,
+                overallScore: 0.72,
+                pendingTasks: 4,
+                urgentTasksCount: 3,
+                criticalIssues: 1
             )
         ]
         

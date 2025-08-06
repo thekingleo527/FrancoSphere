@@ -21,7 +21,7 @@ import SwiftUI
 
 struct SyncStatusView: View {
     
-    @ObservedObject var syncService = DashboardSyncService.shared
+    @StateObject private var syncService = DashboardSyncService.shared
     
     var body: some View {
         HStack(spacing: 8) {

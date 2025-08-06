@@ -73,8 +73,6 @@ struct WeatherViewModifier: ViewModifier {
             return "cloud.fog.fill"
         case .windy:
             return "wind"
-        case .cloudy:
-            return "cloud.sun.fill"
         case .overcast:
             return "cloud.fill"
         case .hot:
@@ -102,8 +100,6 @@ struct WeatherViewModifier: ViewModifier {
             return .gray.opacity(0.7)
         case .windy:
             return .mint
-        case .cloudy:
-            return .yellow.opacity(0.8)
         case .overcast:
             return .gray.opacity(0.9)
         case .hot:
@@ -143,7 +139,7 @@ struct WeatherViewModifier: ViewModifier {
             }
         case .clear, .sunny:
             return "Current weather conditions are favorable"
-        case .cloudy, .partlyCloudy, .overcast:
+        case .cloudy, .overcast:
             return "Cloudy conditions - good for most outdoor work"
         case .hot:
             return "Heat alert: Stay hydrated and take frequent breaks"
