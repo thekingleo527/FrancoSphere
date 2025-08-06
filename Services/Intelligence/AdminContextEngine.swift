@@ -86,7 +86,7 @@ public final class AdminContextEngine: ObservableObject, AdminContextEngineProto
     // private var buildingService: BuildingService? { container?.buildings }
     // private var taskService: TaskService? { container?.tasks }
     // private var complianceService: ComplianceService? { container?.compliance }
-    // private var workerService: WorkerService? { container?.workers }
+    private var workerService: WorkerService? { container?.workers }
     // private var intelligenceService: UnifiedIntelligenceService? { container?.intelligence }
     
     // MARK: - Initialization
@@ -161,13 +161,17 @@ public final class AdminContextEngine: ObservableObject, AdminContextEngineProto
     /// Get worker performance overview
     public func getWorkerPerformanceOverview() -> WorkerPerformanceOverview {
         let topPerformers = allWorkers
-            .compactMap { worker in
+            .compactMap { (worker: CoreTypes.WorkerProfile) -> (CoreTypes.WorkerProfile, Double)? in
                 guard let metrics = workerPerformanceMetrics[worker.id] else { return nil }
                 return (worker, metrics.efficiency)
             }
-            .sorted { $0.1 > $1.1 }
+            .sorted { (a: (CoreTypes.WorkerProfile, Double), b: (CoreTypes.WorkerProfile, Double)) -> Bool in
+                a.1 > b.1
+            }
             .prefix(5)
-            .map { $0.0 }
+            .map { (tuple: (CoreTypes.WorkerProfile, Double)) -> CoreTypes.WorkerProfile in
+                tuple.0
+            }
         
         let avgEfficiency = workerPerformanceMetrics.values
             .map { $0.efficiency }
@@ -222,15 +226,9 @@ public final class AdminContextEngine: ObservableObject, AdminContextEngineProto
     }
     
     /// Get real-time activity feed
-    public func getRealtimeActivityFeed() -> [CoreTypes.RealtimeActivity] {
-        return dashboardSync?.recentUpdates.prefix(10).map { update in
-            CoreTypes.RealtimeActivity(
-                type: mapUpdateTypeToActivity(update.type),
-                description: update.description ?? "\(update.type.rawValue) in building",
-                buildingId: update.buildingId,
-                workerId: update.workerId,
-                timestamp: update.timestamp
-            )
+    public func getRealtimeActivityFeed() -> [String] {
+        return dashboardSync?.liveAdminAlerts.prefix(10).map { alert in
+            "\(alert.severity.rawValue): \(alert.title) at Building \(alert.buildingId)"
         } ?? []
     }
     
@@ -630,6 +628,7 @@ extension WorkerService {
         // Implementation would update worker-building assignments in database
         print("Assigning worker \(workerId) to building \(buildingId)")
     }
+    
 }
 
 
