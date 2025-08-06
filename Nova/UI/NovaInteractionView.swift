@@ -87,7 +87,7 @@ struct NovaInteractionView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar(content: {
+            .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark.circle.fill")
@@ -112,7 +112,7 @@ struct NovaInteractionView: View {
                             .foregroundColor(.white.opacity(0.7))
                     }
                 }
-            })
+            }
         }
         .preferredColorScheme(.dark)
         .task {
@@ -120,8 +120,22 @@ struct NovaInteractionView: View {
             checkForActiveScenarios()
         }
         .sheet(isPresented: $showingHolographicView) {
-            NovaHolographicView()
-                .environmentObject(novaManager)
+            if #available(iOS 15.0, *) {
+                NovaHolographicView()
+                    .environmentObject(novaManager)
+            } else {
+                VStack(spacing: 20) {
+                    Text("🔮 Holographic Mode")
+                        .font(.title)
+                    Text("This feature requires iOS 15 or later")
+                        .foregroundColor(.secondary)
+                    Button("Close") {
+                        showingHolographicView = false
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                .padding()
+            }
         }
     }
     
@@ -524,10 +538,10 @@ struct NovaInteractionView: View {
                 dragOffset = value.translation
                 
                 // Determine swipe direction
-                if abs(value.translation.x) > abs(value.translation.y) {
-                    if value.translation.x > 50 && Date().timeIntervalSince(lastSwipeTime) > 0.3 {
+                if abs(value.translation.width) > abs(value.translation.height) {
+                    if value.translation.width > 50 && Date().timeIntervalSince(lastSwipeTime) > 0.3 {
                         swipeDirection = .left
-                    } else if value.translation.x < -50 && Date().timeIntervalSince(lastSwipeTime) > 0.3 {
+                    } else if value.translation.width < -50 && Date().timeIntervalSince(lastSwipeTime) > 0.3 {
                         swipeDirection = .right
                     }
                 }
