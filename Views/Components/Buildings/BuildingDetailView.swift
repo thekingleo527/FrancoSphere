@@ -1519,7 +1519,7 @@ struct BuildingInventoryTab: View {
                     ForEach(filteredInventoryItems) { item in
                         BuildingInventoryItemRow(
                             item: item,
-                            buildingId: building.id
+                            buildingId: buildingId
                         ) { newQuantity in
                             // Handle quantity update - the component itself will handle the database update
                             // The viewModel.updateInventoryItem is a placeholder for future implementation
