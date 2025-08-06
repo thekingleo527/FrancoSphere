@@ -83,11 +83,11 @@ public final class AdminContextEngine: ObservableObject, AdminContextEngineProto
     
     // Service dependencies
     private var dashboardSync: DashboardSyncService? { container?.dashboardSync }
-    // private var buildingService: BuildingService? { container?.buildings }
-    // private var taskService: TaskService? { container?.tasks }
-    // private var complianceService: ComplianceService? { container?.compliance }
+    private var buildingService: BuildingService? { container?.buildings }
+    private var taskService: TaskService? { container?.tasks }
+    private var complianceService: ComplianceService? { container?.compliance }
     private var workerService: WorkerService? { container?.workers }
-    // private var intelligenceService: UnifiedIntelligenceService? { container?.intelligence }
+    private var intelligenceService: UnifiedIntelligenceService? { container?.intelligence }
     
     // MARK: - Initialization
     
@@ -116,14 +116,15 @@ public final class AdminContextEngine: ObservableObject, AdminContextEngineProto
         
         do {
             // Load core data in parallel
-            async let workers = loadWorkerData()
-            async let buildings = loadBuildingData()
-            async let tasks = loadTaskData()
-            async let compliance = loadComplianceData()
-            async let intelligence = loadIntelligenceData()
-            
-            // Wait for all data to load
-            _ = try await (workers, buildings, tasks, compliance, intelligence)
+            try await withThrowingTaskGroup(of: Void.self) { group in
+                group.addTask { try await self.loadWorkerData() }
+                group.addTask { try await self.loadBuildingData() }
+                group.addTask { try await self.loadTaskData() }
+                group.addTask { try await self.loadComplianceData() }
+                group.addTask { try await self.loadIntelligenceData() }
+                
+                try await group.waitForAll()
+            }
             
             // Calculate derived metrics
             await calculateOperationalMetrics()
@@ -267,14 +268,14 @@ public final class AdminContextEngine: ObservableObject, AdminContextEngineProto
         totalBuildings = allBuildings.count
         
         // Load building metrics
-        let buildingIds = allBuildings.map { $0.id }
-        let metricsDict = try await buildingService.getBuildingMetrics(for: buildingIds)
-        buildingMetrics = metricsDict
-        
-        // Update performance map
-        for (buildingId, metrics) in metricsDict {
-            buildingPerformanceMap[buildingId] = metrics.completionRate
+        var metricsDict: [String: CoreTypes.BuildingMetrics] = [:]
+        for building in allBuildings {
+            if let metrics = try? await buildingService.getBuildingMetrics(building.id) {
+                metricsDict[building.id] = metrics
+                buildingPerformanceMap[building.id] = metrics.completionRate
+            }
         }
+        buildingMetrics = metricsDict
         
         // Identify buildings with issues
         buildingsWithIssues = allBuildings.filter { building in
@@ -314,7 +315,7 @@ public final class AdminContextEngine: ObservableObject, AdminContextEngineProto
         complianceOverview = try await complianceService.getComplianceOverview()
         
         // Load critical issues
-        criticalIssues = try await complianceService.getCriticalIssues()
+        criticalIssues = try await complianceService.getComplianceIssues(for: "")
     }
     
     private func loadIntelligenceData() async throws {
@@ -442,9 +443,9 @@ public final class AdminContextEngine: ObservableObject, AdminContextEngineProto
     
     private func setupSubscriptions() {
         // Subscribe to dashboard sync updates
-        dashboardSync?.$lastUpdate
+        dashboardSync?.$lastSyncTime
             .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
-            .sink { [weak self] _ in
+            .sink { [weak self] (_: Date?) in
                 Task {
                     await self?.handleRealtimeUpdate()
                 }
@@ -469,7 +470,7 @@ public final class AdminContextEngine: ObservableObject, AdminContextEngineProto
     
     private func handleRealtimeUpdate() async {
         // Handle specific updates without full refresh
-        guard let lastUpdate = dashboardSync?.lastUpdate else { return }
+        guard let lastUpdate = dashboardSync?.getRecentUpdates(for: .admin, limit: 1).first else { return }
         
         switch lastUpdate.type {
         case .taskCompleted, .taskStarted:
@@ -485,11 +486,9 @@ public final class AdminContextEngine: ObservableObject, AdminContextEngineProto
             if let buildingId = lastUpdate.data["buildingId"],
                let buildingService = buildingService {
                 do {
-                    let metrics = try await buildingService.getBuildingMetrics(for: [buildingId])
-                    if let metric = metrics[buildingId] {
-                        buildingMetrics[buildingId] = metric
-                        buildingPerformanceMap[buildingId] = metric.completionRate
-                    }
+                    let metrics = try await buildingService.getBuildingMetrics(buildingId)
+                    buildingMetrics[buildingId] = metrics
+                    buildingPerformanceMap[buildingId] = metrics.completionRate
                 } catch {
                     print("Failed to refresh building metrics: \(error)")
                 }
@@ -499,7 +498,7 @@ public final class AdminContextEngine: ObservableObject, AdminContextEngineProto
             // Refresh compliance data
             do {
                 complianceOverview = try await complianceService?.getComplianceOverview() ?? complianceOverview
-                criticalIssues = try await complianceService?.getCriticalIssues() ?? []
+                criticalIssues = try await complianceService?.getComplianceIssues(for: "") ?? []
             } catch {
                 print("Failed to refresh compliance data: \(error)")
             }

@@ -377,6 +377,7 @@ struct BuildingTaskRow: View {
         case .utilities: return "bolt"
         case .renovation: return "paintbrush"
         case .administrative: return "folder"
+        case .compliance: return "checkmark.shield"
         }
     }
     

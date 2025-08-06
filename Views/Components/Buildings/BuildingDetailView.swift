@@ -101,10 +101,8 @@ struct BuildingDetailView: View {
                 animateCards = true
             }
         }
-        .onReceive(dashboardSync.$lastUpdate) { update in
-            if update?.buildingId == buildingId {
-                Task { await viewModel.refreshData() }
-            }
+        .onReceive(dashboardSync.$lastSyncTime) { _ in
+            Task { await viewModel.refreshData() }
         }
         .sheet(isPresented: $showingPhotoCapture) {
             PhotoCaptureSheet(
@@ -192,12 +190,12 @@ struct BuildingDetailView: View {
         .padding(.horizontal)
         .padding(.vertical, 12)
         .background(
-            CyntientOpsDesign.glassMorphism()
+            CyntientOpsDesign.DashboardColors.glassOverlay
                 .overlay(
                     Rectangle()
                         .fill(CyntientOpsDesign.DashboardColors.borderSubtle)
                         .frame(height: 1),
-                    alignment: .bottom
+                    alignment: Alignment.bottom
                 )
         )
     }
@@ -205,12 +203,12 @@ struct BuildingDetailView: View {
     // MARK: - Building Hero Section
     private var buildingHeroSection: some View {
         VStack(spacing: 0) {
-            ZStack(alignment: .bottomLeading) {
+            ZStack(alignment: Alignment.bottomLeading) {
                 // Gradient background
                 LinearGradient(
                     gradient: Gradient(colors: [
-                        CyntientOpsDesign.DashboardColors.accent.opacity(0.3),
-                        CyntientOpsDesign.DashboardColors.accent.opacity(0.1)
+                        CyntientOpsDesign.DashboardColors.primaryAction.opacity(0.3),
+                        CyntientOpsDesign.DashboardColors.primaryAction.opacity(0.1)
                     ]),
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -222,7 +220,7 @@ struct BuildingDetailView: View {
                     Spacer()
                     Image(systemName: viewModel.buildingIcon)
                         .font(.system(size: 50))
-                        .foregroundColor(CyntientOpsDesign.DashboardColors.accent.opacity(0.2))
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction.opacity(0.2))
                         .padding()
                 }
                 
@@ -241,8 +239,8 @@ struct BuildingDetailView: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(
-                            CyntientOpsDesign.glassMorphism()
-                                .overlay(CyntientOpsDesign.glassBorder())
+                            CyntientOpsDesign.DashboardColors.glassOverlay
+                                .overlay(RoundedRectangle(cornerRadius: 12).stroke(CyntientOpsDesign.DashboardColors.borderSubtle, lineWidth: 1))
                         )
                         .cornerRadius(20)
                         
@@ -286,7 +284,7 @@ struct BuildingDetailView: View {
                             .padding(8)
                             .background(
                                 Circle()
-                                    .fill(CyntientOpsDesign.glassMorphism())
+                                    .fill(CyntientOpsDesign.DashboardColors.glassOverlay)
                             )
                     }
                 }
@@ -301,12 +299,12 @@ struct BuildingDetailView: View {
             }
         }
         .background(
-            CyntientOpsDesign.glassMorphism()
+            CyntientOpsDesign.DashboardColors.glassOverlay
                 .overlay(
                     Rectangle()
                         .fill(CyntientOpsDesign.DashboardColors.borderSubtle)
                         .frame(height: 1),
-                    alignment: .bottom
+                    alignment: Alignment.bottom
                 )
         )
     }
@@ -355,7 +353,7 @@ struct BuildingDetailView: View {
             }
         }
         .padding()
-        .background(CyntientOpsDesign.glassMorphism())
+        .background(CyntientOpsDesign.DashboardColors.glassOverlay)
     }
     
     // MARK: - Tab Bar
@@ -380,8 +378,8 @@ struct BuildingDetailView: View {
         }
         .padding(.vertical, 12)
         .background(
-            CyntientOpsDesign.glassMorphism()
-                .overlay(CyntientOpsDesign.glassBorder())
+            CyntientOpsDesign.DashboardColors.glassOverlay
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(CyntientOpsDesign.DashboardColors.borderSubtle, lineWidth: 1))
         )
     }
     
@@ -451,7 +449,7 @@ struct BuildingDetailView: View {
                 
                 Menu {
                     Button(action: {
-                        photoCategory = .general
+                        photoCategory = .duringWork
                         showingPhotoCapture = true
                     }) {
                         Label("Take Photo", systemImage: "camera.fill")
@@ -479,7 +477,7 @@ struct BuildingDetailView: View {
                 } label: {
                     ZStack {
                         Circle()
-                            .fill(CyntientOpsDesign.DashboardGradients.accentGradient)
+                            .fill(CyntientOpsDesign.DashboardGradients.successGradient)
                             .frame(width: 56, height: 56)
                         
                         Image(systemName: "plus")
@@ -487,7 +485,7 @@ struct BuildingDetailView: View {
                             .foregroundColor(.white)
                     }
                     .shadow(
-                        color: CyntientOpsDesign.DashboardColors.accent.opacity(0.3),
+                        color: CyntientOpsDesign.DashboardColors.primaryAction.opacity(0.3),
                         radius: 8,
                         x: 0,
                         y: 4
@@ -639,14 +637,14 @@ struct TabButton: View {
             }
             .foregroundColor(
                 isSelected ?
-                CyntientOpsDesign.DashboardColors.accent :
+                CyntientOpsDesign.DashboardColors.primaryAction :
                 CyntientOpsDesign.DashboardColors.secondaryText
             )
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
             .background(
                 isSelected ?
-                CyntientOpsDesign.DashboardColors.accent.opacity(0.15) :
+                CyntientOpsDesign.DashboardColors.primaryAction.opacity(0.15) :
                 Color.clear
             )
             .cornerRadius(12)
@@ -654,7 +652,7 @@ struct TabButton: View {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
                         isSelected ?
-                        CyntientOpsDesign.DashboardColors.accent.opacity(0.3) :
+                        CyntientOpsDesign.DashboardColors.primaryAction.opacity(0.3) :
                         Color.clear,
                         lineWidth: 1
                     )
@@ -747,7 +745,7 @@ struct BuildingQuickStatCard: View {
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 10)
-                .fill(CyntientOpsDesign.glassMorphism())
+                .fill(CyntientOpsDesign.DashboardColors.glassOverlay)
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
                         .stroke(color.opacity(0.2), lineWidth: 1)
@@ -859,7 +857,7 @@ struct BuildingOverviewTab: View {
             if let specialNote = viewModel.todaysSpecialNote {
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "info.circle.fill")
-                        .foregroundColor(CyntientOpsDesign.DashboardColors.accent)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
                         .font(.caption)
                     Text(specialNote)
                         .font(.caption)
@@ -868,10 +866,10 @@ struct BuildingOverviewTab: View {
                 .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(CyntientOpsDesign.DashboardColors.accent.opacity(0.1))
+                        .fill(CyntientOpsDesign.DashboardColors.primaryAction.opacity(0.1))
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(CyntientOpsDesign.DashboardColors.accent.opacity(0.2), lineWidth: 1)
+                                .stroke(CyntientOpsDesign.DashboardColors.primaryAction.opacity(0.2), lineWidth: 1)
                         )
                 )
             }
@@ -1051,7 +1049,7 @@ struct BuildingTasksTab: View {
                 
                 Text("\(viewModel.completedRoutines)/\(viewModel.totalRoutines)")
                     .font(.caption)
-                    .foregroundColor(CyntientOpsDesign.DashboardColors.accent)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
             }
             
             if viewModel.dailyRoutines.isEmpty {
@@ -1173,7 +1171,7 @@ struct BuildingWorkersTab: View {
                 title: "Avg Hours",
                 value: "\(viewModel.averageWorkerHours)h",
                 icon: "clock",
-                color: CyntientOpsDesign.DashboardColors.accent
+                color: CyntientOpsDesign.DashboardColors.primaryAction
             )
         }
     }
@@ -1296,7 +1294,7 @@ struct BuildingMaintenanceTab: View {
                     title: "Total Cost",
                     value: viewModel.totalMaintenanceCost.formatted(.currency(code: "USD")),
                     icon: "dollarsign.circle.fill",
-                    color: CyntientOpsDesign.DashboardColors.accent
+                    color: CyntientOpsDesign.DashboardColors.primaryAction
                 )
             }
         }
@@ -1340,14 +1338,14 @@ struct BuildingMaintenanceTab: View {
                         Image(systemName: "chevron.down")
                             .font(.caption2)
                     }
-                    .foregroundColor(CyntientOpsDesign.DashboardColors.accent)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
                 }
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(CyntientOpsDesign.DashboardColors.accent.opacity(0.1))
+                    .fill(CyntientOpsDesign.DashboardColors.primaryAction.opacity(0.1))
             )
         }
     }
@@ -1510,7 +1508,7 @@ struct BuildingInventoryTab: View {
                 
                 Button(action: { showingAddItem = true }) {
                     Image(systemName: "plus.circle.fill")
-                        .foregroundColor(CyntientOpsDesign.DashboardColors.accent)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
                 }
             }
             
@@ -1519,8 +1517,12 @@ struct BuildingInventoryTab: View {
             } else {
                 VStack(spacing: 12) {
                     ForEach(filteredInventoryItems) { item in
-                        BuildingInventoryItemRow(item: item) { updatedItem in
-                            viewModel.updateInventoryItem(updatedItem)
+                        BuildingInventoryItemRow(
+                            item: item,
+                            buildingId: building.id
+                        ) { newQuantity in
+                            // Handle quantity update - the component itself will handle the database update
+                            // The viewModel.updateInventoryItem is a placeholder for future implementation
                         }
                     }
                 }
@@ -1584,16 +1586,16 @@ struct BuildingSpacesTab: View {
             .padding(12)
             .background(
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(CyntientOpsDesign.glassMorphism())
+                    .fill(CyntientOpsDesign.DashboardColors.glassOverlay)
             )
             
             Button(action: onPhotoCapture) {
                 Image(systemName: "camera.fill")
-                    .foregroundColor(CyntientOpsDesign.DashboardColors.accent)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
                     .frame(width: 44, height: 44)
                     .background(
                         Circle()
-                            .fill(CyntientOpsDesign.glassMorphism())
+                            .fill(CyntientOpsDesign.DashboardColors.glassOverlay)
                     )
             }
         }
@@ -1619,7 +1621,7 @@ struct BuildingSpacesTab: View {
                             .padding(.vertical, 6)
                             .background(
                                 Capsule()
-                                    .fill(CyntientOpsDesign.glassMorphism())
+                                    .fill(CyntientOpsDesign.DashboardColors.glassOverlay)
                             )
                     }
                 }
@@ -1726,22 +1728,16 @@ struct BuildingEmergencyTab: View {
         HStack(spacing: 16) {
             EmergencyActionButton(
                 title: "Call 911",
-                icon: "phone.fill",
-                color: CyntientOpsDesign.DashboardColors.critical,
                 action: { callNumber("911") }
             )
             
             EmergencyActionButton(
                 title: "Report Issue",
-                icon: "exclamationmark.triangle.fill",
-                color: CyntientOpsDesign.DashboardColors.warning,
                 action: { viewModel.reportEmergencyIssue() }
             )
             
             EmergencyActionButton(
                 title: "Alert Team",
-                icon: "bell.badge.fill",
-                color: CyntientOpsDesign.DashboardColors.info,
                 action: { viewModel.alertEmergencyTeam() }
             )
         }
@@ -2219,7 +2215,7 @@ struct BuildingFilterPill: View {
             .padding(.vertical, 8)
             .background(
                 Capsule()
-                    .fill(isSelected ? CyntientOpsDesign.DashboardColors.accent : CyntientOpsDesign.glassMorphism())
+                    .fill(isSelected ? CyntientOpsDesign.DashboardColors.primaryAction : CyntientOpsDesign.DashboardColors.glassOverlay)
             )
         }
     }
@@ -2322,7 +2318,7 @@ struct MaintenanceTaskRow: View {
     private var urgencyColor: Color {
         switch task.urgency {
         case .low: return .green
-        case .medium: return .yellow
+        case .medium, .normal: return .yellow
         case .high: return .orange
         case .urgent: return .purple
         case .critical, .emergency: return .red
@@ -2507,7 +2503,7 @@ struct MaintenanceHistoryRow: View {
                 Text(cost.formatted(.currency(code: "USD")))
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(CyntientOpsDesign.DashboardColors.accent)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
             }
         }
     }
@@ -2558,7 +2554,7 @@ struct BuildingInventoryCategoryButton: View {
                 .padding(.vertical, 8)
                 .background(
                     Capsule()
-                        .fill(isSelected ? CyntientOpsDesign.DashboardColors.accent : CyntientOpsDesign.glassMorphism())
+                        .fill(isSelected ? CyntientOpsDesign.DashboardColors.primaryAction : CyntientOpsDesign.DashboardColors.glassOverlay)
                 )
         }
     }
@@ -2580,8 +2576,8 @@ struct AccessCodeChip: View {
                 
                 Text(isRevealed ? code.code : "••••")
                     .font(.caption)
-                    .fontFamily(.monospaced)
-                    .foregroundColor(CyntientOpsDesign.DashboardColors.accent)
+                    .fontDesign(.monospaced)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
             }
             
             Button(action: { isRevealed.toggle() }) {
@@ -2594,7 +2590,7 @@ struct AccessCodeChip: View {
         .padding(.vertical, 8)
         .background(
             Capsule()
-                .fill(CyntientOpsDesign.glassMorphism())
+                .fill(CyntientOpsDesign.DashboardColors.glassOverlay)
         )
     }
 }
@@ -2618,8 +2614,8 @@ struct SpaceCard: View {
                         .fill(
                             LinearGradient(
                                 gradient: Gradient(colors: [
-                                    CyntientOpsDesign.DashboardColors.accent.opacity(0.3),
-                                    CyntientOpsDesign.DashboardColors.accent.opacity(0.1)
+                                    CyntientOpsDesign.DashboardColors.primaryAction.opacity(0.3),
+                                    CyntientOpsDesign.DashboardColors.primaryAction.opacity(0.1)
                                 ]),
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -2629,7 +2625,7 @@ struct SpaceCard: View {
                         .overlay(
                             Image(systemName: space.category.icon)
                                 .font(.title)
-                                .foregroundColor(CyntientOpsDesign.DashboardColors.accent.opacity(0.5))
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction.opacity(0.5))
                         )
                 }
                 
@@ -2659,7 +2655,7 @@ struct SpaceCard: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(CyntientOpsDesign.glassMorphism())
+                    .fill(CyntientOpsDesign.DashboardColors.glassOverlay)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(CyntientOpsDesign.DashboardColors.borderSubtle, lineWidth: 1)
@@ -2780,14 +2776,13 @@ struct MaintenanceTaskDetailSheet: View {
     var body: some View {
         NavigationView {
             MaintenanceTaskView(
-                task: task,
-                buildingName: buildingName
+                task: task
             )
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") { dismiss() }
-                        .foregroundColor(CyntientOpsDesign.DashboardColors.accent)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
                 }
             }
         }

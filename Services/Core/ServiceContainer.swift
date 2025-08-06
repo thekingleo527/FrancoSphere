@@ -48,10 +48,10 @@ public final class ServiceContainer: ObservableObject {
     // MARK: - Layer 4: Context Engines
     public let workerContext: WorkerContextEngine
     public let adminContext: AdminContextEngine
-    public let clientContext: ClientContextEngine
+    public lazy var clientContext: ClientContextEngine = ClientContextEngine(container: self)
     
-    // MARK: - Layer 5: Command Chains
-    public let commands: CommandChainManager
+    // MARK: - Layer 5: Command Chains  
+    public lazy var commands: CommandChainManager = CommandChainManager(container: self)
     
     // MARK: - Layer 6: Offline Support
     public let offlineQueue: OfflineQueueManager
@@ -87,7 +87,7 @@ public final class ServiceContainer: ObservableObject {
         // Layer 1: Core Services (no circular dependencies)
         print("🔧 Layer 1: Initializing core services...")
         
-        self.auth = try AuthenticationService(database: database)
+        self.auth = AuthenticationService(database: database)
         self.workers = WorkerService.shared
         self.buildings = BuildingService.shared
         self.tasks = TaskService.shared
@@ -135,15 +135,7 @@ public final class ServiceContainer: ObservableObject {
         
         print("✅ Layer 4: Context engines initialized")
         
-        // Layer 5: Command Chains (needs full container)
-        print("⚡ Layer 5: Initializing command chains...")
-        
-        self.commands = CommandChainManager(container: self)
-        
-        // Layer 4 continued: Initialize ClientContextEngine after all properties set
-        self.clientContext = ClientContextEngine(container: self)
-        
-        print("✅ Layer 5: Command chains initialized")
+        print("⚡ Layer 5: Command chains and client context - lazy initialization on first access")
         
         // Layer 6: Offline Support
         print("💾 Layer 6: Initializing offline support...")

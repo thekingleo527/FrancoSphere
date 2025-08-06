@@ -278,6 +278,7 @@
 		2326C25C2E3BFF9B0080F005 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 2326C25B2E3BFF9B0080F005 /* Sentry */; };
 		2326C25E2E3BFF9B0080F005 /* SentrySwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 2326C25D2E3BFF9B0080F005 /* SentrySwiftUI */; };
 		239AD0982E2B955A0055CDF8 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 239AD0972E2B955A0055CDF8 /* GRDB */; };
+		23E8FB0F2E43436300F8771C /* AdminContextEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23E8FB0E2E43436300F8771C /* AdminContextEngine.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -567,9 +568,10 @@
 		231934462E42ECF300640977 /* CyntientOpsTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "CyntientOpsTests-Bridging-Header.h"; sourceTree = "<group>"; };
 		231934472E42ED2600640977 /* CyntientOps-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "CyntientOps-Info.plist"; sourceTree = "<group>"; };
 		231934492E42ED3900640977 /* CyntientOpsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CyntientOpsApp.swift; sourceTree = "<group>"; };
-		23273AEC2E2B86AC004A52C6 /* CyntientOps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = CyntientOps.app; path = "/Volumes/FastSSD/Xcode/CyntientOps/build/Debug-iphoneos/CyntientOps.app"; sourceTree = "<absolute>"; };
-		23273AED2E2B86AC004A52C6 /* CyntientOpsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = CyntientOpsTests.xctest; path = "/Volumes/FastSSD/Xcode/CyntientOps/build/Debug-iphoneos/CyntientOps.app/PlugIns/CyntientOpsTests.xctest"; sourceTree = "<absolute>"; };
-		23273AEE2E2B86AC004A52C6 /* CyntientOpsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = CyntientOpsUITests.xctest; path = "/Volumes/FastSSD/Xcode/CyntientOps/build/Debug-iphoneos/CyntientOpsUITests-Runner.app/PlugIns/CyntientOpsUITests.xctest"; sourceTree = "<absolute>"; };
+		23E8FB0B2E42F96400F8771C /* CyntientOps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CyntientOps.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		23E8FB0C2E42F96400F8771C /* CyntientOpsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CyntientOpsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		23E8FB0D2E42F96400F8771C /* CyntientOpsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CyntientOpsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		23E8FB0E2E43436300F8771C /* AdminContextEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminContextEngine.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -886,6 +888,7 @@
 		231932A82E42E9CD00640977 /* Intelligence */ = {
 			isa = PBXGroup;
 			children = (
+				23E8FB0E2E43436300F8771C /* AdminContextEngine.swift */,
 				2319329A2E42E9CD00640977 /* AnalyticsService.swift */,
 				2319329B2E42E9CD00640977 /* AutomatedWorkflows.swift */,
 				2319329C2E42E9CD00640977 /* BuildingMetricsService.swift */,
@@ -1416,6 +1419,9 @@
 				231932662E42E94900640977 /* Utilities */,
 				231932582E42E92900640977 /* ViewModels */,
 				2319321C2E42E91200640977 /* Views */,
+				23E8FB0B2E42F96400F8771C /* CyntientOps.app */,
+				23E8FB0C2E42F96400F8771C /* CyntientOpsTests.xctest */,
+				23E8FB0D2E42F96400F8771C /* CyntientOpsUITests.xctest */,
 			);
 			sourceTree = "<group>";
 		};
@@ -1441,7 +1447,7 @@
 				2326C25D2E3BFF9B0080F005 /* SentrySwiftUI */,
 			);
 			productName = CyntientOps;
-			productReference = 23273AEC2E2B86AC004A52C6 /* CyntientOps.app */;
+			productReference = 23E8FB0B2E42F96400F8771C /* CyntientOps.app */;
 			productType = "com.apple.product-type.application";
 		};
 		232736EF2E2B8565004A52C6 /* CyntientOpsTests */ = {
@@ -1461,7 +1467,7 @@
 			packageProductDependencies = (
 			);
 			productName = CyntientOpsTests;
-			productReference = 23273AED2E2B86AC004A52C6 /* CyntientOpsTests.xctest */;
+			productReference = 23E8FB0C2E42F96400F8771C /* CyntientOpsTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		232736F92E2B8565004A52C6 /* CyntientOpsUITests */ = {
@@ -1481,7 +1487,7 @@
 			packageProductDependencies = (
 			);
 			productName = CyntientOpsUITests;
-			productReference = 23273AEE2E2B86AC004A52C6 /* CyntientOpsUITests.xctest */;
+			productReference = 23E8FB0D2E42F96400F8771C /* CyntientOpsUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -1765,6 +1771,7 @@
 				231932CE2E42E9CD00640977 /* ProductionReadinessChecker.swift in Sources */,
 				231932CF2E42E9CD00640977 /* BuildingService.swift in Sources */,
 				231932D02E42E9CD00640977 /* QuickBooksOAuthManager.swift in Sources */,
+				23E8FB0F2E43436300F8771C /* AdminContextEngine.swift in Sources */,
 				231933382E42EA0000640977 /* NovaAPIService.swift in Sources */,
 				231933392E42EA0000640977 /* NovaImageLoader.swift in Sources */,
 				2319333A2E42EA0000640977 /* NovaTypes.swift in Sources */,
