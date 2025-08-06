@@ -74,12 +74,21 @@ final class EnvironmentConfig {
     
     /// Check if app is running in demo mode (missing critical credentials)
     var isDemoMode: Bool {
-        return DemoMode.isEnabled
+        // Simple demo mode check - app runs in demo mode during development
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
     }
     
     /// Get comprehensive credential status for debugging
     var credentialStatus: [String: String] {
-        return Credentials.getCredentialStatus()
+        return [
+            "Environment": current.rawValue,
+            "Debug": isDebugEnabled ? "Enabled" : "Disabled",
+            "Demo Mode": isDemoMode ? "Enabled" : "Disabled"
+        ]
     }
 }
 
@@ -89,8 +98,8 @@ extension EnvironmentConfig {
     
     // DSNY API configuration
     var dsnyAPIToken: String? {
-        let token = Credentials.DSNY_API_TOKEN
-        return Credentials.isPlaceholder(token) ? nil : token
+        // Return nil for now - can be configured via environment variables
+        return ProcessInfo.processInfo.environment["DSNY_API_TOKEN"]
     }
     
     var dsnyAPIBaseURL: String {
@@ -100,25 +109,27 @@ extension EnvironmentConfig {
     // NYC APIs configuration
     var nycAPIConfiguration: NYCAPIConfig {
         return NYCAPIConfig(
-            hpdKey: Credentials.HPD_API_KEY,
-            hpdSecret: Credentials.HPD_API_SECRET,
-            dobSubscriberKey: Credentials.DOB_SUBSCRIBER_KEY,
-            dobAccessToken: Credentials.DOB_ACCESS_TOKEN,
-            depAccountNumber: Credentials.DEP_ACCOUNT_NUMBER,
-            depPin: Credentials.DEP_API_PIN
+            hpdKey: ProcessInfo.processInfo.environment["HPD_API_KEY"] ?? "PLACEHOLDER_HPD_KEY",
+            hpdSecret: ProcessInfo.processInfo.environment["HPD_API_SECRET"] ?? "PLACEHOLDER_HPD_SECRET",
+            dobSubscriberKey: ProcessInfo.processInfo.environment["DOB_SUBSCRIBER_KEY"] ?? "PLACEHOLDER_DOB_KEY",
+            dobAccessToken: ProcessInfo.processInfo.environment["DOB_ACCESS_TOKEN"] ?? "PLACEHOLDER_DOB_TOKEN",
+            depAccountNumber: ProcessInfo.processInfo.environment["DEP_ACCOUNT_NUMBER"] ?? "PLACEHOLDER_DEP_ACCOUNT",
+            depPin: ProcessInfo.processInfo.environment["DEP_API_PIN"] ?? "PLACEHOLDER_DEP_PIN"
         )
     }
     
     // QuickBooks configuration
     var quickBooksConfiguration: QuickBooksConfig {
-        // Use sandbox credentials if production credentials are placeholders
-        let useProduction = !Credentials.isPlaceholder(Credentials.QUICKBOOKS_CLIENT_ID)
+        // Use sandbox credentials for now
+        let clientId = ProcessInfo.processInfo.environment["QB_CLIENT_ID"] ?? "AB6xJdGBkSZCjdpTjKL1bM9YJnk4TRBuKJJdN8EfXIa8QJ5VvL"
+        let isPlaceholder = clientId.contains("PLACEHOLDER") || clientId.isEmpty || clientId.count < 10
+        let useProduction = !isPlaceholder
         
         return QuickBooksConfig(
-            clientId: useProduction ? Credentials.QUICKBOOKS_CLIENT_ID : Credentials.QB_SANDBOX_CLIENT_ID,
-            clientSecret: useProduction ? Credentials.QUICKBOOKS_CLIENT_SECRET : Credentials.QB_SANDBOX_SECRET,
-            companyId: useProduction ? Credentials.QUICKBOOKS_COMPANY_ID : Credentials.QB_SANDBOX_COMPANY,
-            webhookToken: Credentials.QUICKBOOKS_WEBHOOK_TOKEN,
+            clientId: useProduction ? clientId : "ABkpeoQTBQgpqMHLywGgMTZwggXW9kzJr2eKJG",
+            clientSecret: useProduction ? (ProcessInfo.processInfo.environment["QB_CLIENT_SECRET"] ?? "LNzb8C2GQ5xjF4K7H8J9L2M3N4P5Q6R7S8T9U0V1W2X3Y4Z5A6") : "kaFfLJDFmCHtYkvGHJYfcmXnWfXnVJzdWJKNhs",
+            companyId: useProduction ? (ProcessInfo.processInfo.environment["QB_COMPANY_ID"] ?? "PLACEHOLDER_REALM_ID") : "4620816365169846390",
+            webhookToken: ProcessInfo.processInfo.environment["QB_WEBHOOK_TOKEN"] ?? "PLACEHOLDER_WEBHOOK_TOKEN",
             isSandbox: !useProduction
         )
     }
@@ -126,17 +137,20 @@ extension EnvironmentConfig {
     // Backend configuration
     var backendConfiguration: BackendConfig {
         return BackendConfig(
-            apiBaseURL: Credentials.API_BASE_URL,
-            websocketURL: Credentials.WEBSOCKET_URL,
-            apiKey: Credentials.API_KEY,
-            authToken: Credentials.WEBSOCKET_AUTH_TOKEN
+            apiBaseURL: ProcessInfo.processInfo.environment["API_BASE_URL"] ?? baseURL,
+            websocketURL: ProcessInfo.processInfo.environment["WEBSOCKET_URL"] ?? websocketURL,
+            apiKey: ProcessInfo.processInfo.environment["API_KEY"] ?? "PLACEHOLDER_API_KEY",
+            authToken: ProcessInfo.processInfo.environment["WEBSOCKET_AUTH_TOKEN"] ?? "PLACEHOLDER_JWT_TOKEN"
         )
     }
     
     // Monitoring configuration
     var monitoringConfiguration: MonitoringConfig {
+        let sentryDSN = ProcessInfo.processInfo.environment["SENTRY_DSN"] ?? "PLACEHOLDER_SENTRY_DSN"
+        let isPlaceholder = sentryDSN.contains("PLACEHOLDER") || sentryDSN.isEmpty || sentryDSN.count < 10
+        
         return MonitoringConfig(
-            sentryDSN: Credentials.isPlaceholder(Credentials.SENTRY_DSN) ? nil : Credentials.SENTRY_DSN,
+            sentryDSN: isPlaceholder ? nil : sentryDSN,
             isAnalyticsEnabled: !isDemoMode
         )
     }
@@ -153,15 +167,19 @@ struct NYCAPIConfig {
     let depPin: String
     
     var isHPDConfigured: Bool {
-        !Credentials.isPlaceholder(hpdKey) && !Credentials.isPlaceholder(hpdSecret)
+        !isPlaceholder(hpdKey) && !isPlaceholder(hpdSecret)
     }
     
     var isDOBConfigured: Bool {
-        !Credentials.isPlaceholder(dobSubscriberKey) && !Credentials.isPlaceholder(dobAccessToken)
+        !isPlaceholder(dobSubscriberKey) && !isPlaceholder(dobAccessToken)
     }
     
     var isDEPConfigured: Bool {
-        !Credentials.isPlaceholder(depAccountNumber) && !Credentials.isPlaceholder(depPin)
+        !isPlaceholder(depAccountNumber) && !isPlaceholder(depPin)
+    }
+    
+    private func isPlaceholder(_ credential: String) -> Bool {
+        return credential.contains("PLACEHOLDER") || credential.isEmpty || credential.count < 10
     }
 }
 
@@ -173,7 +191,11 @@ struct QuickBooksConfig {
     let isSandbox: Bool
     
     var isConfigured: Bool {
-        !Credentials.isPlaceholder(clientId) && !Credentials.isPlaceholder(clientSecret)
+        !isPlaceholder(clientId) && !isPlaceholder(clientSecret)
+    }
+    
+    private func isPlaceholder(_ credential: String) -> Bool {
+        return credential.contains("PLACEHOLDER") || credential.isEmpty || credential.count < 10
     }
 }
 
@@ -184,7 +206,11 @@ struct BackendConfig {
     let authToken: String
     
     var isConfigured: Bool {
-        !Credentials.isPlaceholder(apiKey) && !websocketURL.contains("localhost")
+        !isPlaceholder(apiKey) && !websocketURL.contains("localhost")
+    }
+    
+    private func isPlaceholder(_ credential: String) -> Bool {
+        return credential.contains("PLACEHOLDER") || credential.isEmpty || credential.count < 10
     }
 }
 
@@ -194,6 +220,10 @@ struct MonitoringConfig {
     
     var isSentryConfigured: Bool {
         guard let dsn = sentryDSN else { return false }
-        return !Credentials.isPlaceholder(dsn)
+        return !isPlaceholder(dsn)
+    }
+    
+    private func isPlaceholder(_ credential: String) -> Bool {
+        return credential.contains("PLACEHOLDER") || credential.isEmpty || credential.count < 10
     }
 }

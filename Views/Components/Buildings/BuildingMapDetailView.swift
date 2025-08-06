@@ -129,7 +129,7 @@ struct BuildingMapDetailView: View {
                         )
                 }
             }
-            .francoGlassCard()
+            .francoGlassCard(intensity: GlassIntensity.regular)
             
             // Building info with glass text
             VStack(spacing: 8) {
@@ -190,15 +190,15 @@ struct BuildingMapDetailView: View {
                 Button(action: { showAllTasks = true }) {
                     HStack {
                         Text("View All \(tasks.count) Tasks")
+                            .glassText(size: .callout)
                         Image(systemName: "chevron.right")
                     }
-                    .glassText(size: .callout)
                 }
                 .glassButton(style: .ghost, size: .medium)
             }
         }
         .padding(20)
-        .francoGlassCard(intensity: .regular)
+        .francoGlassCard(intensity: GlassIntensity.regular)
     }
     
     // MARK: - Actions Section
@@ -297,7 +297,7 @@ struct BuildingMapDetailView: View {
         return tasks.filter { task in
             guard let urgency = task.urgency else { return false }
             switch urgency {
-            case .high, .critical:
+            case .high, .critical, .urgent, .emergency:
                 return true
             case .medium, .low, .normal:
                 return false
@@ -392,8 +392,12 @@ struct BuildingTaskRow: View {
             return "Normal"
         case .high:
             return "High"
+        case .urgent:
+            return "Urgent"
         case .critical:
             return "Critical"
+        case .emergency:
+            return "Emergency"
         }
     }
     
@@ -409,8 +413,12 @@ struct BuildingTaskRow: View {
             return CyntientOpsDesign.DashboardColors.secondaryText
         case .high:
             return CyntientOpsDesign.DashboardColors.warning
+        case .urgent:
+            return CyntientOpsDesign.DashboardColors.warning
         case .critical:
-            return CyntientOpsDesign.DashboardColors.error
+            return CyntientOpsDesign.DashboardColors.critical
+        case .emergency:
+            return CyntientOpsDesign.DashboardColors.critical
         }
     }
 }

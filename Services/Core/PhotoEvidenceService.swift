@@ -145,7 +145,7 @@ public class PhotoEvidenceService: ObservableObject {
         uploadProgress = 0.8
         
         // Step 8: Queue for background upload
-        await queueForUpload(photoId: photoId)
+        await queueForUpload(photoId)
         
         uploadProgress = 0.9
         

@@ -59,9 +59,9 @@ enum Credentials {
     /// CyntientOps Backend WebSocket Server
     /// Status: CRITICAL - Required for real-time sync
     /// Current: Configured for localhost development
-    static let WEBSOCKET_URL = ProcessInfo.processInfo.environment["WEBSOCKET_URL"] ?? EnvironmentConfig.shared.websocketURL
+    static let WEBSOCKET_URL = ProcessInfo.processInfo.environment["WEBSOCKET_URL"] ?? "ws://localhost:8080/sync"
     static let WEBSOCKET_AUTH_TOKEN = ProcessInfo.processInfo.environment["WEBSOCKET_AUTH_TOKEN"] ?? "PLACEHOLDER_JWT_TOKEN"
-    static let API_BASE_URL = ProcessInfo.processInfo.environment["API_BASE_URL"] ?? EnvironmentConfig.shared.baseURL
+    static let API_BASE_URL = ProcessInfo.processInfo.environment["API_BASE_URL"] ?? "http://localhost:8080"
     static let API_KEY = ProcessInfo.processInfo.environment["API_KEY"] ?? "PLACEHOLDER_API_KEY"
     
     // MARK: - Analytics & Monitoring

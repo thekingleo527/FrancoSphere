@@ -26,6 +26,10 @@ public class DSNYAPIService: ObservableObject {
     @Published private var scheduleCache: [String: DSNY.BuildingSchedule] = [:]
     private let cacheExpiration: TimeInterval = 86400 // 24 hours
     
+    // Task generation
+    @Published public var autoGenerateTasks: Bool = true
+    @Published public var lastTaskGeneration: Date?
+    
     // URLSession
     private let session: URLSession
     

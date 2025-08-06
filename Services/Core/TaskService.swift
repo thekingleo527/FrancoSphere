@@ -16,7 +16,7 @@ import CoreLocation // Added for CLLocationCoordinate2D
 public actor TaskService {
     static let shared = TaskService()
     
-    private let grdbManager = GRDBManager.shared
+    let grdbManager = GRDBManager.shared
     
     private init() {}
     
@@ -158,6 +158,18 @@ public actor TaskService {
     
     func deleteTask(_ taskId: String) async throws {
         try await grdbManager.execute("DELETE FROM routine_tasks WHERE id = ?", [taskId])
+    }
+    
+    func updateTaskStatus(_ taskId: String, status: CoreTypes.TaskStatus) async throws {
+        try await grdbManager.execute("""
+            UPDATE routine_tasks 
+            SET isCompleted = ?, completedDate = ? 
+            WHERE id = ?
+        """, [
+            status == .completed ? 1 : 0,
+            status == .completed ? ISO8601DateFormatter().string(from: Date()) : nil,
+            taskId
+        ])
     }
     
     // MARK: - Building & Worker Task Queries

@@ -166,9 +166,12 @@ extension TaskService {
         let timeSpentMinutes = clockInTime.map { Int(Date().timeIntervalSince($0) / 60) }
         
         // Count tasks requiring photos
-        let requiredPhotoCount = allTasks.filter { task in
-            task.requiresPhoto ?? false || task.category == .sanitation || task.category == .cleaning
-        }.count
+        let photosRequired = allTasks.filter { task in
+            return (task.requiresPhoto ?? false) || 
+                   task.category == .sanitation || 
+                   task.category == .cleaning
+        }
+        let requiredPhotoCount = photosRequired.count
         
         return DepartureChecklist(
             allTasks: allTasks,
@@ -245,7 +248,7 @@ extension TaskService {
         
         // Parse enums
         let categoryString = row["category"] as? String
-        let category = categoryString.flatMap { CoreTypes.TaskCategory(rawValue: $0) } ?? .general
+        let category: CoreTypes.TaskCategory? = categoryString != nil ? CoreTypes.TaskCategory(rawValue: categoryString!) : .maintenance
         
         let urgencyString = row["urgency"] as? String
         let urgency = urgencyString.flatMap { CoreTypes.TaskUrgency(rawValue: $0) } ?? .medium
@@ -259,12 +262,16 @@ extension TaskService {
         let requiresPhoto = (row["requires_photo"] as? Int64 ?? 0) > 0 || 
                            (row["requires_photo"] as? Int ?? 0) > 0
         
+        let status: CoreTypes.TaskStatus = isCompleted ? .completed : .pending
+        let scheduledDate = (row["scheduledDate"] ?? row["scheduled_date"]) as? Date
+        
         return CoreTypes.ContextualTask(
             id: id,
             title: title,
             description: row["description"] as? String,
-            isCompleted: isCompleted,
-            completedDate: completedDate,
+            status: status,
+            completedAt: completedDate,
+            scheduledDate: scheduledDate,
             dueDate: dueDate,
             category: category,
             urgency: urgency,
@@ -272,8 +279,7 @@ extension TaskService {
             buildingId: buildingId,
             assignedWorkerId: (row["assigned_worker_id"] ?? row["workerId"]) as? String,
             requiresPhoto: requiresPhoto,
-            estimatedDuration: (row["estimatedDuration"] ?? row["estimated_duration"]) as? Int,
-            notes: row["notes"] as? String
+            estimatedDuration: TimeInterval((row["estimatedDuration"] ?? row["estimated_duration"]) as? Int ?? 0)
         )
     }
     

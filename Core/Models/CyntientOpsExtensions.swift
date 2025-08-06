@@ -125,6 +125,7 @@ extension CoreTypes.TaskCategory {
         case .installation: return "indigo"
         case .utilities: return "brown"
         case .renovation: return "pink"
+        case .compliance: return "yellow"
         }
     }
 }

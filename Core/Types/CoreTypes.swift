@@ -330,6 +330,7 @@ public struct CoreTypes {
         case utilities = "utilities"
         case emergency = "emergency"
         case renovation = "renovation"
+        case compliance = "compliance"
         case landscaping = "landscaping"
         case sanitation = "sanitation"
         
@@ -347,6 +348,7 @@ public struct CoreTypes {
             case .renovation: return "building.2"
             case .landscaping: return "leaf"
             case .sanitation: return "sparkles"
+            case .compliance: return "checkmark.shield"
             }
         }
     }
