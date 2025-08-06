@@ -1,6 +1,6 @@
 //
 //  NotificationManager.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ FIXED: ContextualTask.buildingId → .buildingId property access
 //  ✅ FIXED: Optional unwrapping for TaskCategory
@@ -12,7 +12,7 @@ import UserNotifications
 
 // MARK: - Notification Models
 
-/// FrancoSphere notification model
+/// CyntientOps notification model
 struct FSNotification: Identifiable, Codable, Hashable {
     let id: String
     let title: String
@@ -319,12 +319,12 @@ class NotificationManager: ObservableObject {
     
     private func saveNotifications() {
         if let data = try? JSONEncoder().encode(notifications) {
-            UserDefaults.standard.set(data, forKey: "FrancoSphere_Notifications")
+            UserDefaults.standard.set(data, forKey: "CyntientOps_Notifications")
         }
     }
     
     private func loadNotifications() {
-        if let data = UserDefaults.standard.data(forKey: "FrancoSphere_Notifications"),
+        if let data = UserDefaults.standard.data(forKey: "CyntientOps_Notifications"),
            let savedNotifications = try? JSONDecoder().decode([FSNotification].self, from: data) {
             notifications = savedNotifications
             updateUnreadCount()

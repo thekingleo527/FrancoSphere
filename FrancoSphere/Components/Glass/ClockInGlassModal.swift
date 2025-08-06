@@ -1,9 +1,9 @@
 //
 //  ClockInGlassModal.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ UPDATED: Dark Elegance theme applied
-//  ✅ ENHANCED: Integrated with FrancoSphereDesign color system
+//  ✅ ENHANCED: Integrated with CyntientOpsDesign color system
 //  ✅ IMPROVED: Glass effects and animations
 //  ✅ OPTIMIZED: Better visual hierarchy with dark theme
 //
@@ -29,7 +29,7 @@ struct ClockInGlassModal: View {
     var body: some View {
         ZStack {
             // Dark background overlay
-            FrancoSphereDesign.DashboardColors.baseBackground.opacity(0.6)
+            CyntientOpsDesign.DashboardColors.baseBackground.opacity(0.6)
                 .ignoresSafeArea()
                 .onTapGesture {
                     if !isProcessing {
@@ -53,7 +53,7 @@ struct ClockInGlassModal: View {
                 .background(ClockInModalBackground())
                 .clipShape(RoundedRectangle(cornerRadius: 20))
                 .shadow(
-                    color: FrancoSphereDesign.DashboardColors.baseBackground.opacity(0.5),
+                    color: CyntientOpsDesign.DashboardColors.baseBackground.opacity(0.5),
                     radius: 30,
                     x: 0,
                     y: 10
@@ -64,8 +64,8 @@ struct ClockInGlassModal: View {
                 .opacity(modalOpacity)
             }
         }
-        .animation(FrancoSphereDesign.Animations.spring, value: isProcessing)
-        .animation(FrancoSphereDesign.Animations.spring, value: modalOffset)
+        .animation(CyntientOpsDesign.Animations.spring, value: isProcessing)
+        .animation(CyntientOpsDesign.Animations.spring, value: modalOffset)
         .onAppear {
             presentModal()
         }
@@ -77,11 +77,11 @@ struct ClockInGlassModal: View {
                 Text(isClockingIn ? "Clock In" : "Clock Out")
                     .font(.title2)
                     .fontWeight(.bold)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Text(isClockingIn ? "Start your shift at this location" : "End your shift")
                     .font(.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             }
             
             Spacer()
@@ -93,9 +93,9 @@ struct ClockInGlassModal: View {
             }) {
                 Image(systemName: "xmark")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     .frame(width: 32, height: 32)
-                    .background(FrancoSphereDesign.DashboardColors.glassOverlay)
+                    .background(CyntientOpsDesign.DashboardColors.glassOverlay)
                     .clipShape(Circle())
                     .overlay(
                         Circle()
@@ -115,16 +115,16 @@ struct ClockInGlassModal: View {
                 Text(building.name)
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 HStack(spacing: 6) {
                     Image(systemName: "location.fill")
                         .font(.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     
                     Text("Lat: \(building.latitude, specifier: "%.4f"), Lng: \(building.longitude, specifier: "%.4f")")
                         .font(.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                         .lineLimit(1)
                 }
             }
@@ -136,22 +136,22 @@ struct ClockInGlassModal: View {
     @ViewBuilder
     private var buildingImageView: some View {
         RoundedRectangle(cornerRadius: 16)
-            .fill(FrancoSphereDesign.DashboardColors.info.opacity(0.2))
+            .fill(CyntientOpsDesign.DashboardColors.info.opacity(0.2))
             .frame(width: 80, height: 80)
             .overlay(
                 Image(systemName: "building.2.fill")
                     .font(.system(size: 32))
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.info)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.info)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(FrancoSphereDesign.DashboardColors.info.opacity(0.3), lineWidth: 1)
+                    .stroke(CyntientOpsDesign.DashboardColors.info.opacity(0.3), lineWidth: 1)
             )
     }
 
     private var locationStatusSection: some View {
-        let color = isAtLocation ? FrancoSphereDesign.DashboardColors.success :
-                   (isAdmin ? FrancoSphereDesign.DashboardColors.warning : FrancoSphereDesign.DashboardColors.critical)
+        let color = isAtLocation ? CyntientOpsDesign.DashboardColors.success :
+                   (isAdmin ? CyntientOpsDesign.DashboardColors.warning : CyntientOpsDesign.DashboardColors.critical)
         let icon = isAtLocation ? "location.fill" : (isAdmin ? "key.fill" : "location.slash.fill")
         let title = isAtLocation ? "At Building Location" : (isAdmin ? "Admin Remote Access" : "Not At Location")
         let desc = isAtLocation ? "Your GPS location is verified." :
@@ -175,11 +175,11 @@ struct ClockInGlassModal: View {
                 Text(title)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Text(desc)
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             }
             
             Spacer()
@@ -216,8 +216,8 @@ struct ClockInGlassModal: View {
             .padding(.vertical, 16)
             .background(
                 canPerformAction ?
-                (isClockingIn ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.critical) :
-                FrancoSphereDesign.DashboardColors.inactive
+                (isClockingIn ? CyntientOpsDesign.DashboardColors.success : CyntientOpsDesign.DashboardColors.critical) :
+                CyntientOpsDesign.DashboardColors.inactive
             )
             .cornerRadius(12)
             .opacity(canPerformAction ? 1.0 : 0.6)
@@ -229,11 +229,11 @@ struct ClockInGlassModal: View {
         HStack(spacing: 6) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.caption2)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
             
             Text("Admin override will be logged.")
                 .font(.caption2)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
         }
     }
 
@@ -266,14 +266,14 @@ struct ClockInGlassModal: View {
         modalOffset = 50
         modalOpacity = 0
         
-        withAnimation(FrancoSphereDesign.Animations.spring) {
+        withAnimation(CyntientOpsDesign.Animations.spring) {
             modalOffset = 0
             modalOpacity = 1
         }
     }
 
     private func dismissModal() {
-        withAnimation(FrancoSphereDesign.Animations.spring) {
+        withAnimation(CyntientOpsDesign.Animations.spring) {
             modalOffset = 50
             modalOpacity = 0
         }
@@ -291,7 +291,7 @@ private struct ClockInModalBackground: View {
         ZStack {
             // Dark base
             RoundedRectangle(cornerRadius: 20)
-                .fill(FrancoSphereDesign.DashboardColors.cardBackground.opacity(0.95))
+                .fill(CyntientOpsDesign.DashboardColors.cardBackground.opacity(0.95))
             
             // Glass material
             RoundedRectangle(cornerRadius: 20)
@@ -302,8 +302,8 @@ private struct ClockInModalBackground: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            FrancoSphereDesign.DashboardColors.glassOverlay.opacity(0.3),
-                            FrancoSphereDesign.DashboardColors.glassOverlay.opacity(0.1),
+                            CyntientOpsDesign.DashboardColors.glassOverlay.opacity(0.3),
+                            CyntientOpsDesign.DashboardColors.glassOverlay.opacity(0.1),
                             Color.clear
                         ],
                         startPoint: .topLeading,
@@ -368,12 +368,12 @@ struct ClockInGlassModal_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
             // Dark Elegance background
-            FrancoSphereDesign.DashboardColors.baseBackground
+            CyntientOpsDesign.DashboardColors.baseBackground
                 .ignoresSafeArea()
             
             VStack {
                 Text("Background Content")
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             }
         }
         .overlay(

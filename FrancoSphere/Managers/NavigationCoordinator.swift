@@ -1,6 +1,6 @@
 //
 //  NavigationCoordinator.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Stream D: Features & Polish
 //  Mission: Create a centralized navigation system to manage app flow.

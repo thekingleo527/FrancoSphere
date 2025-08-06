@@ -1,6 +1,6 @@
 //
 //  BuildingIntelligenceViewModel.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: All 5 compilation errors resolved
 //  ✅ FIXED: Line 50 - Changed public to internal for method with internal parameter

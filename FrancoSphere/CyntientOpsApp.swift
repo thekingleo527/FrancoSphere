@@ -1,6 +1,6 @@
 //
 //  CyntientOpsApp.swift
-//  CyntientOps (formerly FrancoSphere) v6.0
+//  CyntientOps (formerly CyntientOps) v6.0
 //
 //  ✅ PHASE 0-2 INTEGRATED: ServiceContainer + Nova AI + Existing Features
 //  ✅ PRESERVED: All Sentry, database init, migration, and daily ops functionality

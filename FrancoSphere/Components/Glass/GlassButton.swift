@@ -1,6 +1,6 @@
 //
 //  GlassButton.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Created by Shawn Magloire on 6/8/25.
 //  ✅ FIXED: Corrected Animation to Animation

@@ -1,6 +1,6 @@
 //
 //  BuildingPreviewPopover.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: Asset names match exactly what's in Assets.xcassets
 //  ✅ MAINTAINED: All existing functionality preserved

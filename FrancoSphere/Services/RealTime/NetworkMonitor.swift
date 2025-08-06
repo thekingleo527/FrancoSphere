@@ -1,5 +1,5 @@
 //  NetworkMonitor.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ STREAM B IMPLEMENTATION: Advanced network monitoring
 //  ✅ FEATURES: Connection quality detection, predictive offline, automatic queue management

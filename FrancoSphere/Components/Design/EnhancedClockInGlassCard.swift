@@ -1,6 +1,6 @@
 //
 //  EnhancedClockInGlassCard.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ V6.0: Decoupled from ClockInManager actor.
 //  ✅ Now a "dumb" view that accepts simple state values.

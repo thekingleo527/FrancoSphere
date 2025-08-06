@@ -1,6 +1,6 @@
 
 //  BatchedRequestManager.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ STREAM B IMPLEMENTATION: Efficient API request batching
 //  ✅ FEATURES: Automatic batching, retry logic, priority queuing

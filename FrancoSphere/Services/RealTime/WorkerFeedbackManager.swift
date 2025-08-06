@@ -1,6 +1,6 @@
 ///
 //  WorkerFeedbackManager.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ V6.0: Phase 2.3 - Worker Feedback Loop
 //  ✅ Provides immediate UI confirmation to workers for their actions.

@@ -1,6 +1,6 @@
 ///
 //  ReportService.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: DateRange issue resolved
 //  ✅ PRODUCTION READY: PDF and CSV report generation
@@ -130,8 +130,8 @@ public final class ReportService: ObservableObject {
     
     private func createFullPortfolioReport(data: ClientPortfolioReportData) -> Data {
         let pdfMetaData = [
-            kCGPDFContextCreator: "FrancoSphere",
-            kCGPDFContextAuthor: "FrancoSphere System",
+            kCGPDFContextCreator: "CyntientOps",
+            kCGPDFContextAuthor: "CyntientOps System",
             kCGPDFContextTitle: "Portfolio Report"
         ]
         
@@ -353,8 +353,8 @@ public final class ReportService: ObservableObject {
     private func createBuildingPDF(buildingId: String, metrics: CoreTypes.BuildingMetrics) -> Data {
         // Create PDF data using UIGraphicsPDFRenderer
         let pdfMetaData = [
-            kCGPDFContextCreator: "FrancoSphere",
-            kCGPDFContextAuthor: "FrancoSphere System",
+            kCGPDFContextCreator: "CyntientOps",
+            kCGPDFContextAuthor: "CyntientOps System",
             kCGPDFContextTitle: "Building Report - \(buildingId)"
         ]
         
@@ -412,8 +412,8 @@ public final class ReportService: ObservableObject {
     
     private func createCompliancePDF(issues: [CoreTypes.ComplianceIssue]) -> Data {
         let pdfMetaData = [
-            kCGPDFContextCreator: "FrancoSphere",
-            kCGPDFContextAuthor: "FrancoSphere System",
+            kCGPDFContextCreator: "CyntientOps",
+            kCGPDFContextAuthor: "CyntientOps System",
             kCGPDFContextTitle: "Compliance Report"
         ]
         

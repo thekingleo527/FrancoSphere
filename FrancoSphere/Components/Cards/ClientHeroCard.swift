@@ -1,6 +1,6 @@
 //
 //  ClientHeroCard.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: All type conflicts resolved
 //  ✅ NAMESPACED: Using CoreTypes for shared models
@@ -36,10 +36,10 @@ struct ClientHeroCard: View {
     
     private var statusColor: Color {
         switch overallStatus {
-        case .onTrack: return FrancoSphereDesign.DashboardColors.success
-        case .inProgress: return FrancoSphereDesign.DashboardColors.info
-        case .behindSchedule: return FrancoSphereDesign.DashboardColors.warning
-        case .starting: return FrancoSphereDesign.DashboardColors.inactive
+        case .onTrack: return CyntientOpsDesign.DashboardColors.success
+        case .inProgress: return CyntientOpsDesign.DashboardColors.info
+        case .behindSchedule: return CyntientOpsDesign.DashboardColors.warning
+        case .starting: return CyntientOpsDesign.DashboardColors.inactive
         }
     }
     
@@ -101,12 +101,12 @@ struct ClientHeroCard: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(timeOfDayGreeting)
-                        .francoTypography(FrancoSphereDesign.Typography.headline)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.headline)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     
                     Text("Service Status Overview")
-                        .francoTypography(FrancoSphereDesign.Typography.dashboardTitle)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.dashboardTitle)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
                 
                 Spacer()
@@ -120,7 +120,7 @@ struct ClientHeroCard: View {
                         .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: UUID())
                     
                     Text("LIVE")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
                         .fontWeight(.semibold)
                         .foregroundColor(.green)
                 }
@@ -137,7 +137,7 @@ struct ClientHeroCard: View {
                 if routineMetrics.behindScheduleCount > 0 {
                     ClientStatusIndicator(
                         label: "\(routineMetrics.behindScheduleCount) behind schedule",
-                        color: FrancoSphereDesign.DashboardColors.warning,
+                        color: CyntientOpsDesign.DashboardColors.warning,
                         icon: "exclamationmark.triangle.fill"
                     )
                 }
@@ -151,14 +151,14 @@ struct ClientHeroCard: View {
         VStack(spacing: 12) {
             HStack {
                 Text("Property Status")
-                    .francoTypography(FrancoSphereDesign.Typography.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Spacer()
                 
                 Text("\(routineMetrics.buildingStatuses.count) Properties")
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
             }
             
             ForEach(priorityBuildings, id: \.buildingId) { building in
@@ -188,7 +188,7 @@ struct ClientHeroCard: View {
             ClientMetricDisplay(
                 value: "\(activeWorkers.totalActive)",
                 label: "Active Workers",
-                color: FrancoSphereDesign.DashboardColors.info,
+                color: CyntientOpsDesign.DashboardColors.info,
                 icon: "person.3.fill"
             )
             
@@ -207,33 +207,33 @@ struct ClientHeroCard: View {
         HStack(spacing: 12) {
             Image(systemName: "dollarsign.circle.fill")
                 .font(.title3)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text("Monthly Budget Alert")
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Text("\(Int(monthlyMetrics.budgetUtilization * 100))% utilized • \(monthlyMetrics.daysRemaining) days remaining")
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             }
             
             Spacer()
             
             Text("$\(String(format: "%.0f", monthlyMetrics.dailyBurnRate))/day")
-                .francoTypography(FrancoSphereDesign.Typography.caption)
+                .francoTypography(CyntientOpsDesign.Typography.caption)
                 .fontWeight(.medium)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
         }
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(FrancoSphereDesign.DashboardColors.warning.opacity(0.1))
+                .fill(CyntientOpsDesign.DashboardColors.warning.opacity(0.1))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(FrancoSphereDesign.DashboardColors.warning.opacity(0.3), lineWidth: 1)
+                        .stroke(CyntientOpsDesign.DashboardColors.warning.opacity(0.3), lineWidth: 1)
                 )
         )
     }
@@ -244,32 +244,32 @@ struct ClientHeroCard: View {
         HStack(spacing: 12) {
             Image(systemName: "exclamationmark.shield.fill")
                 .font(.title3)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.critical)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text("Compliance Issues Detected")
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Text("\(complianceStatus.criticalViolations) critical • \(complianceStatus.pendingInspections) pending inspections")
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             }
             
             Spacer()
             
             Image(systemName: "chevron.right")
                 .font(.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
         }
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(FrancoSphereDesign.DashboardColors.critical.opacity(0.1))
+                .fill(CyntientOpsDesign.DashboardColors.critical.opacity(0.1))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(FrancoSphereDesign.DashboardColors.critical.opacity(0.3), lineWidth: 1)
+                        .stroke(CyntientOpsDesign.DashboardColors.critical.opacity(0.3), lineWidth: 1)
                 )
         )
     }
@@ -284,23 +284,23 @@ struct ClientHeroCard: View {
     
     private var completionColor: Color {
         if routineMetrics.overallCompletion > 0.8 {
-            return FrancoSphereDesign.DashboardColors.success
+            return CyntientOpsDesign.DashboardColors.success
         } else if routineMetrics.overallCompletion > 0.6 {
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         } else {
-            return FrancoSphereDesign.DashboardColors.critical
+            return CyntientOpsDesign.DashboardColors.critical
         }
     }
     
     private var complianceColor: Color {
         if complianceStatus.overallScore >= 0.9 {
-            return FrancoSphereDesign.DashboardColors.success
+            return CyntientOpsDesign.DashboardColors.success
         } else if complianceStatus.overallScore >= 0.8 {
-            return FrancoSphereDesign.DashboardColors.info
+            return CyntientOpsDesign.DashboardColors.info
         } else if complianceStatus.overallScore >= 0.7 {
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         } else {
-            return FrancoSphereDesign.DashboardColors.critical
+            return CyntientOpsDesign.DashboardColors.critical
         }
     }
     
@@ -361,13 +361,13 @@ struct ClientPropertyStatusRow: View {
     
     private var statusColor: Color {
         if status.isBehindSchedule {
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         } else if status.completionRate >= 1.0 {
-            return FrancoSphereDesign.DashboardColors.success
+            return CyntientOpsDesign.DashboardColors.success
         } else if status.activeWorkerCount > 0 {
-            return FrancoSphereDesign.DashboardColors.info
+            return CyntientOpsDesign.DashboardColors.info
         } else {
-            return FrancoSphereDesign.DashboardColors.inactive
+            return CyntientOpsDesign.DashboardColors.inactive
         }
     }
     
@@ -378,9 +378,9 @@ struct ClientPropertyStatusRow: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(status.buildingName)
-                            .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                            .francoTypography(CyntientOpsDesign.Typography.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         
                         HStack(spacing: 8) {
                             // Time block indicator
@@ -389,15 +389,15 @@ struct ClientPropertyStatusRow: View {
                                     .fill(timeBlockColor)
                                     .frame(width: 6, height: 6)
                                 Text(status.timeBlock.rawValue.capitalized)
-                                    .francoTypography(FrancoSphereDesign.Typography.caption)
-                                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                                    .francoTypography(CyntientOpsDesign.Typography.caption)
+                                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                             }
                             
                             Text("•")
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                             
                             Text(statusText)
-                                .francoTypography(FrancoSphereDesign.Typography.caption)
+                                .francoTypography(CyntientOpsDesign.Typography.caption)
                                 .fontWeight(.medium)
                                 .foregroundColor(statusColor)
                         }
@@ -411,22 +411,22 @@ struct ClientPropertyStatusRow: View {
                             Image(systemName: "person.fill")
                                 .font(.caption)
                             Text("\(status.activeWorkerCount)")
-                                .francoTypography(FrancoSphereDesign.Typography.caption)
+                                .francoTypography(CyntientOpsDesign.Typography.caption)
                                 .fontWeight(.medium)
                         }
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     }
                     
                     Image(systemName: "chevron.right")
                         .font(.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 }
                 
                 // Progress bar
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
                         RoundedRectangle(cornerRadius: 3)
-                            .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                            .fill(CyntientOpsDesign.DashboardColors.glassOverlay)
                             .frame(height: 6)
                         
                         RoundedRectangle(cornerRadius: 3)
@@ -440,22 +440,22 @@ struct ClientPropertyStatusRow: View {
                 // Completion percentage and ETA
                 HStack {
                     Text("\(Int(status.completionRate * 100))% Complete")
-                        .francoTypography(FrancoSphereDesign.Typography.caption2)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption2)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     
                     Spacer()
                     
                     if let eta = status.estimatedCompletion {
                         Text("ETA: \(eta, style: .time)")
-                            .francoTypography(FrancoSphereDesign.Typography.caption2)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                            .francoTypography(CyntientOpsDesign.Typography.caption2)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     }
                 }
             }
             .padding(12)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                    .fill(CyntientOpsDesign.DashboardColors.glassOverlay)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -482,7 +482,7 @@ struct ClientStatusIndicator: View {
                     .font(.caption)
             }
             Text(label)
-                .francoTypography(FrancoSphereDesign.Typography.caption)
+                .francoTypography(CyntientOpsDesign.Typography.caption)
                 .fontWeight(.medium)
         }
         .foregroundColor(color)
@@ -513,12 +513,12 @@ struct ClientMetricDisplay: View {
             
             VStack(alignment: .leading, spacing: 0) {
                 Text(value)
-                    .francoTypography(FrancoSphereDesign.Typography.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Text(label)
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -580,7 +580,7 @@ struct ClientHeroCard_Previews: PreviewProvider {
             }
         )
         .padding()
-        .background(FrancoSphereDesign.DashboardColors.baseBackground)
+        .background(CyntientOpsDesign.DashboardColors.baseBackground)
         .preferredColorScheme(.dark)
     }
 }

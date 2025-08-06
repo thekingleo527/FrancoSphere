@@ -1,6 +1,6 @@
 //
 //  MyAssignedBuildingsSection.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ GLASS MORPHISM: Aligned with v6.0 design language
 //  ✅ FIXED: Removed imageAssetName references (not in NamedCoordinate)
@@ -99,7 +99,7 @@ struct MyAssignedBuildingsSection: View {
         .frame(maxWidth: .infinity, minHeight: 200)
         .francoCardPadding()
         .francoGlassBackground()
-        .francoShadow(FrancoSphereDesign.Shadow.glassCard)
+        .francoShadow(CyntientOpsDesign.Shadow.glassCard)
     }
     
     // MARK: - Metrics Loading
@@ -184,7 +184,7 @@ struct GlassBuildingMetricCard: View {
         .padding(12)
         .frame(height: 160)
         .francoPropertyCardBackground()
-        .francoShadow(FrancoSphereDesign.Shadow.propertyCard)
+        .francoShadow(CyntientOpsDesign.Shadow.propertyCard)
         .overlay(
             // Glow effect for primary building
             RoundedRectangle(cornerRadius: 12)

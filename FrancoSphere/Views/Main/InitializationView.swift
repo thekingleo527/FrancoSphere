@@ -1,6 +1,6 @@
 //
 //  InitializationView.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ ENHANCED: Added error handling and retry functionality
 //  ✅ VISUAL: Beautiful initialization screen with progress
@@ -85,7 +85,7 @@ struct InitializationView: View {
                     value: viewModel.isInitializing
                 )
             
-            Text("FrancoSphere")
+            Text("CyntientOps")
                 .font(.system(size: 36, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
                 .opacity(logoOpacity)

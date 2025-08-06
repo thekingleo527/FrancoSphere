@@ -1,6 +1,6 @@
 //
 //  TestRealDataIntegration.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  Integration test for real data implementation
 //  ✅ FIXED: Added missing 'await' keywords for MainActor-isolated properties

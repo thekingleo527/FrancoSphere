@@ -1,6 +1,6 @@
 //
 //  BuildingMetricsService.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: All compilation errors resolved for cross-dashboard integration
 //  ✅ CORRECTED: CoreTypes.BuildingMetrics constructor parameters
@@ -480,7 +480,7 @@ extension BuildingMetricsService {
         return try await calculateMetrics(for: "15") // Stuyvesant Park building ID
     }
     
-    /// Get all FrancoSphere portfolio metrics
+    /// Get all CyntientOps portfolio metrics
     public func getPortfolioMetrics() async throws -> [String: CoreTypes.BuildingMetrics] {
         let buildingIds = ["1", "4", "7", "8", "10", "12", "13", "14", "15", "16", "17"]
         return try await calculateBatchMetrics(for: buildingIds)
@@ -489,10 +489,10 @@ extension BuildingMetricsService {
 
 // MARK: - Usage Instructions for Cross-Dashboard Integration
 //
-// To ensure proper integration across all three dashboards, call this in FrancoSphereApp.swift:
+// To ensure proper integration across all three dashboards, call this in CyntientOpsApp.swift:
 //
 // @main
-// struct FrancoSphereApp: App {
+// struct CyntientOpsApp: App {
 //     var body: some Scene {
 //         WindowGroup {
 //             ContentView()

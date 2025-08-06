@@ -1,6 +1,6 @@
 //
 //  IntelligencePreviewPanel.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ REFACTORED: Now supports both panel and compact bar modes
 //  ✅ ELEGANT: Single component, two display modes
@@ -21,7 +21,7 @@
 
 import SwiftUI
 
-// MARK: - FrancoSphere Production Data Reference
+// MARK: - CyntientOps Production Data Reference
 // Building IDs from CanonicalIDs:
 // - "14": Rubin Museum (142-148 W 17th) - Kevin's primary
 // - "10": 131 Perry Street
@@ -1023,7 +1023,7 @@ struct InsightRowView: View {
                 
                 Image(systemName: insight.type.icon)
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.EnumColors.insightCategory(insight.type))
+                    .foregroundColor(CyntientOpsDesign.EnumColors.insightCategory(insight.type))
                     .frame(width: 20)
                 
                 VStack(alignment: .leading, spacing: 2) {
@@ -1056,7 +1056,7 @@ struct InsightRowView: View {
     }
     
     private func priorityColor(for priority: CoreTypes.AIPriority) -> Color {
-        FrancoSphereDesign.EnumColors.aiPriority(priority)
+        CyntientOpsDesign.EnumColors.aiPriority(priority)
     }
 }
 
@@ -1074,7 +1074,7 @@ struct InsightDetailView: View {
                         HStack {
                             Image(systemName: insight.type.icon)
                                 .font(.title2)
-                                .foregroundColor(FrancoSphereDesign.EnumColors.insightCategory(insight.type))
+                                .foregroundColor(CyntientOpsDesign.EnumColors.insightCategory(insight.type))
                             
                             Text(insight.title)
                                 .font(.title2)
@@ -1178,7 +1178,7 @@ struct InsightDetailView: View {
     }
     
     private func priorityColor(for priority: CoreTypes.AIPriority) -> Color {
-        FrancoSphereDesign.EnumColors.aiPriority(priority)
+        CyntientOpsDesign.EnumColors.aiPriority(priority)
     }
 }
 

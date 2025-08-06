@@ -1,6 +1,6 @@
 
 //  SiteLogService.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Service for managing site departure logs and compliance tracking
 //

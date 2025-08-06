@@ -1,8 +1,8 @@
 //  TaskTimelineRow.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ FIXED: Compilation error resolved - using completedAt instead of completedDate
-//  ✅ Uses task.title property (from FrancoSphereModels.swift)
+//  ✅ Uses task.title property (from CyntientOpsModels.swift)
 //  ✅ Fixed constructor to match actual ContextualTask init
 //  ✅ Handles optional urgency properly
 //
@@ -20,7 +20,7 @@ struct TaskTimelineRow: View {
                 .frame(width: 12, height: 12)
             
             VStack(alignment: .leading, spacing: 4) {
-                // Using task.title (actual property from FrancoSphereModels)
+                // Using task.title (actual property from CyntientOpsModels)
                 Text(task.title)
                     .font(.headline)
                     .foregroundColor(.primary)

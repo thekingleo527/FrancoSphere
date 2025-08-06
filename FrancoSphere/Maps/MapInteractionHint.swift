@@ -1,6 +1,6 @@
 //
 //  MapInteractionHint.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ V6.0 UPDATED: Aligned with GRDB implementation and actor architecture
 //  ✅ FIXED: Animation syntax errors and SwiftUI binding issues
@@ -244,11 +244,11 @@ extension MapInteractionHint {
     }
 }
 
-// MARK: - UserDefaults FrancoSphere Extension
+// MARK: - UserDefaults CyntientOps Extension
 
 extension UserDefaults {
-    /// FrancoSphere app preference keys
-    enum FrancoSphereKeys {
+    /// CyntientOps app preference keys
+    enum CyntientOpsKeys {
         static let hasSeenMapHint = "franco_has_seen_map_hint"
         static let hasSeenDashboardTour = "franco_has_seen_dashboard_tour"
         static let lastSelectedDashboard = "franco_last_selected_dashboard"
@@ -257,21 +257,21 @@ extension UserDefaults {
     
     /// Check if the user has seen the map interaction hint
     var francoHasSeenMapHint: Bool {
-        get { bool(forKey: FrancoSphereKeys.hasSeenMapHint) }
-        set { set(newValue, forKey: FrancoSphereKeys.hasSeenMapHint) }
+        get { bool(forKey: CyntientOpsKeys.hasSeenMapHint) }
+        set { set(newValue, forKey: CyntientOpsKeys.hasSeenMapHint) }
     }
     
-    /// Reset all FrancoSphere onboarding hints
-    func resetFrancoOnboardingHints() {
-        removeObject(forKey: FrancoSphereKeys.hasSeenMapHint)
-        removeObject(forKey: FrancoSphereKeys.hasSeenDashboardTour)
-        print("🔄 All FrancoSphere onboarding hints reset")
+    /// Reset all CyntientOps onboarding hints
+    func resetCyntientOpsOnboardingHints() {
+        removeObject(forKey: CyntientOpsKeys.hasSeenMapHint)
+        removeObject(forKey: CyntientOpsKeys.hasSeenDashboardTour)
+        print("🔄 All CyntientOps onboarding hints reset")
     }
     
     /// Get/set last selected dashboard for continuity
     var francoLastSelectedDashboard: String? {
-        get { string(forKey: FrancoSphereKeys.lastSelectedDashboard) }
-        set { set(newValue, forKey: FrancoSphereKeys.lastSelectedDashboard) }
+        get { string(forKey: CyntientOpsKeys.lastSelectedDashboard) }
+        set { set(newValue, forKey: CyntientOpsKeys.lastSelectedDashboard) }
     }
 }
 
@@ -365,7 +365,7 @@ private struct PreviewContainer: View {
                 VStack {
                     HStack {
                         Spacer()
-                        Text("FrancoSphere Map")
+                        Text("CyntientOps Map")
                             .font(.title3.weight(.medium))
                             .foregroundColor(.white.opacity(0.7))
                         Spacer()

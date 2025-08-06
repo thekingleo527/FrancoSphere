@@ -1,9 +1,9 @@
 //
 //  BuildingHeaderGlassOverlay.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ UPDATED: Dark Elegance theme applied
-//  ✅ ENHANCED: Integrated with FrancoSphereDesign color system
+//  ✅ ENHANCED: Integrated with CyntientOpsDesign color system
 //  ✅ IMPROVED: Glass effects optimized for dark theme
 //  ✅ FIXED: Works with NamedCoordinate that doesn't have imageAssetName
 //
@@ -34,25 +34,25 @@ struct BuildingHeaderGlassOverlay: View {
                             Text(building.name)
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                                 .multilineTextAlignment(.leading)
                             
                             // Location information using coordinates
                             HStack(spacing: 6) {
                                 Image(systemName: "location.fill")
                                     .font(.caption)
-                                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                                 
                                 Text(getFormattedLocation())
                                     .font(.caption)
-                                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                                     .lineLimit(2)
                             }
                             
                             // Coordinates for technical reference
                             Text("Lat: \(String(format: "%.4f", building.latitude)), Lon: \(String(format: "%.4f", building.longitude))")
                                 .font(.caption2)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                                 .monospaced()
                         }
                         
@@ -101,8 +101,8 @@ struct BuildingHeaderGlassOverlay: View {
                 ZStack {
                     LinearGradient(
                         colors: [
-                            FrancoSphereDesign.DashboardColors.info.opacity(0.3),
-                            FrancoSphereDesign.DashboardColors.info.opacity(0.1)
+                            CyntientOpsDesign.DashboardColors.info.opacity(0.3),
+                            CyntientOpsDesign.DashboardColors.info.opacity(0.1)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -110,7 +110,7 @@ struct BuildingHeaderGlassOverlay: View {
                     
                     Image(systemName: "building.2.fill")
                         .font(.system(size: 60))
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.info.opacity(0.3))
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.info.opacity(0.3))
                 }
                 .frame(height: 280)
                 .overlay(darkImageOverlay)
@@ -121,9 +121,9 @@ struct BuildingHeaderGlassOverlay: View {
     private var darkImageOverlay: some View {
         LinearGradient(
             colors: [
-                FrancoSphereDesign.DashboardColors.baseBackground.opacity(0.3),
+                CyntientOpsDesign.DashboardColors.baseBackground.opacity(0.3),
                 Color.clear,
-                FrancoSphereDesign.DashboardColors.baseBackground.opacity(0.8)
+                CyntientOpsDesign.DashboardColors.baseBackground.opacity(0.8)
             ],
             startPoint: .top,
             endPoint: .bottom
@@ -134,7 +134,7 @@ struct BuildingHeaderGlassOverlay: View {
         ZStack {
             // Dark base
             RoundedRectangle(cornerRadius: 20)
-                .fill(FrancoSphereDesign.DashboardColors.cardBackground.opacity(0.9))
+                .fill(CyntientOpsDesign.DashboardColors.cardBackground.opacity(0.9))
             
             // Glass material
             RoundedRectangle(cornerRadius: 20)
@@ -145,8 +145,8 @@ struct BuildingHeaderGlassOverlay: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            FrancoSphereDesign.DashboardColors.glassOverlay.opacity(0.2),
-                            FrancoSphereDesign.DashboardColors.glassOverlay.opacity(0.05)
+                            CyntientOpsDesign.DashboardColors.glassOverlay.opacity(0.2),
+                            CyntientOpsDesign.DashboardColors.glassOverlay.opacity(0.05)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -173,11 +173,11 @@ struct BuildingHeaderGlassOverlay: View {
     private var buildingStatusBadge: some View {
         HStack(spacing: 6) {
             Circle()
-                .fill(FrancoSphereDesign.DashboardColors.success)
+                .fill(CyntientOpsDesign.DashboardColors.success)
                 .frame(width: 8, height: 8)
                 .overlay(
                     Circle()
-                        .stroke(FrancoSphereDesign.DashboardColors.success.opacity(0.3), lineWidth: 8)
+                        .stroke(CyntientOpsDesign.DashboardColors.success.opacity(0.3), lineWidth: 8)
                         .scaleEffect(1.5)
                         .opacity(0.6)
                         .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: true)
@@ -187,13 +187,13 @@ struct BuildingHeaderGlassOverlay: View {
                 .font(.caption)
                 .fontWeight(.medium)
         }
-        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(FrancoSphereDesign.DashboardColors.success.opacity(0.15))
+        .background(CyntientOpsDesign.DashboardColors.success.opacity(0.15))
         .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .stroke(FrancoSphereDesign.DashboardColors.success.opacity(0.3), lineWidth: 1)
+                .stroke(CyntientOpsDesign.DashboardColors.success.opacity(0.3), lineWidth: 1)
         )
         .cornerRadius(20)
     }
@@ -204,20 +204,20 @@ struct BuildingHeaderGlassOverlay: View {
                 // Clocked in indicator
                 HStack(spacing: 6) {
                     Circle()
-                        .fill(FrancoSphereDesign.DashboardColors.success)
+                        .fill(CyntientOpsDesign.DashboardColors.success)
                         .frame(width: 8, height: 8)
                     
                     Text("On Site")
                         .font(.caption)
                         .fontWeight(.medium)
                 }
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(FrancoSphereDesign.DashboardColors.success.opacity(0.2))
+                .background(CyntientOpsDesign.DashboardColors.success.opacity(0.2))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(FrancoSphereDesign.DashboardColors.success.opacity(0.4), lineWidth: 1)
+                        .stroke(CyntientOpsDesign.DashboardColors.success.opacity(0.4), lineWidth: 1)
                 )
                 .cornerRadius(16)
             }
@@ -232,10 +232,10 @@ struct BuildingHeaderGlassOverlay: View {
                         .font(.caption)
                         .fontWeight(.medium)
                 }
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(FrancoSphereDesign.DashboardColors.glassOverlay)
+                .background(CyntientOpsDesign.DashboardColors.glassOverlay)
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
                         .stroke(Color.white.opacity(0.2), lineWidth: 1)
@@ -256,7 +256,7 @@ struct BuildingHeaderGlassOverlay: View {
             
             Divider()
                 .frame(height: 30)
-                .background(FrancoSphereDesign.DashboardColors.glassOverlay)
+                .background(CyntientOpsDesign.DashboardColors.glassOverlay)
             
             buildingMetric(
                 icon: "map",
@@ -266,7 +266,7 @@ struct BuildingHeaderGlassOverlay: View {
             
             Divider()
                 .frame(height: 30)
-                .background(FrancoSphereDesign.DashboardColors.glassOverlay)
+                .background(CyntientOpsDesign.DashboardColors.glassOverlay)
             
             buildingMetric(
                 icon: "person.2",
@@ -280,16 +280,16 @@ struct BuildingHeaderGlassOverlay: View {
         VStack(spacing: 4) {
             Image(systemName: icon)
                 .font(.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             
             Text(value)
                 .font(.caption)
                 .fontWeight(.semibold)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             Text(label)
                 .font(.caption2)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
         }
         .frame(maxWidth: .infinity)
     }
@@ -389,7 +389,7 @@ struct BuildingHeaderGlassOverlay: View {
 struct BuildingHeaderGlassOverlay_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
-            FrancoSphereDesign.DashboardColors.baseBackground
+            CyntientOpsDesign.DashboardColors.baseBackground
                 .ignoresSafeArea()
             
             VStack {

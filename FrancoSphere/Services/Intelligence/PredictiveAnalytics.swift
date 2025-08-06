@@ -1,6 +1,6 @@
 
 //  PredictiveAnalytics.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Stream D: Features & Polish
 //  Mission: Create a service for ML-driven predictions.

@@ -1,5 +1,5 @@
 //  InitializationViewModel.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ UPDATED: Works with new DatabaseInitializer
 //  ✅ SIMPLIFIED: Delegates database work to DatabaseInitializer
@@ -15,7 +15,7 @@ import Combine
 @MainActor
 class InitializationViewModel: ObservableObject {
     @Published var progress: Double = 0.0
-    @Published var currentStep: String = "Preparing FrancoSphere..."
+    @Published var currentStep: String = "Preparing CyntientOps..."
     @Published var isInitializing: Bool = false
     @Published var isComplete: Bool = false
     @Published var initializationError: String?
@@ -96,7 +96,7 @@ class InitializationViewModel: ObservableObject {
             isComplete = true
             isInitializing = false
             
-            print("✅ FrancoSphere initialization completed successfully")
+            print("✅ CyntientOps initialization completed successfully")
             
         } catch {
             await handleInitializationError(error)
@@ -146,12 +146,11 @@ class InitializationViewModel: ObservableObject {
     }
     
     private func initializeNovaAI() {
-        // FIXED: Accessing .shared is synchronous.
-        _ = NovaFeatureManager.shared
-        _ = NovaIntelligenceEngine.shared
+        // PHASE 3: Nova AI now integrated through UnifiedIntelligenceService via ServiceContainer
+        _ = NovaAIManager.shared  // Only persistent singleton
         _ = NovaAPIService.shared
         
-        print("✅ Nova AI system initialized")
+        print("✅ Nova AI system initialized with unified intelligence")
     }
     
     private func finalizeSetup() async throws {
@@ -167,7 +166,7 @@ class InitializationViewModel: ObservableObject {
         // This is an async call, so 'await' is correct here.
         let stats = try? await databaseInitializer.getDatabaseStatistics()
         
-        print("📱 FrancoSphere v6.0 initialized")
+        print("📱 CyntientOps v6.0 initialized")
         print("  - Database: ✅ \(databaseInitializer.dataStatus.description)")
         print("  - Services: ✅")
         print("  - User Context: ✅")

@@ -1,7 +1,7 @@
 //
 //
 //  TaskService+OperationalFallback.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
 //  ✅ FIXED: Corrected ContextualTask initializer parameters

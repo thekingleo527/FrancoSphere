@@ -1,6 +1,6 @@
 //
 //  WeatherTasksSection.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ REAL WEATHER: Integrated with OpenMeteo API via WeatherDataAdapter
 //  ✅ NO MOCK DATA: Removed all mock weather generators

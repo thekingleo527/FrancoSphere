@@ -1,6 +1,6 @@
 //
 //  AnalyticsService.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Created by Shawn Magloire on 8/2/25.
 //
@@ -8,7 +8,7 @@
 
 //
 //  AnalyticsService.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ PRODUCTION READY: Centralized analytics tracking
 //  ✅ TYPE-SAFE: Strongly typed events and properties

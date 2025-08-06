@@ -1,6 +1,6 @@
 //
 //  SimplifiedDashboard.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ UPDATED: Dark Elegance theme with accessibility focus
 //  ✅ HIGH CONTRAST: Maintains readability for simplified interface users
@@ -23,7 +23,7 @@ struct SimplifiedDashboard: View {
     var body: some View {
         ZStack {
             // Dark elegant background with subtle gradient
-            FrancoSphereDesign.DashboardGradients.backgroundGradient
+            CyntientOpsDesign.DashboardGradients.backgroundGradient
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
@@ -92,23 +92,23 @@ struct SimplifiedDashboard: View {
         VStack(spacing: 12) {
             Text(greeting)
                 .glassSubtitle()
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             
             Text(viewModel.workerProfile?.name ?? "Worker")
                 .font(.system(size: 36, weight: .bold, design: .rounded))
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 .glassTextGlow()
             
             // Status indicator
             HStack(spacing: 8) {
                 Circle()
-                    .fill(viewModel.isClockedIn ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.inactive)
+                    .fill(viewModel.isClockedIn ? CyntientOpsDesign.DashboardColors.success : CyntientOpsDesign.DashboardColors.inactive)
                     .frame(width: 12, height: 12)
-                    .shadow(color: viewModel.isClockedIn ? FrancoSphereDesign.DashboardColors.success : .clear, radius: 4)
+                    .shadow(color: viewModel.isClockedIn ? CyntientOpsDesign.DashboardColors.success : .clear, radius: 4)
                 
                 Text(viewModel.isClockedIn ? "Clocked In" : "Not Clocked In")
                     .glassText(size: .callout)
-                    .foregroundColor(viewModel.isClockedIn ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.secondaryText)
+                    .foregroundColor(viewModel.isClockedIn ? CyntientOpsDesign.DashboardColors.success : CyntientOpsDesign.DashboardColors.secondaryText)
             }
         }
         .padding(.vertical, 24)
@@ -127,8 +127,8 @@ struct SimplifiedDashboard: View {
             HStack {
                 Image(systemName: "building.2.fill")
                     .font(.title2)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.workerPrimary)
-                    .shadow(color: FrancoSphereDesign.DashboardColors.workerPrimary.opacity(0.5), radius: 4)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.workerPrimary)
+                    .shadow(color: CyntientOpsDesign.DashboardColors.workerPrimary.opacity(0.5), radius: 4)
                 
                 Text("Current Building")
                     .glassHeading()
@@ -138,7 +138,7 @@ struct SimplifiedDashboard: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(building.name)
                         .font(.system(size: 28, weight: .semibold, design: .rounded))
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     
                     if !building.address.isEmpty {
                         Text(building.address)
@@ -150,7 +150,7 @@ struct SimplifiedDashboard: View {
             } else {
                 Text("Tap the green button below to clock in")
                     .font(.system(size: 20, weight: .medium, design: .rounded))
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     .padding(.vertical, 8)
             }
         }
@@ -166,8 +166,8 @@ struct SimplifiedDashboard: View {
             HStack {
                 Image(systemName: "checklist")
                     .font(.title2)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.workerPrimary)
-                    .shadow(color: FrancoSphereDesign.DashboardColors.workerPrimary.opacity(0.5), radius: 4)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.workerPrimary)
+                    .shadow(color: CyntientOpsDesign.DashboardColors.workerPrimary.opacity(0.5), radius: 4)
                 
                 Text("Today's Tasks")
                     .glassHeading()
@@ -182,7 +182,7 @@ struct SimplifiedDashboard: View {
                         .padding(.vertical, 6)
                         .background(
                             Capsule()
-                                .fill(FrancoSphereDesign.DashboardColors.workerPrimary.opacity(0.2))
+                                .fill(CyntientOpsDesign.DashboardColors.workerPrimary.opacity(0.2))
                         )
                 }
             }
@@ -210,12 +210,12 @@ struct SimplifiedDashboard: View {
                                 Text("View All \(viewModel.todaysTasks.count) Tasks")
                                     .glassText()
                                 Image(systemName: "arrow.right.circle.fill")
-                                    .foregroundColor(FrancoSphereDesign.DashboardColors.workerPrimary)
+                                    .foregroundColor(CyntientOpsDesign.DashboardColors.workerPrimary)
                             }
                             .padding()
                             .frame(maxWidth: .infinity)
                             .background(
-                                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.medium)
+                                RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.medium)
                                     .fill(.ultraThinMaterial)
                             )
                         }
@@ -262,18 +262,18 @@ struct SimplifiedDashboard: View {
             .padding(.vertical, 20)
             .frame(maxWidth: .infinity)
             .background(
-                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.xl)
+                RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.xl)
                     .fill(
                         LinearGradient(
                             colors: viewModel.isClockedIn ?
-                                [FrancoSphereDesign.DashboardColors.critical, FrancoSphereDesign.DashboardColors.critical.opacity(0.8)] :
-                                [FrancoSphereDesign.DashboardColors.success, FrancoSphereDesign.DashboardColors.success.opacity(0.8)],
+                                [CyntientOpsDesign.DashboardColors.critical, CyntientOpsDesign.DashboardColors.critical.opacity(0.8)] :
+                                [CyntientOpsDesign.DashboardColors.success, CyntientOpsDesign.DashboardColors.success.opacity(0.8)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                     .shadow(
-                        color: (viewModel.isClockedIn ? FrancoSphereDesign.DashboardColors.critical : FrancoSphereDesign.DashboardColors.success).opacity(0.4),
+                        color: (viewModel.isClockedIn ? CyntientOpsDesign.DashboardColors.critical : CyntientOpsDesign.DashboardColors.success).opacity(0.4),
                         radius: 15,
                         y: 8
                     )
@@ -315,13 +315,13 @@ struct SimplifiedTaskRow: View {
                 Button(action: onComplete) {
                     ZStack {
                         Circle()
-                            .stroke(task.isCompleted ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.secondaryText, lineWidth: 3)
+                            .stroke(task.isCompleted ? CyntientOpsDesign.DashboardColors.success : CyntientOpsDesign.DashboardColors.secondaryText, lineWidth: 3)
                             .frame(width: 44, height: 44)
                         
                         if task.isCompleted {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 24, weight: .bold))
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.success)
                         }
                     }
                 }
@@ -331,7 +331,7 @@ struct SimplifiedTaskRow: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(task.title)
                         .font(.system(size: 20, weight: .semibold, design: .rounded))
-                        .foregroundColor(task.isCompleted ? FrancoSphereDesign.DashboardColors.secondaryText : FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(task.isCompleted ? CyntientOpsDesign.DashboardColors.secondaryText : CyntientOpsDesign.DashboardColors.primaryText)
                         .strikethrough(task.isCompleted)
                         .lineLimit(2)
                     
@@ -342,7 +342,7 @@ struct SimplifiedTaskRow: View {
                             Text(building.name)
                                 .font(.system(size: 16))
                         }
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     }
                 }
                 
@@ -353,22 +353,22 @@ struct SimplifiedTaskRow: View {
                     VStack {
                         Image(systemName: urgencyIcon(urgency))
                             .font(.title2)
-                            .foregroundColor(FrancoSphereDesign.EnumColors.taskUrgency(urgency))
+                            .foregroundColor(CyntientOpsDesign.EnumColors.taskUrgency(urgency))
                         
                         Text(urgency.rawValue.uppercased())
                             .font(.caption2)
                             .fontWeight(.bold)
-                            .foregroundColor(FrancoSphereDesign.EnumColors.taskUrgency(urgency))
+                            .foregroundColor(CyntientOpsDesign.EnumColors.taskUrgency(urgency))
                     }
                 }
             }
             .padding(20)
             .background(
-                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.large)
+                RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.large)
                     .fill(task.isCompleted ? .ultraThinMaterial : .regularMaterial)
                     .overlay(
-                        RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.large)
-                            .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.large)
+                            .stroke(CyntientOpsDesign.DashboardColors.borderSubtle, lineWidth: 1)
                     )
             )
             .scaleEffect(isPressed ? 0.98 : 1.0)
@@ -400,17 +400,17 @@ struct SimplifiedEmptyTasksView: View {
         VStack(spacing: 20) {
             Image(systemName: "checkmark.circle")
                 .font(.system(size: 60))
-                .foregroundColor(FrancoSphereDesign.DashboardColors.success)
-                .shadow(color: FrancoSphereDesign.DashboardColors.success.opacity(0.3), radius: 10)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.success)
+                .shadow(color: CyntientOpsDesign.DashboardColors.success.opacity(0.3), radius: 10)
             
             VStack(spacing: 8) {
                 Text("All Clear!")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Text("No tasks scheduled for today")
                     .font(.system(size: 18))
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             }
         }
         .frame(maxWidth: .infinity)
@@ -428,13 +428,13 @@ struct SimplifiedClockInSheet: View {
     var body: some View {
         NavigationView {
             ZStack {
-                FrancoSphereDesign.DashboardGradients.backgroundGradient
+                CyntientOpsDesign.DashboardGradients.backgroundGradient
                     .ignoresSafeArea()
                 
                 VStack(spacing: 24) {
                     Text("Select Building to Clock In")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         .padding(.top)
                     
                     ScrollView {
@@ -446,23 +446,23 @@ struct SimplifiedClockInSheet: View {
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text(building.name)
                                             .font(.system(size: 20, weight: .semibold))
-                                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                                         
                                         if !building.address.isEmpty {
                                             Text(building.address)
                                                 .font(.system(size: 16))
-                                                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                                                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                                                 .lineLimit(2)
                                         }
                                     }
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(20)
                                     .background(
-                                        RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.large)
+                                        RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.large)
                                             .fill(.regularMaterial)
                                             .overlay(
-                                                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.large)
-                                                    .stroke(FrancoSphereDesign.DashboardColors.workerPrimary.opacity(0.3), lineWidth: 2)
+                                                RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.large)
+                                                    .stroke(CyntientOpsDesign.DashboardColors.workerPrimary.opacity(0.3), lineWidth: 2)
                                             )
                                     )
                                 }
@@ -479,7 +479,7 @@ struct SimplifiedClockInSheet: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
             }
         }
@@ -493,7 +493,7 @@ struct TaskListView: View {
     
     var body: some View {
         ZStack {
-            FrancoSphereDesign.DashboardGradients.backgroundGradient
+            CyntientOpsDesign.DashboardGradients.backgroundGradient
                 .ignoresSafeArea()
             
             ScrollView {

@@ -1,6 +1,6 @@
 //
 //  SignUpView.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: Binding conversion issues and missing UserRole cases
 //  ✅ FIXED: Use correct UserRole enum cases (admin, manager, worker, client)
@@ -46,7 +46,7 @@ struct SignUpView: View {
     
     private var headerSection: some View {
         VStack(spacing: 16) {
-            Text("Join FrancoSphere")
+            Text("Join CyntientOps")
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(.white)

@@ -1,6 +1,6 @@
 //
 //  TaskService.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ NO FALLBACKS: Throws errors when no data found
 //  ✅ PRODUCTION READY: Real database operations only

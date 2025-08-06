@@ -1,6 +1,6 @@
 //
 //  HeaderV3B.swift
-//  FrancoSphere v6.0 - Future-Ready Header
+//  CyntientOps v6.0 - Future-Ready Header
 //
 //  ✅ BRAND-FIRST: Logo on left establishes identity
 //  ✅ AI-CENTRIC: Nova takes center stage
@@ -107,14 +107,14 @@ struct HeaderV3B: View {
         Button(action: { onLogoTap?() ?? {} }) {
             HStack(spacing: 8) {
                 // Logo
-                Image("FrancoSphereLogo")
+                Image("CyntientOpsLogo")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)
                     .foregroundColor(.white)
                 
                 // Or text logo if image not found
-                if UIImage(named: "FrancoSphereLogo") == nil {
+                if UIImage(named: "CyntientOpsLogo") == nil {
                     VStack(alignment: .leading, spacing: 0) {
                         Text("FRANCO")
                             .font(.system(size: 14, weight: .bold, design: .rounded))

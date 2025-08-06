@@ -1,6 +1,6 @@
 //
 //  WeatherViewModifier.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ V6.0 FIXED: Exhaustive switch statements with all CoreTypes.WeatherCondition cases
 //  ✅ INTEGRATION: Uses existing WeatherDataAdapter properly

@@ -1,6 +1,6 @@
 //
 //  WeatherDataAdapter.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ FIXED: All compilation errors resolved
 //  ✅ FIXED: Added missing 'id' parameter to all CoreTypes.WeatherData initializers

@@ -1,6 +1,6 @@
 //
 //  TaskDetailViewModel.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: Corrected nested enum access for DashboardUpdate.UpdateType
 //  ✅ PRODUCTION READY: Complete task detail management

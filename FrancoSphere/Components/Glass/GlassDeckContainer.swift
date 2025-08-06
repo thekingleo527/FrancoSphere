@@ -1,6 +1,6 @@
 //
 //  GlassDeckContainer.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: Animation syntax errors resolved (AnimationAnimation → Animation)
 //  ✅ FIXED: GlassIntensity .light → .thin

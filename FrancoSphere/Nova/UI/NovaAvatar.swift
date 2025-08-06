@@ -9,7 +9,7 @@ import SwiftUI
 
 //
 //  NovaAvatar.swift - AI ASSISTANT ANIMATED VERSION
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ Uses actual AI Assistant image from Assets
 //  ✅ Sophisticated animations on the AI image itself

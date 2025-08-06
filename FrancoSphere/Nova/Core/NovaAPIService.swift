@@ -1,6 +1,6 @@
 //
 //  NovaAPIService.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  Nova API Service with domain knowledge about Kevin Dutan, Rubin Museum, and portfolio
 //  ✅ UPDATED: Removed NovaContextEngine dependency

@@ -1,6 +1,6 @@
 //
 //  ProductionConfiguration.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Created by Shawn Magloire on 8/4/25.
 //
@@ -8,7 +8,7 @@
 
 //
 //  ProductionConfiguration.swift
-//  CyntientOps (formerly FrancoSphere)
+//  CyntientOps (formerly CyntientOps)
 //
 //  Phase 0.4: Production Configuration
 //  Centralized configuration for production environment

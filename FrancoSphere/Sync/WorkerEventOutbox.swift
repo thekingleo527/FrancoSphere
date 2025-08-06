@@ -1,6 +1,6 @@
 //
 //  WorkerEventOutbox.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ CLEAN: No dependency on DataSynchronizationService or WorkerEvent
 //  ✅ SELF-CONTAINED: Works independently

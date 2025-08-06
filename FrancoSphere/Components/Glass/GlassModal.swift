@@ -1,6 +1,6 @@
 //
 //  GlassModal.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: Generic parameter inference issues resolved
 //  ✅ FIXED: Type conversion errors resolved

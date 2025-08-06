@@ -1,9 +1,9 @@
 //
 //  BuildingStatsGlassCard.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ UPDATED: Dark Elegance theme applied
-//  ✅ ENHANCED: Integrated with FrancoSphereDesign color system
+//  ✅ ENHANCED: Integrated with CyntientOpsDesign color system
 //  ✅ IMPROVED: Glass effects optimized for dark theme
 //  ✅ FIXED: All exhaustive switch errors resolved
 //
@@ -27,13 +27,13 @@ struct BuildingStatsGlassCard: View {
         var color: Color {
             switch self {
             case .low:
-                return FrancoSphereDesign.DashboardColors.success
+                return CyntientOpsDesign.DashboardColors.success
             case .medium:
-                return FrancoSphereDesign.DashboardColors.warning
+                return CyntientOpsDesign.DashboardColors.warning
             case .high:
-                return FrancoSphereDesign.DashboardColors.warning
+                return CyntientOpsDesign.DashboardColors.warning
             case .extreme:
-                return FrancoSphereDesign.DashboardColors.critical
+                return CyntientOpsDesign.DashboardColors.critical
             }
         }
         
@@ -72,13 +72,13 @@ struct BuildingStatsGlassCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 20))
         .overlay(glassOverlayBorder)
         .shadow(
-            color: FrancoSphereDesign.DashboardColors.baseBackground.opacity(0.3),
+            color: CyntientOpsDesign.DashboardColors.baseBackground.opacity(0.3),
             radius: 15,
             x: 0,
             y: 8
         )
         .onAppear {
-            withAnimation(FrancoSphereDesign.Animations.spring.delay(0.2)) {
+            withAnimation(CyntientOpsDesign.Animations.spring.delay(0.2)) {
                 isAnimating = true
             }
         }
@@ -91,7 +91,7 @@ struct BuildingStatsGlassCard: View {
             Text("Building Stats")
                 .font(.headline)
                 .fontWeight(.semibold)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             Spacer()
             
@@ -120,7 +120,7 @@ struct BuildingStatsGlassCard: View {
                 Text(weatherRisk.rawValue)
                     .font(.caption2)
                     .fontWeight(.medium)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             }
         }
         .padding(.horizontal, 10)
@@ -141,7 +141,7 @@ struct BuildingStatsGlassCard: View {
             StatItemView(
                 title: "Completed",
                 value: "\(completedTasksCount)",
-                color: FrancoSphereDesign.DashboardColors.success,
+                color: CyntientOpsDesign.DashboardColors.success,
                 icon: "checkmark.circle.fill"
             )
         }
@@ -152,30 +152,30 @@ struct BuildingStatsGlassCard: View {
             Text("Priority Breakdown")
                 .font(.caption)
                 .fontWeight(.medium)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             
             HStack(spacing: 12) {
                 PriorityItem(
                     count: getHighPriorityCount(),
                     label: "High",
-                    color: FrancoSphereDesign.DashboardColors.critical
+                    color: CyntientOpsDesign.DashboardColors.critical
                 )
                 
                 PriorityItem(
                     count: getMediumPriorityCount(),
                     label: "Med",
-                    color: FrancoSphereDesign.DashboardColors.warning
+                    color: CyntientOpsDesign.DashboardColors.warning
                 )
                 
                 PriorityItem(
                     count: getLowPriorityCount(),
                     label: "Low",
-                    color: FrancoSphereDesign.DashboardColors.info
+                    color: CyntientOpsDesign.DashboardColors.info
                 )
             }
         }
         .padding(12)
-        .background(FrancoSphereDesign.DashboardColors.glassOverlay)
+        .background(CyntientOpsDesign.DashboardColors.glassOverlay)
         .cornerRadius(12)
     }
     
@@ -184,11 +184,11 @@ struct BuildingStatsGlassCard: View {
             HStack(spacing: 6) {
                 Image(systemName: "person.2.fill")
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.info)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.info)
                 
                 Text("Workers: \(assignedWorkersCount)")
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             }
             
             Spacer()
@@ -199,7 +199,7 @@ struct BuildingStatsGlassCard: View {
                 Text("\(getCompletionRate())% Complete")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             }
         }
     }
@@ -210,7 +210,7 @@ struct BuildingStatsGlassCard: View {
         ZStack {
             // Dark base
             RoundedRectangle(cornerRadius: 20)
-                .fill(FrancoSphereDesign.DashboardColors.cardBackground.opacity(0.9))
+                .fill(CyntientOpsDesign.DashboardColors.cardBackground.opacity(0.9))
             
             // Glass material
             RoundedRectangle(cornerRadius: 20)
@@ -221,8 +221,8 @@ struct BuildingStatsGlassCard: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            FrancoSphereDesign.DashboardColors.glassOverlay.opacity(0.2),
-                            FrancoSphereDesign.DashboardColors.glassOverlay.opacity(0.05)
+                            CyntientOpsDesign.DashboardColors.glassOverlay.opacity(0.2),
+                            CyntientOpsDesign.DashboardColors.glassOverlay.opacity(0.05)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -251,13 +251,13 @@ struct BuildingStatsGlassCard: View {
     private var pendingTasksColor: Color {
         switch pendingTasksCount {
         case 0:
-            return FrancoSphereDesign.DashboardColors.success
+            return CyntientOpsDesign.DashboardColors.success
         case 1...3:
             return Color(hex: "fbbf24") // Amber
         case 4...8:
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         default:
-            return FrancoSphereDesign.DashboardColors.critical
+            return CyntientOpsDesign.DashboardColors.critical
         }
     }
     
@@ -305,7 +305,7 @@ struct StatItemView: View {
                 
                 Text(title)
                     .font(.caption2)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
             }
             
             Text(value)
@@ -349,11 +349,11 @@ struct PriorityItem: View {
             Text("\(count)")
                 .font(.caption)
                 .fontWeight(.medium)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             Text(label)
                 .font(.caption2)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
         }
     }
 }
@@ -364,15 +364,15 @@ struct CircularProgressIndicator: View {
     var body: some View {
         ZStack {
             Circle()
-                .stroke(FrancoSphereDesign.DashboardColors.glassOverlay, lineWidth: 2)
+                .stroke(CyntientOpsDesign.DashboardColors.glassOverlay, lineWidth: 2)
                 .frame(width: 16, height: 16)
             
             Circle()
                 .trim(from: 0, to: progress)
                 .stroke(
-                    progress > 0.8 ? FrancoSphereDesign.DashboardColors.success :
-                    progress > 0.5 ? FrancoSphereDesign.DashboardColors.warning :
-                    FrancoSphereDesign.DashboardColors.critical,
+                    progress > 0.8 ? CyntientOpsDesign.DashboardColors.success :
+                    progress > 0.5 ? CyntientOpsDesign.DashboardColors.warning :
+                    CyntientOpsDesign.DashboardColors.critical,
                     style: StrokeStyle(lineWidth: 2, lineCap: .round)
                 )
                 .frame(width: 16, height: 16)
@@ -387,7 +387,7 @@ struct CircularProgressIndicator: View {
 struct BuildingStatsGlassCard_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
-            FrancoSphereDesign.DashboardColors.baseBackground
+            CyntientOpsDesign.DashboardColors.baseBackground
                 .ignoresSafeArea()
             
             VStack(spacing: 24) {

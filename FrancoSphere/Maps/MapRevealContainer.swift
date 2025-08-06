@@ -1,6 +1,6 @@
 //
 //  MapRevealContainer.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ ENHANCED: Dual-mode map with intelligence previews
 //  ✅ FIXED: Uses WorkerContextEngine (not adapter)

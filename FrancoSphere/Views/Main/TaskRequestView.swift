@@ -1,6 +1,6 @@
 //
 //  TaskRequestView.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ FIXED: Removed all duplicate type definitions
 //  ✅ FIXED: Now properly imports from CoreTypes

@@ -1,6 +1,6 @@
 //
 //  ProfileBadge.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ INTEGRATED: With DashboardSyncService for real-time updates
 //  ✅ ALIGNED: With three-dashboard architecture
@@ -68,11 +68,11 @@ public struct ProfileBadge: View {
     private var gradientColors: [Color] {
         switch context {
         case .worker:
-            return [FrancoSphereDesign.DashboardColors.workerPrimary, FrancoSphereDesign.DashboardColors.workerSecondary]
+            return [CyntientOpsDesign.DashboardColors.workerPrimary, CyntientOpsDesign.DashboardColors.workerSecondary]
         case .admin:
-            return [FrancoSphereDesign.DashboardColors.adminPrimary, FrancoSphereDesign.DashboardColors.adminSecondary]
+            return [CyntientOpsDesign.DashboardColors.adminPrimary, CyntientOpsDesign.DashboardColors.adminSecondary]
         case .client:
-            return [FrancoSphereDesign.DashboardColors.clientPrimary, FrancoSphereDesign.DashboardColors.clientSecondary]
+            return [CyntientOpsDesign.DashboardColors.clientPrimary, CyntientOpsDesign.DashboardColors.clientSecondary]
         case .building(let id):
             let hash = id.hashValue
             let hue = Double(abs(hash) % 360) / 360.0
@@ -166,7 +166,7 @@ public struct ProfileBadge: View {
     
     private var statusIndicator: some View {
         Circle()
-            .fill(FrancoSphereDesign.EnumColors.workerStatus(statusMonitor.currentStatus))
+            .fill(CyntientOpsDesign.EnumColors.workerStatus(statusMonitor.currentStatus))
             .frame(width: displaySize * 0.25, height: displaySize * 0.25)
             .overlay(Circle().stroke(Color.black.opacity(0.3), lineWidth: 1))
             .offset(x: displaySize * 0.35, y: displaySize * 0.35)

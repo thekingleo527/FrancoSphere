@@ -1,12 +1,12 @@
 //
 //  SyncStatusComponents.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Created by Shawn Magloire on 7/7/25.
 //
 //
 //  SyncStatusComponents.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ V6.0: Phase 4.2 - Worker Feedback UI
 //  ✅ Provides the visual banner and rows for real-time action confirmation.

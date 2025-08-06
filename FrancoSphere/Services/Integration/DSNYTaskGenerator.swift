@@ -1,6 +1,6 @@
 //
 //  DSNYTaskGenerator.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ V6.0 FIXED: All GRDB access and parameter issues resolved
 //  ✅ FIXED: Added await for async isDatabaseReady() calls

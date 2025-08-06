@@ -1,6 +1,6 @@
 //
 //  UnifiedDataService.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ UPDATED: Removed duplicate types, now works with DatabaseInitializer
 //  ✅ FOCUSED: Only handles data bridging and fallbacks

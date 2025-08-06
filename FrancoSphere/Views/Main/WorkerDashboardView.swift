@@ -1,6 +1,6 @@
 //
 //  WorkerDashboardView.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ REFACTORED: Space-optimized with collapsible hero
 //  ✅ INTEGRATED: Updated HeaderV3B with brand-AI-user layout
@@ -97,7 +97,7 @@ struct WorkerDashboardView: View {
         ) {
             ZStack {
                 // Dark Elegance Background
-                FrancoSphereDesign.DashboardColors.baseBackground
+                CyntientOpsDesign.DashboardColors.baseBackground
                     .ignoresSafeArea()
                 
                 // Main content
@@ -172,7 +172,7 @@ struct WorkerDashboardView: View {
                             contextEngine: contextEngine
                         )
                         .transition(.move(edge: .bottom).combined(with: .opacity))
-                        .animation(FrancoSphereDesign.Animations.spring, value: intelligencePanelState)
+                        .animation(CyntientOpsDesign.Animations.spring, value: intelligencePanelState)
                     }
                 }
             }
@@ -216,7 +216,7 @@ struct WorkerDashboardView: View {
                         }
                     }
                     .listStyle(PlainListStyle())
-                    .background(FrancoSphereDesign.DashboardColors.baseBackground)
+                    .background(CyntientOpsDesign.DashboardColors.baseBackground)
                 }
                 .navigationTitle("Today's Tasks")
                 .navigationBarTitleDisplayMode(.large)
@@ -225,10 +225,10 @@ struct WorkerDashboardView: View {
                         Button("Done") {
                             showAllTasks = false
                         }
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     }
                 }
-                .background(FrancoSphereDesign.DashboardColors.baseBackground)
+                .background(CyntientOpsDesign.DashboardColors.baseBackground)
             }
             .preferredColorScheme(.dark)
         }
@@ -536,20 +536,20 @@ struct WorkerTaskRowView: View {
                     Text(task.title)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         .lineLimit(1)
                     
                     HStack(spacing: 8) {
                         if let building = task.building {
                             Label(building.name, systemImage: "building.2")
                                 .font(.caption)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                         }
                         
                         if let dueDate = task.dueDate {
                             Label(dueDate.formatted(date: .omitted, time: .shortened), systemImage: "clock")
                                 .font(.caption)
-                                .foregroundColor(task.isOverdue ? FrancoSphereDesign.DashboardColors.critical : FrancoSphereDesign.DashboardColors.secondaryText)
+                                .foregroundColor(task.isOverdue ? CyntientOpsDesign.DashboardColors.critical : CyntientOpsDesign.DashboardColors.secondaryText)
                         }
                     }
                 }
@@ -559,10 +559,10 @@ struct WorkerTaskRowView: View {
                 // Status indicator
                 if task.isCompleted {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.success)
                 } else if task.urgency == .critical || task.urgency == .urgent {
                     Image(systemName: "exclamationmark.circle.fill")
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
                 }
             }
             .padding(.vertical, 8)
@@ -575,13 +575,13 @@ struct WorkerTaskRowView: View {
         // Use Dark Elegance theme colors
         switch task.urgency ?? .low {
         case .critical, .emergency:
-            return FrancoSphereDesign.DashboardColors.critical
+            return CyntientOpsDesign.DashboardColors.critical
         case .urgent, .high:
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         case .medium:
             return Color(hex: "fbbf24") // Amber
         case .low:
-            return FrancoSphereDesign.DashboardColors.info
+            return CyntientOpsDesign.DashboardColors.info
         }
     }
 }
@@ -600,31 +600,31 @@ struct MainMenuView: View {
                     Label("Buildings", systemImage: "building.2")
                     Label("Schedule", systemImage: "calendar")
                 }
-                .listRowBackground(FrancoSphereDesign.DashboardColors.cardBackground)
+                .listRowBackground(CyntientOpsDesign.DashboardColors.cardBackground)
                 
                 Section("Tools") {
                     Label("Reports", systemImage: "doc.text")
                     Label("Inventory", systemImage: "shippingbox")
                     Label("Messages", systemImage: "message")
                 }
-                .listRowBackground(FrancoSphereDesign.DashboardColors.cardBackground)
+                .listRowBackground(CyntientOpsDesign.DashboardColors.cardBackground)
                 
                 Section("Support") {
                     Label("Help", systemImage: "questionmark.circle")
                     Label("Settings", systemImage: "gear")
                 }
-                .listRowBackground(FrancoSphereDesign.DashboardColors.cardBackground)
+                .listRowBackground(CyntientOpsDesign.DashboardColors.cardBackground)
             }
             .scrollContentBackground(.hidden)
-            .background(FrancoSphereDesign.DashboardColors.baseBackground)
-            .navigationTitle("FrancoSphere")
+            .background(CyntientOpsDesign.DashboardColors.baseBackground)
+            .navigationTitle("CyntientOps")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
             }
         }
@@ -662,7 +662,7 @@ struct CollapsibleHeroWrapper: View {
                     progress: progress,
                     clockInStatus: clockInStatus,
                     onExpand: {
-                        withAnimation(FrancoSphereDesign.Animations.spring) {
+                        withAnimation(CyntientOpsDesign.Animations.spring) {
                             isCollapsed = false
                         }
                     }
@@ -688,15 +688,15 @@ struct CollapsibleHeroWrapper: View {
                     
                     // Collapse button overlay
                     Button(action: {
-                        withAnimation(FrancoSphereDesign.Animations.spring) {
+                        withAnimation(CyntientOpsDesign.Animations.spring) {
                             isCollapsed = true
                         }
                     }) {
                         Image(systemName: "chevron.up")
                             .font(.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                             .padding(8)
-                            .background(Circle().fill(FrancoSphereDesign.DashboardColors.glassOverlay))
+                            .background(Circle().fill(CyntientOpsDesign.DashboardColors.glassOverlay))
                     }
                     .padding(8)
                 }
@@ -734,37 +734,37 @@ struct MinimalHeroCard: View {
                     Text(worker.name)
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         .lineLimit(1)
                 }
                 
                 Text("•")
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 
                 // Progress
                 HStack(spacing: 4) {
                     Image(systemName: "checkmark.circle")
                         .font(.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     
                     Text("\(progress.completedTasks)/\(progress.totalTasks)")
                         .font(.subheadline)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 }
                 
                 // Building if clocked in
                 if let building = building {
                     Text("•")
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     
                     HStack(spacing: 4) {
                         Image(systemName: "location")
                             .font(.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                         
                         Text(building.name)
                             .font(.subheadline)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                             .lineLimit(1)
                     }
                 }
@@ -774,7 +774,7 @@ struct MinimalHeroCard: View {
                 // Expand indicator
                 Image(systemName: "chevron.down")
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -785,9 +785,9 @@ struct MinimalHeroCard: View {
     
     private var statusColor: Color {
         if case .clockedIn = clockInStatus {
-            return FrancoSphereDesign.DashboardColors.success
+            return CyntientOpsDesign.DashboardColors.success
         } else {
-            return FrancoSphereDesign.DashboardColors.inactive
+            return CyntientOpsDesign.DashboardColors.inactive
         }
     }
     

@@ -1,6 +1,6 @@
 //
 //  WorkerDashboardMainView.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: Type reference errors for UrgencyLevel and DashboardSource
 //  ✅ FIXED: Using correct types from CoreTypes
@@ -13,8 +13,11 @@ import Combine
 import CoreLocation
 
 struct WorkerDashboardMainView: View {
-    // MARK: - Using Actual ViewModel Only
-    @StateObject private var viewModel = WorkerDashboardViewModel()
+    // MARK: - ServiceContainer Integration
+    let container: ServiceContainer
+    
+    // MARK: - ViewModels
+    @StateObject private var viewModel: WorkerDashboardViewModel
     @StateObject private var locationManager = LocationManager.shared
     
     // MARK: - Environment Objects
@@ -35,36 +38,92 @@ struct WorkerDashboardMainView: View {
     @AppStorage("workerPreferredLanguage") private var preferredLanguage = "en"
     @AppStorage("workerSimplifiedMode") private var simplifiedMode = false
     
+    // MARK: - Initialization
+    
+    init(container: ServiceContainer) {
+        self.container = container
+        self._viewModel = StateObject(wrappedValue: WorkerDashboardViewModel(container: container))
+    }
+    
     var body: some View {
-        NavigationView {
-            Group {
-                if viewModel.isLoading {
-                    LoadingDashboardView()
-                } else if viewModel.workerCapabilities?.simplifiedInterface == true || simplifiedMode {
-                    // Simplified Interface for workers who need it
-                    SimplifiedWorkerDashboard(
-                        viewModel: viewModel,
-                        onClockIn: handleClockIn,
-                        onClockOut: handleClockOut,
-                        onTaskTap: handleTaskTap,
-                        onCameraTap: handleCameraTap
-                    )
-                } else {
-                    // Standard Full-Featured Dashboard
-                    StandardWorkerDashboard(
-                        viewModel: viewModel,
-                        selectedTab: $selectedTab,
-                        onClockIn: handleClockIn,
-                        onClockOut: handleClockOut,
-                        onTaskTap: handleTaskTap,
-                        onCameraTap: handleCameraTap,
-                        onProfileTap: { showingProfile = true }
-                    )
+        ZStack {
+            // Background
+            Color.black.ignoresSafeArea()
+            
+            // Main Content
+            VStack(spacing: 0) {
+                // Header (60px) - Fixed
+                WorkerDashboardHeader(
+                    workerName: viewModel.workerProfile?.name ?? "Worker",
+                    totalTasks: viewModel.todaysTasks.count,
+                    completedTasks: viewModel.completedTasksCount,
+                    currentBuilding: viewModel.currentBuilding?.name
+                )
+                .frame(height: 60)
+                
+                // Scrollable Content
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        // Hero Card (280px → 80px on scroll)
+                        WorkerHeroCard(
+                            workerProfile: viewModel.workerProfile,
+                            currentBuilding: viewModel.currentBuilding,
+                            todaysProgress: calculateTodaysProgress(),
+                            clockedIn: viewModel.isCurrentlyClockedIn,
+                            onClockAction: handleClockAction
+                        )
+                        .frame(height: 280) // Will compress on scroll
+                        
+                        // Urgent Tasks Section
+                        if !viewModel.urgentTasks.isEmpty {
+                            WorkerUrgentTasksSection(
+                                tasks: viewModel.urgentTasks,
+                                onTaskTap: handleTaskTap
+                            )
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                        }
+                        
+                        // Current Building Section
+                        if let currentBuilding = viewModel.currentBuilding {
+                            WorkerCurrentBuildingSection(
+                                building: currentBuilding,
+                                buildingTasks: viewModel.currentBuildingTasks,
+                                onTaskTap: handleTaskTap,
+                                onBuildingTap: { showingBuildingSelector = true }
+                            )
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                        }
+                        
+                        // Today's Tasks Section
+                        WorkerTodaysTasksSection(
+                            tasks: viewModel.todaysTasks,
+                            completedTasks: viewModel.completedTasks,
+                            onTaskTap: handleTaskTap,
+                            requiresPhoto: viewModel.workerCapabilities?.requiresPhotoForSanitation ?? false
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        
+                        // Bottom spacing for Nova bar
+                        Spacer()
+                            .frame(height: 80)
+                    }
                 }
             }
-            .navigationBarHidden(true)
+            
+            // Nova Intelligence Bar (60px → 300px expanded)
+            VStack {
+                Spacer()
+                NovaIntelligenceBar(
+                    container: container,
+                    workerId: viewModel.workerProfile?.id,
+                    currentContext: generateWorkerContext()
+                )
+                .frame(height: 60) // Expandable to 300px
+            }
         }
-        .navigationViewStyle(StackNavigationViewStyle())
         .task {
             await viewModel.loadInitialData()
         }
@@ -167,6 +226,49 @@ struct WorkerDashboardMainView: View {
             currentPhotoTaskId = taskId
             showingCamera = true
         }
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func calculateTodaysProgress() -> Double {
+        guard !viewModel.todaysTasks.isEmpty else { return 0.0 }
+        let completedCount = viewModel.todaysTasks.filter { $0.isCompleted }.count
+        return Double(completedCount) / Double(viewModel.todaysTasks.count)
+    }
+    
+    private func handleClockAction() {
+        if viewModel.isCurrentlyClockedIn {
+            handleClockOut()
+        } else {
+            handleClockIn()
+        }
+    }
+    
+    private func generateWorkerContext() -> [String: Any] {
+        var context: [String: Any] = [:]
+        
+        // Worker info
+        if let profile = viewModel.workerProfile {
+            context["workerId"] = profile.id
+            context["workerName"] = profile.name
+            context["role"] = profile.role.rawValue
+        }
+        
+        // Current status
+        context["isClockedIn"] = viewModel.isCurrentlyClockedIn
+        context["currentBuilding"] = viewModel.currentBuilding?.name
+        
+        // Task progress
+        context["totalTasks"] = viewModel.todaysTasks.count
+        context["completedTasks"] = viewModel.completedTasksCount
+        context["urgentTasks"] = viewModel.urgentTasks.count
+        context["overdueTasks"] = viewModel.todaysTasks.filter { $0.isOverdue }.count
+        
+        // Performance metrics
+        context["todaysProgress"] = calculateTodaysProgress()
+        context["hoursWorked"] = viewModel.hoursWorkedToday
+        
+        return context
     }
 }
 

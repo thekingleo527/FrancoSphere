@@ -1,6 +1,6 @@
 //
 //  ClientBuildingSeeder.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Created by Shawn Magloire on 8/4/25.
 //
@@ -8,7 +8,7 @@
 
 //
 //  ClientBuildingSeeder.swift
-//  CyntientOps (formerly FrancoSphere)
+//  CyntientOps (formerly CyntientOps)
 //
 //  Phase 0B: Client-Building Structure
 //  Creates client management schema and seeds real client data

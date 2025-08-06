@@ -1,6 +1,6 @@
 
 //  OnboardingView.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Stream A: UI/UX & Spanish
 //  Mission: Create an onboarding flow for first-time users.
@@ -21,7 +21,7 @@ struct OnboardingView: View {
     @State private var currentPage = 0
     
     private let pages: [OnboardingPage] = [
-        .init(image: "globe", title: "Welcome to FrancoSphere", description: "Your all-in-one property management tool. Let's get you set up."),
+        .init(image: "globe", title: "Welcome to CyntientOps", description: "Your all-in-one property management tool. Let's get you set up."),
         .init(image: "text.bubble", title: "Choose Your Language", description: "Select your preferred language for the app interface."),
         .init(image: "hand.tap", title: "Select Your Interface", description: "Choose the interface that works best for you. You can change this later in settings."),
         .init(image: "checkmark.circle", title: "You're All Set!", description: "You are now ready to start managing your tasks efficiently.")

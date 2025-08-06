@@ -1,6 +1,6 @@
 //
 //  AdminDashboardMainView.swift  // RENAMED from AdminDashboardContainerView
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: Renamed to AdminDashboardMainView to avoid redeclaration
 //  ✅ FIXED: Renamed conflicting components with Admin prefix
@@ -15,9 +15,12 @@
 import SwiftUI
 import Combine
 
-struct AdminDashboardMainView: View {  // RENAMED from AdminDashboardContainerView
-    // MARK: - Using Actual ViewModel Only
-    @StateObject private var viewModel = AdminDashboardViewModel()
+struct AdminDashboardMainView: View {
+    // MARK: - ServiceContainer Integration
+    let container: ServiceContainer
+    
+    // MARK: - ViewModels
+    @StateObject private var viewModel: AdminDashboardViewModel
     
     // MARK: - Environment Objects
     @EnvironmentObject private var authManager: NewAuthManager
@@ -58,95 +61,101 @@ struct AdminDashboardMainView: View {  // RENAMED from AdminDashboardContainerVi
         }
     }
     
+    // MARK: - Initialization
+    
+    init(container: ServiceContainer) {
+        self.container = container
+        self._viewModel = StateObject(wrappedValue: AdminDashboardViewModel(container: container))
+    }
+    
     // MARK: - Computed Properties
     private var portfolioSummary: AdminPortfolioSummary {
         viewModel.getAdminPortfolioSummary()
     }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                // Background
-                backgroundGradient
+        ZStack {
+            // Background
+            Color.black.ignoresSafeArea()
+            
+            // Main Content with Phase 4 Exact Structure
+            VStack(spacing: 0) {
+                // Header (80px) - Fixed
+                AdminDashboardHeader(
+                    adminName: authManager.currentUser?.name ?? "Administrator",
+                    totalBuildings: viewModel.buildings.count,
+                    activeWorkers: viewModel.activeWorkers.count,
+                    criticalAlerts: portfolioSummary.criticalInsights,
+                    syncStatus: viewModel.dashboardSyncStatus
+                )
+                .frame(height: 80)
                 
-                VStack(spacing: 0) {
-                    // Header
-                    AdminMainHeaderView(  // RENAMED from AdminHeaderView
-                        adminName: authManager.currentUser?.name ?? "Administrator",
-                        syncStatus: viewModel.dashboardSyncStatus,
-                        onProfileTap: { showingProfile = true },
-                        onSettingsTap: { showingSettings = true },
-                        onRefresh: { Task { await viewModel.refreshDashboardData() } }
-                    )
-                    
-                    // Tab Bar
-                    AdminMainTabBar(selectedTab: $selectedTab)  // RENAMED from AdminTabBar
-                    
-                    // Content
-                    TabView(selection: $selectedTab) {
-                        // Overview Tab
-                        AdminOverviewTab(
-                            viewModel: viewModel,
+                // Scrollable Content
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        // Hero Metrics Card (200px)
+                        AdminHeroMetricsCard(
                             portfolioSummary: portfolioSummary,
-                            onBuildingTap: { buildingId in
-                                selectedBuildingId = buildingId
-                                showingBuildingDetail = true
-                            }
+                            buildingMetrics: viewModel.buildingMetrics,
+                            onDrillDown: { selectedTab = .overview }
                         )
-                        .tag(AdminTab.overview)
+                        .frame(height: 200)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 12)
                         
-                        // Buildings Tab
-                        AdminBuildingsTab(
-                            buildings: viewModel.buildings,
+                        // Real-time Activity Section
+                        if !viewModel.crossDashboardUpdates.isEmpty {
+                            AdminRealtimeSection(
+                                updates: viewModel.crossDashboardUpdates,
+                                onViewAll: { selectedTab = .tasks }
+                            )
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                        }
+                        
+                        // Building Performance Grid
+                        AdminBuildingPerformanceSection(
+                            buildings: viewModel.buildings.prefix(6).map { $0 },
                             buildingMetrics: viewModel.buildingMetrics,
                             onBuildingTap: { building in
                                 selectedBuildingId = building.id
-                                Task { await viewModel.fetchBuildingIntelligence(for: building.id) }
                                 showingBuildingDetail = true
-                            }
+                            },
+                            onViewAll: { selectedTab = .buildings }
                         )
-                        .tag(AdminTab.buildings)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
                         
-                        // Workers Tab
-                        AdminWorkersTab(
-                            workers: viewModel.workers,
+                        // Worker Status Overview
+                        AdminWorkerStatusSection(
                             activeWorkers: viewModel.activeWorkers,
-                            workerCapabilities: viewModel.workerCapabilities,
+                            allWorkers: viewModel.workers,
                             onWorkerTap: { worker in
                                 selectedWorker = worker
                                 showingWorkerDetail = true
-                            }
+                            },
+                            onViewAll: { selectedTab = .workers }
                         )
-                        .tag(AdminTab.workers)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
                         
-                        // Tasks Tab
-                        AdminTasksTab(
-                            tasks: viewModel.tasks,
-                            completedTasks: viewModel.completedTasks,
-                            recentCompletedTasks: viewModel.recentCompletedTasks,
-                            photoComplianceStats: viewModel.photoComplianceStats,
-                            onTaskTap: { task in
-                                selectedTaskForPhoto = task
-                                showingPhotoEvidence = true
-                            }
-                        )
-                        .tag(AdminTab.tasks)
-                        
-                        // Insights Tab
-                        AdminInsightsTab(
-                            portfolioInsights: viewModel.portfolioInsights,
-                            selectedBuildingInsights: viewModel.selectedBuildingInsights,
-                            isLoadingInsights: viewModel.isLoadingInsights
-                        )
-                        .tag(AdminTab.insights)
+                        // Bottom spacing
+                        Spacer()
+                            .frame(height: 80)
                     }
-                    .tabViewStyle(.page(indexDisplayMode: .never))
                 }
             }
-            .navigationBarHidden(true)
-            .id(refreshID)
+            
+            // Nova Intelligence Bar (bottom overlay)
+            VStack {
+                Spacer()
+                NovaAdminIntelligenceBar(
+                    container: container,
+                    adminContext: generateAdminContext()
+                )
+                .frame(height: 60)
+            }
         }
-        .navigationViewStyle(StackNavigationViewStyle())
         .task {
             await viewModel.loadDashboardData()
         }
@@ -196,6 +205,34 @@ struct AdminDashboardMainView: View {  // RENAMED from AdminDashboardContainerVi
         }
     }
     
+    // MARK: - Helper Methods
+    
+    private func generateAdminContext() -> [String: Any] {
+        var context: [String: Any] = [:]
+        
+        // Admin info
+        context["adminName"] = authManager.currentUser?.name ?? "Administrator"
+        context["role"] = "admin"
+        
+        // Portfolio overview
+        context["totalBuildings"] = viewModel.buildings.count
+        context["activeWorkers"] = viewModel.activeWorkers.count
+        context["totalWorkers"] = viewModel.workers.count
+        context["ongoingTasks"] = viewModel.tasks.filter { !$0.isCompleted }.count
+        context["completedToday"] = viewModel.completedTasks.count
+        
+        // Performance metrics
+        context["portfolioCompletion"] = portfolioSummary.completionPercentage
+        context["complianceScore"] = portfolioSummary.complianceScore
+        context["criticalAlerts"] = portfolioSummary.criticalInsights
+        
+        // Real-time status
+        context["syncStatus"] = viewModel.dashboardSyncStatus.rawValue
+        context["crossDashboardUpdates"] = viewModel.crossDashboardUpdates.count
+        
+        return context
+    }
+    
     // MARK: - Background
     private var backgroundGradient: some View {
         LinearGradient(
@@ -236,7 +273,7 @@ struct AdminMainHeaderView: View {
                     .foregroundColor(.white)
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("FrancoSphere Admin")
+                    Text("CyntientOps Admin")
                         .font(.headline)
                         .foregroundColor(.white)
                     

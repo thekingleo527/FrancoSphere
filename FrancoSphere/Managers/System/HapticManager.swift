@@ -1,6 +1,6 @@
 //
 //  HapticManager.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ V6.0: Added missing 'success' haptic feedback type.
 //

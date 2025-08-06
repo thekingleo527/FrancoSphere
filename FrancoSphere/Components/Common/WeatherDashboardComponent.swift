@@ -1,6 +1,6 @@
 //
 //  WeatherDashboardComponent.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
 //  ✅ ALIGNED: With current CoreTypes and Phase 2.1 implementation

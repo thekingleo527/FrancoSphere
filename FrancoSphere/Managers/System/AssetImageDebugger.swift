@@ -1,6 +1,6 @@
 //
 //  AssetImageDebugger.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  🔧 COMPILATION FIXED - Using BuildingService for building data
 //  ✅ Fixed: Made buildingIdToAssetName internal for access from view

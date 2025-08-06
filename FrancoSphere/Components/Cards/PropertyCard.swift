@@ -1,9 +1,9 @@
 //
 //  PropertyCard.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ UPDATED: Dark Elegance theme applied
-//  ✅ ENHANCED: Glass morphism effects using FrancoSphereDesign
+//  ✅ ENHANCED: Glass morphism effects using CyntientOpsDesign
 //  ✅ FIXED: Consistent dark theme styling
 //  ✅ ALIGNED: With CoreTypes.BuildingMetrics properties
 //
@@ -27,18 +27,18 @@ struct PropertyCard: View {
     
     var body: some View {
         Button(action: {
-            withAnimation(FrancoSphereDesign.Animations.quick) {
+            withAnimation(CyntientOpsDesign.Animations.quick) {
                 isPressed = true
             }
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation(FrancoSphereDesign.Animations.quick) {
+                withAnimation(CyntientOpsDesign.Animations.quick) {
                     isPressed = false
                 }
                 onTap()
             }
         }) {
-            HStack(spacing: FrancoSphereDesign.Spacing.md) {
+            HStack(spacing: CyntientOpsDesign.Spacing.md) {
                 buildingImage
                 buildingContent
                 Spacer()
@@ -46,14 +46,14 @@ struct PropertyCard: View {
             }
             .francoCardPadding()
             .background(
-                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
-                    .fill(FrancoSphereDesign.DashboardColors.cardBackground)
+                RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.lg)
+                    .fill(CyntientOpsDesign.DashboardColors.cardBackground)
                     .overlay(
-                        RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
-                            .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.lg)
+                            .stroke(CyntientOpsDesign.DashboardColors.borderSubtle, lineWidth: 1)
                     )
             )
-            .francoShadow(FrancoSphereDesign.Shadow.sm)
+            .francoShadow(CyntientOpsDesign.Shadow.sm)
             .scaleEffect(isPressed ? 0.98 : 1.0)
         }
         .buttonStyle(PlainButtonStyle())
@@ -66,17 +66,17 @@ struct PropertyCard: View {
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: imageSize, height: imageSize)
-                    .cornerRadius(FrancoSphereDesign.CornerRadius.sm)
+                    .cornerRadius(CyntientOpsDesign.CornerRadius.sm)
                     .overlay(
-                        RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.sm)
-                            .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.sm)
+                            .stroke(CyntientOpsDesign.DashboardColors.borderSubtle, lineWidth: 1)
                     )
             } else {
                 // Fallback placeholder with gradient
-                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.sm)
+                RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.sm)
                     .fill(
                         LinearGradient(
-                            colors: FrancoSphereDesign.DashboardColors.workerHeroGradient.map { $0.opacity(0.3) },
+                            colors: CyntientOpsDesign.DashboardColors.workerHeroGradient.map { $0.opacity(0.3) },
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -85,21 +85,21 @@ struct PropertyCard: View {
                     .overlay(
                         Image(systemName: "building.2.fill")
                             .font(.system(size: imageSize * 0.4))
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.sm)
-                            .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.sm)
+                            .stroke(CyntientOpsDesign.DashboardColors.borderSubtle, lineWidth: 1)
                     )
             }
         }
     }
     
     private var buildingContent: some View {
-        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.xs) {
+        VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.xs) {
             Text(building.name)
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 .lineLimit(2)
             
             switch mode {
@@ -114,78 +114,78 @@ struct PropertyCard: View {
     }
     
     private var workerContent: some View {
-        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.xs) {
+        VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.xs) {
             if let metrics = metrics {
                 HStack {
                     Label("Portfolio", systemImage: "building.2.fill")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     
                     Spacer()
                     
                     Text(metrics.pendingTasks > 0 ? "\(metrics.pendingTasks) remaining" : "All complete")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
                         .foregroundColor(metrics.pendingTasks > 0 ?
-                            FrancoSphereDesign.DashboardColors.info :
-                            FrancoSphereDesign.DashboardColors.success
+                            CyntientOpsDesign.DashboardColors.info :
+                            CyntientOpsDesign.DashboardColors.success
                         )
                 }
                 
                 // Progress bar
                 FrancoMetricsProgress(value: metrics.completionRate, role: .worker)
-                    .frame(height: FrancoSphereDesign.MetricsDisplay.progressBarHeight)
+                    .frame(height: CyntientOpsDesign.MetricsDisplay.progressBarHeight)
             } else {
                 HStack {
                     ProgressView()
                         .scaleEffect(0.8)
                     Text("Loading...")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 }
             }
         }
     }
     
     private var adminContent: some View {
-        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.xs) {
+        VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.xs) {
             if let metrics = metrics {
                 HStack {
                     Label("Efficiency", systemImage: "chart.line.uptrend.xyaxis")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     
                     Spacer()
                     
                     Text("\(Int(metrics.maintenanceEfficiency * 100))%")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
                         .fontWeight(.semibold)
                         .foregroundColor(efficiencyColor)
                 }
                 
                 HStack {
                     Label("Workers", systemImage: "person.3.fill")
-                        .francoTypography(FrancoSphereDesign.Typography.caption2)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption2)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     
                     Spacer()
                     
                     Text("\(metrics.activeWorkers)")
-                        .francoTypography(FrancoSphereDesign.Typography.caption2)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption2)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
                 
                 if metrics.overdueTasks > 0 {
                     HStack {
                         Label("Overdue", systemImage: "exclamationmark.triangle.fill")
-                            .francoTypography(FrancoSphereDesign.Typography.caption2)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
+                            .francoTypography(CyntientOpsDesign.Typography.caption2)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.critical)
                         
                         Spacer()
                         
                         Text("\(metrics.overdueTasks)")
-                            .francoTypography(FrancoSphereDesign.Typography.caption2)
+                            .francoTypography(CyntientOpsDesign.Typography.caption2)
                             .fontWeight(.semibold)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.critical)
                     }
                 }
             } else {
@@ -196,37 +196,37 @@ struct PropertyCard: View {
     }
     
     private var clientContent: some View {
-        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.xs) {
+        VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.xs) {
             if let metrics = metrics {
                 HStack {
                     Label("Compliance", systemImage: "checkmark.shield.fill")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     
                     Spacer()
                     
                     Text(metrics.isCompliant ? "Compliant" : "Review Needed")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
                         .fontWeight(.medium)
                         .foregroundColor(metrics.isCompliant ?
-                            FrancoSphereDesign.DashboardColors.compliant :
-                            FrancoSphereDesign.DashboardColors.warning
+                            CyntientOpsDesign.DashboardColors.compliant :
+                            CyntientOpsDesign.DashboardColors.warning
                         )
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
                         .background(
                             Capsule()
                                 .fill((metrics.isCompliant ?
-                                    FrancoSphereDesign.DashboardColors.compliant :
-                                    FrancoSphereDesign.DashboardColors.warning
+                                    CyntientOpsDesign.DashboardColors.compliant :
+                                    CyntientOpsDesign.DashboardColors.warning
                                 ).opacity(0.15))
                         )
                 }
                 
                 HStack {
                     Label("Score", systemImage: "star.fill")
-                        .francoTypography(FrancoSphereDesign.Typography.caption2)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption2)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     
                     Spacer()
                     
@@ -236,28 +236,28 @@ struct PropertyCard: View {
                                 .font(.system(size: 10))
                                 .foregroundColor(
                                     index < Int(metrics.overallScore) ?
-                                    FrancoSphereDesign.DashboardColors.warning :
-                                    FrancoSphereDesign.DashboardColors.inactive
+                                    CyntientOpsDesign.DashboardColors.warning :
+                                    CyntientOpsDesign.DashboardColors.inactive
                                 )
                         }
                         Text(String(format: "%.1f", metrics.overallScore))
-                            .francoTypography(FrancoSphereDesign.Typography.caption2)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            .francoTypography(CyntientOpsDesign.Typography.caption2)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     }
                 }
                 
                 if metrics.urgentTasksCount > 0 {
                     HStack {
                         Label("Urgent", systemImage: "flag.fill")
-                            .francoTypography(FrancoSphereDesign.Typography.caption2)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                            .francoTypography(CyntientOpsDesign.Typography.caption2)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
                         
                         Spacer()
                         
                         Text("\(metrics.urgentTasksCount)")
-                            .francoTypography(FrancoSphereDesign.Typography.caption2)
+                            .francoTypography(CyntientOpsDesign.Typography.caption2)
                             .fontWeight(.semibold)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
                     }
                 }
             } else {
@@ -270,11 +270,11 @@ struct PropertyCard: View {
     private var chevron: some View {
         Image(systemName: "chevron.right")
             .font(.caption)
-            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+            .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
             .padding(8)
             .background(
                 Circle()
-                    .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                    .fill(CyntientOpsDesign.DashboardColors.glassOverlay)
             )
     }
     
@@ -300,7 +300,7 @@ struct PropertyCard: View {
         case "17": return "178_Spring_Street"
         case "18": return "36_Walker_Street"
         case "19": return "115_7th_Avenue"
-        case "20": return "FrancoSphere_HQ"
+        case "20": return "CyntientOps_HQ"
         default:
             print("⚠️ No image found for building ID: \(building.id)")
             return "building_placeholder"
@@ -308,8 +308,8 @@ struct PropertyCard: View {
     }
     
     private var efficiencyColor: Color {
-        guard let metrics = metrics else { return FrancoSphereDesign.DashboardColors.inactive }
-        return FrancoSphereDesign.EnumColors.trendDirection(
+        guard let metrics = metrics else { return CyntientOpsDesign.DashboardColors.inactive }
+        return CyntientOpsDesign.EnumColors.trendDirection(
             metrics.maintenanceEfficiency >= 0.9 ? .up :
             metrics.maintenanceEfficiency >= 0.7 ? .stable : .down
         )
@@ -325,39 +325,39 @@ struct MiniPropertyCard: View {
     
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: FrancoSphereDesign.Spacing.sm) {
+            HStack(spacing: CyntientOpsDesign.Spacing.sm) {
                 // Building icon
                 Image(systemName: "building.2.fill")
                     .font(.title3)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryAction)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryAction)
                     .frame(width: 40, height: 40)
                     .background(
                         Circle()
-                            .fill(FrancoSphereDesign.DashboardColors.secondaryAction.opacity(0.15))
+                            .fill(CyntientOpsDesign.DashboardColors.secondaryAction.opacity(0.15))
                     )
                 
                 // Content
                 VStack(alignment: .leading, spacing: 2) {
                     Text(building.name)
-                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         .lineLimit(1)
                     
                     Text(subtitle)
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
             }
-            .padding(FrancoSphereDesign.Spacing.sm)
+            .padding(CyntientOpsDesign.Spacing.sm)
             .background(
-                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.md)
-                    .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.md)
+                    .fill(CyntientOpsDesign.DashboardColors.glassOverlay)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -369,7 +369,7 @@ struct MiniPropertyCard: View {
 struct PropertyCard_Previews: PreviewProvider {
     static var previews: some View {
         ScrollView {
-            VStack(spacing: FrancoSphereDesign.Spacing.md) {
+            VStack(spacing: CyntientOpsDesign.Spacing.md) {
                 // Worker mode
                 PropertyCard(
                     building: NamedCoordinate(
@@ -454,8 +454,8 @@ struct PropertyCard_Previews: PreviewProvider {
                 // Mini cards
                 VStack(spacing: 8) {
                     Text("Mini Cards")
-                        .francoTypography(FrancoSphereDesign.Typography.headline)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.headline)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     
                     MiniPropertyCard(
                         building: NamedCoordinate(
@@ -483,7 +483,7 @@ struct PropertyCard_Previews: PreviewProvider {
             }
             .padding()
         }
-        .background(FrancoSphereDesign.DashboardColors.baseBackground)
+        .background(CyntientOpsDesign.DashboardColors.baseBackground)
         .preferredColorScheme(.dark)
     }
 }

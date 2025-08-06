@@ -1,6 +1,6 @@
 
 //  ClockInService.swift
-//  CyntientOps (formerly FrancoSphere)
+//  CyntientOps (formerly CyntientOps)
 //
 //  Phase 0.2: ClockInService ObservableObject Wrapper
 //  Wraps the existing ClockInManager actor for SwiftUI compatibility

@@ -1,6 +1,6 @@
 //
 //  WorkerRoutineViewModel.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  🔧 SURGICAL FIXES: All compilation errors resolved
 //  ✅ FIXED: File structure and scope issues

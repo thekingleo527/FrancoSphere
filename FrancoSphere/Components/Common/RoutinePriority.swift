@@ -1,6 +1,6 @@
 //
 //  RoutinePriority.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ GRDB MIGRATION: Updated from GRDBManager to GRDBManager
 //  ✅ PRESERVED: All real-world building routine data

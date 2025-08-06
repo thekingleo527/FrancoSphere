@@ -1,6 +1,6 @@
 //
 //  EnvironmentConfig.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Environment configuration for different deployment targets
 //

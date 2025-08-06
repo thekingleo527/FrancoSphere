@@ -1,6 +1,6 @@
 //
 //  NovaInteractionView.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
 //  ✅ FIXED: Line 846 - Added missing 'try' for throwing function

@@ -1,6 +1,6 @@
 //
 //  WorkerContextEngine.swift
-//  FrancoSphere v6.0 - CONSOLIDATED VERSION
+//  CyntientOps v6.0 - CONSOLIDATED VERSION
 //
 //  ✅ FIXED: Clock-in status tuple handling corrected
 //  ✅ FIXED: All compilation errors resolved

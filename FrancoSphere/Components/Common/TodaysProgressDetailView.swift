@@ -1,6 +1,6 @@
 //
 //  TodaysProgressDetailView.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ F6: Navigation destination for "Today's Progress" taps
 //  Shows detailed progress analytics with completed vs pending tasks grid

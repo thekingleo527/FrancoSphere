@@ -1,13 +1,13 @@
 //
 //  SecurityManager.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Created by Shawn Magloire on 7/4/25.
 //
 
 //
 //  SecurityManager.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  🔐 COMPLETE SECURITY FRAMEWORK
 //  ✅ QuickBooks token management with OAuth 2.0
@@ -18,19 +18,19 @@
 //
 
 import Foundation
-// FrancoSphere Types Import
+// CyntientOps Types Import
 // (This comment helps identify our import)
 
 import Security
-// FrancoSphere Types Import
+// CyntientOps Types Import
 // (This comment helps identify our import)
 
 import CryptoKit
-// FrancoSphere Types Import
+// CyntientOps Types Import
 // (This comment helps identify our import)
 
 import UIKit
-// FrancoSphere Types Import
+// CyntientOps Types Import
 // (This comment helps identify our import)
 
 // MARK: - SecurityManager Actor
@@ -204,7 +204,7 @@ actor SecurityManager {
             privacyView.backgroundColor = .systemBackground
             privacyView.tag = 999 // For removal later
             
-            // Add FrancoSphere logo
+            // Add CyntientOps logo
             let logoImageView = UIImageView(image: UIImage(named: "AppIcon"))
             logoImageView.contentMode = .scaleAspectFit
             logoImageView.translatesAutoresizingMaskIntoConstraints = false
@@ -212,7 +212,7 @@ actor SecurityManager {
             
             // Add "Protected" label
             let protectedLabel = UILabel()
-            protectedLabel.text = "FrancoSphere"
+            protectedLabel.text = "CyntientOps"
             protectedLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
             protectedLabel.textColor = .label
             protectedLabel.textAlignment = .center

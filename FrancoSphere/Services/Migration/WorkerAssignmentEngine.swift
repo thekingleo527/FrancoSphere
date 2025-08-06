@@ -1,6 +1,6 @@
 //
 //  WorkerAssignmentEngine.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ GRDB MIGRATION: Complete migration from GRDBManager to GRDBManager
 //  ✅ PRESERVED: All worker assignment logic and functionality

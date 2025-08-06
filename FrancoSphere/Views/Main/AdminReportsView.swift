@@ -1,6 +1,6 @@
 //
 //  AdminReportsView.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Created by Shawn Magloire on 8/3/25.
 //
@@ -8,7 +8,7 @@
 
 ///
 //  AdminReportsView.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ COMPLETE: Following established admin panel patterns
 //  ✅ INTELLIGENT: Report insights and recommendations
@@ -89,13 +89,13 @@ struct AdminReportsView: View {
         
         var color: Color {
             switch self {
-            case .comprehensive: return FrancoSphereDesign.DashboardColors.primaryAction
-            case .compliance: return FrancoSphereDesign.DashboardColors.warning
-            case .performance: return FrancoSphereDesign.DashboardColors.success
-            case .financial: return FrancoSphereDesign.DashboardColors.info
-            case .operations: return FrancoSphereDesign.DashboardColors.tertiaryAction
-            case .executive: return FrancoSphereDesign.DashboardColors.critical
-            case .custom: return FrancoSphereDesign.DashboardColors.secondaryAction
+            case .comprehensive: return CyntientOpsDesign.DashboardColors.primaryAction
+            case .compliance: return CyntientOpsDesign.DashboardColors.warning
+            case .performance: return CyntientOpsDesign.DashboardColors.success
+            case .financial: return CyntientOpsDesign.DashboardColors.info
+            case .operations: return CyntientOpsDesign.DashboardColors.tertiaryAction
+            case .executive: return CyntientOpsDesign.DashboardColors.critical
+            case .custom: return CyntientOpsDesign.DashboardColors.secondaryAction
             }
         }
     }
@@ -190,7 +190,7 @@ struct AdminReportsView: View {
     var body: some View {
         ZStack {
             // Dark Elegance Background
-            FrancoSphereDesign.DashboardColors.baseBackground
+            CyntientOpsDesign.DashboardColors.baseBackground
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
@@ -248,7 +248,7 @@ struct AdminReportsView: View {
                         onNavigate: handleIntelligenceNavigation
                     )
                     .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .animation(FrancoSphereDesign.Animations.spring, value: intelligencePanelState)
+                    .animation(CyntientOpsDesign.Animations.spring, value: intelligencePanelState)
                 }
             }
             
@@ -345,17 +345,17 @@ struct AdminReportsView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Reports & Analytics")
-                        .francoTypography(FrancoSphereDesign.Typography.dashboardTitle)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.dashboardTitle)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     
                     HStack(spacing: 8) {
                         Text("\(reportService.totalReportsGenerated)")
-                            .francoTypography(FrancoSphereDesign.Typography.headline)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                            .francoTypography(CyntientOpsDesign.Typography.headline)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.success)
                         
                         Text("reports generated")
-                            .francoTypography(FrancoSphereDesign.Typography.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                            .francoTypography(CyntientOpsDesign.Typography.caption)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                         
                         if reportGen.isGenerating {
                             ReportGeneratingIndicator()
@@ -395,14 +395,14 @@ struct AdminReportsView: View {
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .font(.title3)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
                 }
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
             
             Divider()
-                .background(FrancoSphereDesign.DashboardColors.borderSubtle)
+                .background(CyntientOpsDesign.DashboardColors.borderSubtle)
         }
     }
     
@@ -411,8 +411,8 @@ struct AdminReportsView: View {
     private var quickReportSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Quick Report")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             VStack(spacing: 12) {
                 // Report type selector
@@ -435,8 +435,8 @@ struct AdminReportsView: View {
                 // Date range selector
                 HStack {
                     Text("Period:")
-                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     
                     Menu {
                         ForEach(DateRange.allCases, id: \.self) { range in
@@ -447,16 +447,16 @@ struct AdminReportsView: View {
                     } label: {
                         HStack {
                             Text(selectedDateRange.rawValue)
-                                .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                                .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                             
                             Image(systemName: "chevron.down")
                                 .font(.caption)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
-                        .background(FrancoSphereDesign.DashboardColors.cardBackground)
+                        .background(CyntientOpsDesign.DashboardColors.cardBackground)
                         .cornerRadius(8)
                     }
                     
@@ -469,7 +469,7 @@ struct AdminReportsView: View {
                             Image(systemName: "bolt.fill")
                             Text("Generate")
                         }
-                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                        .francoTypography(CyntientOpsDesign.Typography.subheadline)
                         .fontWeight(.medium)
                     }
                     .buttonStyle(ReportActionButtonStyle(color: selectedReportType.color))
@@ -486,16 +486,16 @@ struct AdminReportsView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Label("Scheduled Reports", systemImage: "calendar.badge.clock")
-                    .francoTypography(FrancoSphereDesign.Typography.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Spacer()
                 
                 Button("Manage") {
                     showingScheduleSetup = true
                 }
-                .francoTypography(FrancoSphereDesign.Typography.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                .francoTypography(CyntientOpsDesign.Typography.caption)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
             }
             
             ScrollView(.horizontal, showsIndicators: false) {
@@ -523,8 +523,8 @@ struct AdminReportsView: View {
             // Section header with search
             HStack {
                 Text("Report Library")
-                    .francoTypography(FrancoSphereDesign.Typography.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Spacer()
                 
@@ -540,34 +540,34 @@ struct AdminReportsView: View {
                 } label: {
                     HStack(spacing: 4) {
                         Text(filterCategory.rawValue)
-                            .francoTypography(FrancoSphereDesign.Typography.caption)
+                            .francoTypography(CyntientOpsDesign.Typography.caption)
                             .fontWeight(.medium)
                         Image(systemName: "chevron.down")
                             .font(.caption2)
                     }
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
                 }
             }
             
             // Search bar
             HStack {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 
                 TextField("Search reports...", text: $searchText)
                     .textFieldStyle(PlainTextFieldStyle())
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 if !searchText.isEmpty {
                     Button(action: { searchText = "" }) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     }
                 }
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(FrancoSphereDesign.DashboardColors.cardBackground)
+            .background(CyntientOpsDesign.DashboardColors.cardBackground)
             .cornerRadius(8)
             
             // Reports list
@@ -598,8 +598,8 @@ struct AdminReportsView: View {
                                 Image(systemName: "doc.on.doc")
                                 Text("View All \(filteredReports.count) Reports")
                             }
-                            .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                            .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
                         }
                         .padding(.top, 8)
                     }
@@ -616,16 +616,16 @@ struct AdminReportsView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Report Templates")
-                    .francoTypography(FrancoSphereDesign.Typography.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Spacer()
                 
                 Button("View All") {
                     showingTemplateLibrary = true
                 }
-                .francoTypography(FrancoSphereDesign.Typography.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                .francoTypography(CyntientOpsDesign.Typography.caption)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
             }
             
             LazyVGrid(columns: [
@@ -648,7 +648,7 @@ struct AdminReportsView: View {
     
     private var reportGenerationOverlay: some View {
         ZStack {
-            FrancoSphereDesign.DashboardColors.baseBackground
+            CyntientOpsDesign.DashboardColors.baseBackground
                 .opacity(0.95)
                 .ignoresSafeArea()
             
@@ -656,30 +656,30 @@ struct AdminReportsView: View {
                 // Progress indicator
                 ZStack {
                     Circle()
-                        .stroke(FrancoSphereDesign.DashboardColors.cardBackground, lineWidth: 8)
+                        .stroke(CyntientOpsDesign.DashboardColors.cardBackground, lineWidth: 8)
                         .frame(width: 100, height: 100)
                     
                     Circle()
                         .trim(from: 0, to: reportGen.generationProgress)
-                        .stroke(FrancoSphereDesign.DashboardColors.primaryAction, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                        .stroke(CyntientOpsDesign.DashboardColors.primaryAction, style: StrokeStyle(lineWidth: 8, lineCap: .round))
                         .frame(width: 100, height: 100)
                         .rotationEffect(.degrees(-90))
                         .animation(.easeInOut, value: reportGen.generationProgress)
                     
                     Text("\(Int(reportGen.generationProgress * 100))%")
-                        .francoTypography(FrancoSphereDesign.Typography.title2)
+                        .francoTypography(CyntientOpsDesign.Typography.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
                 
                 VStack(spacing: 8) {
                     Text("Generating Report")
-                        .francoTypography(FrancoSphereDesign.Typography.headline)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.headline)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     
                     Text(reportGen.currentStep)
-                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                         .multilineTextAlignment(.center)
                 }
                 
@@ -687,13 +687,13 @@ struct AdminReportsView: View {
                     reportGen.cancelGeneration()
                     isGenerating = false
                 }
-                .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
+                .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.critical)
             }
             .padding(32)
             .background(
-                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.xl)
-                    .fill(FrancoSphereDesign.DashboardColors.cardBackground)
+                RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.xl)
+                    .fill(CyntientOpsDesign.DashboardColors.cardBackground)
                     .shadow(radius: 20)
             )
         }
@@ -893,7 +893,7 @@ struct CollapsibleReportsHeroWrapper: View {
                     scheduledCount: scheduledReports,
                     lastGenerated: lastGenerated,
                     onExpand: {
-                        withAnimation(FrancoSphereDesign.Animations.spring) {
+                        withAnimation(CyntientOpsDesign.Animations.spring) {
                             isCollapsed = false
                         }
                     }
@@ -914,15 +914,15 @@ struct CollapsibleReportsHeroWrapper: View {
                     
                     // Collapse button
                     Button(action: {
-                        withAnimation(FrancoSphereDesign.Animations.spring) {
+                        withAnimation(CyntientOpsDesign.Animations.spring) {
                             isCollapsed = true
                         }
                     }) {
                         Image(systemName: "chevron.up")
                             .font(.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                             .padding(8)
-                            .background(Circle().fill(FrancoSphereDesign.DashboardColors.glassOverlay))
+                            .background(Circle().fill(CyntientOpsDesign.DashboardColors.glassOverlay))
                     }
                     .padding(8)
                 }
@@ -944,7 +944,7 @@ struct MinimalReportsHeroCard: View {
             HStack(spacing: 12) {
                 // Status indicator
                 Circle()
-                    .fill(FrancoSphereDesign.DashboardColors.info)
+                    .fill(CyntientOpsDesign.DashboardColors.info)
                     .frame(width: 8, height: 8)
                 
                 // Reports summary
@@ -952,20 +952,20 @@ struct MinimalReportsHeroCard: View {
                     ReportMetricPill(
                         value: "\(totalReports)",
                         label: "Reports",
-                        color: FrancoSphereDesign.DashboardColors.primaryAction
+                        color: CyntientOpsDesign.DashboardColors.primaryAction
                     )
                     
                     ReportMetricPill(
                         value: "\(scheduledCount)",
                         label: "Scheduled",
-                        color: FrancoSphereDesign.DashboardColors.info
+                        color: CyntientOpsDesign.DashboardColors.info
                     )
                     
                     if let last = lastGenerated {
                         ReportMetricPill(
                             value: last.formatted(.relative(presentation: .named)),
                             label: "Last",
-                            color: FrancoSphereDesign.DashboardColors.secondaryText
+                            color: CyntientOpsDesign.DashboardColors.secondaryText
                         )
                     }
                 }
@@ -975,7 +975,7 @@ struct MinimalReportsHeroCard: View {
                 // Expand indicator
                 Image(systemName: "chevron.down")
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -1019,17 +1019,17 @@ struct ReportsHeroStatusCard: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Reporting Status")
-                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     
                     HStack(alignment: .bottom, spacing: 8) {
                         Text("\(totalReports)")
-                            .francoTypography(FrancoSphereDesign.Typography.largeTitle)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                            .francoTypography(CyntientOpsDesign.Typography.largeTitle)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
                         
                         Text("reports generated")
-                            .francoTypography(FrancoSphereDesign.Typography.body)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                            .francoTypography(CyntientOpsDesign.Typography.body)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     }
                 }
                 
@@ -1038,12 +1038,12 @@ struct ReportsHeroStatusCard: View {
                 VStack {
                     Image(systemName: "doc.text.fill")
                         .font(.system(size: 32))
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
                     
                     if let last = lastGenerated {
                         Text("Updated \(last.formatted(.relative(presentation: .named)))")
-                            .francoTypography(FrancoSphereDesign.Typography.caption2)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                            .francoTypography(CyntientOpsDesign.Typography.caption2)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     }
                 }
             }
@@ -1052,8 +1052,8 @@ struct ReportsHeroStatusCard: View {
             if !favoriteReports.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Favorite Reports")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
@@ -1076,28 +1076,28 @@ struct ReportsHeroStatusCard: View {
                 title: "Scheduled",
                 value: "\(scheduledReports)",
                 icon: "calendar.badge.clock",
-                color: FrancoSphereDesign.DashboardColors.info
+                color: CyntientOpsDesign.DashboardColors.info
             )
             
             ReportMetricCard(
                 title: "Avg Time",
                 value: "\(Int(avgGenerationTime))s",
                 icon: "timer",
-                color: FrancoSphereDesign.DashboardColors.success
+                color: CyntientOpsDesign.DashboardColors.success
             )
             
             ReportMetricCard(
                 title: "This Month",
                 value: "\(ReportService.shared.monthlyReportCount)",
                 icon: "calendar",
-                color: FrancoSphereDesign.DashboardColors.warning
+                color: CyntientOpsDesign.DashboardColors.warning
             )
             
             ReportMetricCard(
                 title: "Templates",
                 value: "\(ReportService.shared.reportTemplates.count)",
                 icon: "doc.on.doc",
-                color: FrancoSphereDesign.DashboardColors.tertiaryAction
+                color: CyntientOpsDesign.DashboardColors.tertiaryAction
             )
         }
     }
@@ -1106,24 +1106,24 @@ struct ReportsHeroStatusCard: View {
         HStack(spacing: 12) {
             Button(action: onGenerateNow) {
                 Label("Generate", systemImage: "doc.badge.plus")
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
                     .fontWeight(.medium)
             }
-            .buttonStyle(ReportActionButtonStyle(color: FrancoSphereDesign.DashboardColors.primaryAction))
+            .buttonStyle(ReportActionButtonStyle(color: CyntientOpsDesign.DashboardColors.primaryAction))
             
             Button(action: onSchedule) {
                 Label("Schedule", systemImage: "calendar")
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
                     .fontWeight(.medium)
             }
-            .buttonStyle(ReportActionButtonStyle(color: FrancoSphereDesign.DashboardColors.info))
+            .buttonStyle(ReportActionButtonStyle(color: CyntientOpsDesign.DashboardColors.info))
             
             Button(action: onTemplates) {
                 Label("Templates", systemImage: "doc.on.doc")
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
                     .fontWeight(.medium)
             }
-            .buttonStyle(ReportActionButtonStyle(color: FrancoSphereDesign.DashboardColors.success))
+            .buttonStyle(ReportActionButtonStyle(color: CyntientOpsDesign.DashboardColors.success))
         }
     }
 }
@@ -1142,7 +1142,7 @@ struct ReportTypeChip: View {
                     .font(.caption)
                 
                 Text(type.rawValue)
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
                     .fontWeight(.medium)
             }
             .foregroundColor(isSelected ? .white : type.color)
@@ -1174,13 +1174,13 @@ struct ScheduledReportCard: View {
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(schedule.name)
-                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                        .francoTypography(CyntientOpsDesign.Typography.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     
                     Text(schedule.frequency.displayText)
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 }
                 
                 Spacer()
@@ -1196,23 +1196,23 @@ struct ScheduledReportCard: View {
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 }
             }
             
             HStack {
                 Label("Next: \(schedule.nextRun.formatted(.relative(presentation: .named)))",
                       systemImage: "clock")
-                    .francoTypography(FrancoSphereDesign.Typography.caption2)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.caption2)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 
                 Spacer()
                 
                 if schedule.isEnabled {
                     Text("ACTIVE")
-                        .francoTypography(FrancoSphereDesign.Typography.caption2)
+                        .francoTypography(CyntientOpsDesign.Typography.caption2)
                         .fontWeight(.semibold)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.success)
                 }
             }
         }
@@ -1238,22 +1238,22 @@ struct ReportRowCard: View {
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(report.name)
-                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                        .francoTypography(CyntientOpsDesign.Typography.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         .lineLimit(1)
                     
                     HStack(spacing: 8) {
                         Text(report.generatedDate.formatted(date: .abbreviated, time: .shortened))
-                            .francoTypography(FrancoSphereDesign.Typography.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                            .francoTypography(CyntientOpsDesign.Typography.caption)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                         
                         Text("•")
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                         
                         Text(report.fileSize)
-                            .francoTypography(FrancoSphereDesign.Typography.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                            .francoTypography(CyntientOpsDesign.Typography.caption)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     }
                 }
                 
@@ -1263,13 +1263,13 @@ struct ReportRowCard: View {
                     Button(action: onFavorite) {
                         Image(systemName: report.isFavorite ? "star.fill" : "star")
                             .font(.caption)
-                            .foregroundColor(report.isFavorite ? .yellow : FrancoSphereDesign.DashboardColors.tertiaryText)
+                            .foregroundColor(report.isFavorite ? .yellow : CyntientOpsDesign.DashboardColors.tertiaryText)
                     }
                     
                     Button(action: onExport) {
                         Image(systemName: "square.and.arrow.up")
                             .font(.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
                     }
                 }
             }
@@ -1292,14 +1292,14 @@ struct TemplateCard: View {
                 
                 VStack(spacing: 4) {
                     Text(template.name)
-                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
                     
                     Text("\(template.usageCount) uses")
-                        .francoTypography(FrancoSphereDesign.Typography.caption2)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption2)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 }
             }
             .frame(maxWidth: .infinity)
@@ -1316,11 +1316,11 @@ struct EmptyReportsState: View {
         VStack(spacing: 12) {
             Image(systemName: "doc.text")
                 .font(.largeTitle)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
             
             Text("No \(category.rawValue.lowercased())")
-                .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 32)
@@ -1336,13 +1336,13 @@ struct FavoriteReportChip: View {
                 .font(.caption2)
             
             Text(report.name)
-                .francoTypography(FrancoSphereDesign.Typography.caption2)
+                .francoTypography(CyntientOpsDesign.Typography.caption2)
                 .lineLimit(1)
         }
-        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(FrancoSphereDesign.DashboardColors.cardBackground)
+        .background(CyntientOpsDesign.DashboardColors.cardBackground)
         .cornerRadius(6)
     }
 }
@@ -1361,7 +1361,7 @@ struct ReportMetricPill: View {
             
             Text(label)
                 .font(.caption2)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
         }
     }
 }
@@ -1379,21 +1379,21 @@ struct ReportMetricCard: View {
                 .foregroundColor(color)
             
             Text(value)
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             Text(title)
-                .francoTypography(FrancoSphereDesign.Typography.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                .francoTypography(CyntientOpsDesign.Typography.caption)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.md)
+            RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.md)
                 .fill(color.opacity(0.1))
                 .overlay(
-                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.md)
+                    RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.md)
                         .stroke(color.opacity(0.3), lineWidth: 1)
                 )
         )
@@ -1406,15 +1406,15 @@ struct ReportGeneratingIndicator: View {
     var body: some View {
         HStack(spacing: 4) {
             Circle()
-                .fill(FrancoSphereDesign.DashboardColors.warning)
+                .fill(CyntientOpsDesign.DashboardColors.warning)
                 .frame(width: 6, height: 6)
                 .scaleEffect(isAnimating ? 1.2 : 1.0)
                 .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true), value: isAnimating)
             
             Text("GENERATING")
-                .francoTypography(FrancoSphereDesign.Typography.caption2)
+                .francoTypography(CyntientOpsDesign.Typography.caption2)
                 .fontWeight(.semibold)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
         }
         .onAppear { isAnimating = true }
     }
@@ -1456,23 +1456,23 @@ struct ReportIntelligencePanel: View {
     var body: some View {
         VStack(spacing: 0) {
             Rectangle()
-                .fill(FrancoSphereDesign.DashboardColors.adminPrimary.opacity(0.3))
+                .fill(CyntientOpsDesign.DashboardColors.adminPrimary.opacity(0.3))
                 .frame(height: 1)
             
             HStack(spacing: 12) {
                 // Nova AI indicator
                 ZStack {
                     Circle()
-                        .fill(FrancoSphereDesign.DashboardColors.adminPrimary.opacity(0.2))
+                        .fill(CyntientOpsDesign.DashboardColors.adminPrimary.opacity(0.2))
                         .frame(width: 24, height: 24)
                         .scaleEffect(isProcessing ? 1.2 : 1.0)
                         .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true),
                                  value: isProcessing)
                     
                     Text("AI")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
                         .fontWeight(.bold)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.adminPrimary)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.adminPrimary)
                 }
                 
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -1491,16 +1491,16 @@ struct ReportIntelligencePanel: View {
                             Image(systemName: "chevron.up")
                                 .font(.caption)
                             Text("MORE")
-                                .francoTypography(FrancoSphereDesign.Typography.caption2)
+                                .francoTypography(CyntientOpsDesign.Typography.caption2)
                         }
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.adminPrimary)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.adminPrimary)
                         .frame(width: 44, height: 60)
                         .background(
                             RoundedRectangle(cornerRadius: 8)
-                                .fill(FrancoSphereDesign.DashboardColors.adminPrimary.opacity(0.1))
+                                .fill(CyntientOpsDesign.DashboardColors.adminPrimary.opacity(0.1))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8)
-                                        .stroke(FrancoSphereDesign.DashboardColors.adminPrimary.opacity(0.3),
+                                        .stroke(CyntientOpsDesign.DashboardColors.adminPrimary.opacity(0.3),
                                               lineWidth: 1)
                                 )
                         )
@@ -1510,8 +1510,8 @@ struct ReportIntelligencePanel: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
             .background(
-                FrancoSphereDesign.DashboardColors.cardBackground
-                    .overlay(FrancoSphereDesign.DashboardColors.glassOverlay)
+                CyntientOpsDesign.DashboardColors.cardBackground
+                    .overlay(CyntientOpsDesign.DashboardColors.glassOverlay)
             )
         }
     }
@@ -1539,15 +1539,15 @@ struct ReportInsightCard: View {
                         .frame(width: 6, height: 6)
                     
                     Text(insight.priority.rawValue.capitalized)
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
                         .fontWeight(.semibold)
                         .foregroundColor(priorityColor)
                 }
                 
                 Text(insight.title)
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     .lineLimit(2)
                 
                 if let action = insight.recommendedAction {
@@ -1555,9 +1555,9 @@ struct ReportInsightCard: View {
                         Image(systemName: "arrow.right")
                             .font(.caption2)
                         Text(action)
-                            .francoTypography(FrancoSphereDesign.Typography.caption2)
+                            .francoTypography(CyntientOpsDesign.Typography.caption2)
                     }
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
                 }
             }
             .padding(12)
@@ -1575,7 +1575,7 @@ struct ReportInsightCard: View {
     }
     
     private var priorityColor: Color {
-        FrancoSphereDesign.EnumColors.aiPriority(insight.priority)
+        CyntientOpsDesign.EnumColors.aiPriority(insight.priority)
     }
 }
 

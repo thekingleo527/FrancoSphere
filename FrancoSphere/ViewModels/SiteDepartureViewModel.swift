@@ -1,6 +1,6 @@
 //
 //  SiteDepartureViewModel.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ViewModel for managing site departure checklist and verification
 //

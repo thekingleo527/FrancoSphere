@@ -1,6 +1,6 @@
 //
 //  WorkerProfileView.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ UPDATED: Full Dark Elegance theme implementation
 //  ✅ GLASS MORPHISM: Complete integration with AdaptiveGlassModifier
@@ -17,7 +17,7 @@ struct WorkerProfileView: View {
     var body: some View {
         ZStack {
             // Dark elegant background
-            FrancoSphereDesign.DashboardGradients.backgroundGradient
+            CyntientOpsDesign.DashboardGradients.backgroundGradient
                 .ignoresSafeArea()
             
             ScrollView {
@@ -85,21 +85,21 @@ struct ProfileHeaderView: View {
                     } placeholder: {
                         Image(systemName: "person.circle.fill")
                             .font(.system(size: 80))
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.workerPrimary)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.workerPrimary)
                     }
                 } else {
                     Image(systemName: "person.circle.fill")
                         .font(.system(size: 80))
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.workerPrimary)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.workerPrimary)
                 }
                 
                 // Active status indicator
                 Circle()
-                    .fill(worker.isActive ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.inactive)
+                    .fill(worker.isActive ? CyntientOpsDesign.DashboardColors.success : CyntientOpsDesign.DashboardColors.inactive)
                     .frame(width: 24, height: 24)
                     .overlay(
                         Circle()
-                            .stroke(FrancoSphereDesign.DashboardColors.baseBackground, lineWidth: 3)
+                            .stroke(CyntientOpsDesign.DashboardColors.baseBackground, lineWidth: 3)
                     )
                     .offset(x: 35, y: 35)
             }
@@ -116,11 +116,11 @@ struct ProfileHeaderView: View {
                 // Contact info with glass chips
                 HStack(spacing: 12) {
                     if !worker.email.isEmpty {
-                        ContactChip(icon: "envelope.fill", text: worker.email, color: FrancoSphereDesign.DashboardColors.info)
+                        ContactChip(icon: "envelope.fill", text: worker.email, color: CyntientOpsDesign.DashboardColors.info)
                     }
                     
                     if let phoneNumber = worker.phoneNumber, !phoneNumber.isEmpty {
-                        ContactChip(icon: "phone.fill", text: phoneNumber, color: FrancoSphereDesign.DashboardColors.success)
+                        ContactChip(icon: "phone.fill", text: phoneNumber, color: CyntientOpsDesign.DashboardColors.success)
                     }
                 }
                 
@@ -131,7 +131,7 @@ struct ProfileHeaderView: View {
                             .glassCaption()
                         Text(hireDate, style: .date)
                             .glassText(size: .callout)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.workerAccent)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.workerAccent)
                     }
                     .padding(.top, 8)
                 }
@@ -182,7 +182,7 @@ struct PerformanceMetricsView: View {
             HStack {
                 HStack(spacing: 8) {
                     Image(systemName: "chart.line.uptrend.xyaxis")
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.workerPrimary)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.workerPrimary)
                     Text("Performance")
                         .glassHeading()
                 }
@@ -209,28 +209,28 @@ struct PerformanceMetricsView: View {
                     title: "Efficiency",
                     value: "\(Int(metrics.efficiency * 100))%",
                     icon: "speedometer",
-                    color: metrics.efficiency > 0.8 ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.warning
+                    color: metrics.efficiency > 0.8 ? CyntientOpsDesign.DashboardColors.success : CyntientOpsDesign.DashboardColors.warning
                 )
                 
                 WorkerMetricCard(
                     title: "Tasks Completed",
                     value: "\(metrics.tasksCompleted)",
                     icon: "checkmark.circle.fill",
-                    color: FrancoSphereDesign.DashboardColors.info
+                    color: CyntientOpsDesign.DashboardColors.info
                 )
                 
                 WorkerMetricCard(
                     title: "Avg Time",
                     value: formatTime(metrics.averageTime),
                     icon: "clock.fill",
-                    color: FrancoSphereDesign.DashboardColors.workerAccent
+                    color: CyntientOpsDesign.DashboardColors.workerAccent
                 )
                 
                 WorkerMetricCard(
                     title: "Quality Score",
                     value: "\(Int(metrics.qualityScore * 100))%",
                     icon: "star.fill",
-                    color: metrics.qualityScore > 0.8 ? FrancoSphereDesign.DashboardColors.tertiaryAction : FrancoSphereDesign.DashboardColors.warning
+                    color: metrics.qualityScore > 0.8 ? CyntientOpsDesign.DashboardColors.tertiaryAction : CyntientOpsDesign.DashboardColors.warning
                 )
             }
             
@@ -238,7 +238,7 @@ struct PerformanceMetricsView: View {
             HStack {
                 Image(systemName: "clock.arrow.circlepath")
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 Text("Updated \(metrics.lastUpdate, style: .relative)")
                     .glassCaption()
                 Spacer()
@@ -262,10 +262,10 @@ struct PerformanceMetricsView: View {
     
     private func gradeColor(for grade: String) -> Color {
         switch grade {
-        case "A+", "A": return FrancoSphereDesign.DashboardColors.success
-        case "B": return FrancoSphereDesign.DashboardColors.info
-        case "C": return FrancoSphereDesign.DashboardColors.warning
-        default: return FrancoSphereDesign.DashboardColors.critical
+        case "A+", "A": return CyntientOpsDesign.DashboardColors.success
+        case "B": return CyntientOpsDesign.DashboardColors.info
+        case "C": return CyntientOpsDesign.DashboardColors.warning
+        default: return CyntientOpsDesign.DashboardColors.critical
         }
     }
 }
@@ -289,7 +289,7 @@ struct WorkerMetricCard: View {
             // Value with emphasis
             Text(value)
                 .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             // Title
             Text(title)
@@ -298,10 +298,10 @@ struct WorkerMetricCard: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
         .background(
-            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.medium)
+            RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.medium)
                 .fill(color.opacity(0.1))
                 .overlay(
-                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.medium)
+                    RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.medium)
                         .stroke(color.opacity(0.2), lineWidth: 1)
                 )
         )
@@ -318,7 +318,7 @@ struct RecentTasksView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Image(systemName: "clock.arrow.circlepath")
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.workerPrimary)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.workerPrimary)
                 Text("Recent Tasks")
                     .glassHeading()
                 Spacer()
@@ -328,7 +328,7 @@ struct RecentTasksView: View {
                     .padding(.vertical, 4)
                     .background(
                         Capsule()
-                            .fill(FrancoSphereDesign.DashboardColors.workerPrimary.opacity(0.2))
+                            .fill(CyntientOpsDesign.DashboardColors.workerPrimary.opacity(0.2))
                     )
             }
             
@@ -355,7 +355,7 @@ struct EmptyTasksPlaceholder: View {
         VStack(spacing: 16) {
             Image(systemName: "checkmark.circle")
                 .font(.system(size: 48))
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             Text("No recent tasks")
                 .glassSubtitle()
             Text("Tasks will appear here once assigned")
@@ -375,9 +375,9 @@ struct EnhancedTaskRow: View {
         HStack(spacing: 16) {
             // Status indicator with glow
             Circle()
-                .fill(task.isCompleted ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.warning)
+                .fill(task.isCompleted ? CyntientOpsDesign.DashboardColors.success : CyntientOpsDesign.DashboardColors.warning)
                 .frame(width: 10, height: 10)
-                .shadow(color: task.isCompleted ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.warning, radius: 3)
+                .shadow(color: task.isCompleted ? CyntientOpsDesign.DashboardColors.success : CyntientOpsDesign.DashboardColors.warning, radius: 3)
             
             // Task info
             VStack(alignment: .leading, spacing: 6) {
@@ -389,13 +389,13 @@ struct EnhancedTaskRow: View {
                     if let building = task.building {
                         Label(building.name, systemImage: "building.2")
                             .glassCaption()
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     }
                     
                     if let category = task.category {
                         Label(category.rawValue.capitalized, systemImage: getCategoryIcon(category))
                             .glassCaption()
-                            .foregroundColor(FrancoSphereDesign.EnumColors.genericCategoryColor(for: category.rawValue))
+                            .foregroundColor(CyntientOpsDesign.EnumColors.genericCategoryColor(for: category.rawValue))
                     }
                 }
             }
@@ -413,35 +413,35 @@ struct EnhancedTaskRow: View {
                         .padding(.vertical, 4)
                         .background(
                             Capsule()
-                                .fill(FrancoSphereDesign.EnumColors.taskUrgency(urgency))
+                                .fill(CyntientOpsDesign.EnumColors.taskUrgency(urgency))
                         )
                 }
                 
                 if task.isCompleted, let completedDate = task.completedDate {
                     Text(completedDate, style: .time)
                         .glassCaption()
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.success)
                 } else if let dueDate = task.dueDate {
                     Text(dueDate, style: .time)
                         .glassCaption()
-                        .foregroundColor(Date() > dueDate ? FrancoSphereDesign.DashboardColors.critical : FrancoSphereDesign.DashboardColors.secondaryText)
+                        .foregroundColor(Date() > dueDate ? CyntientOpsDesign.DashboardColors.critical : CyntientOpsDesign.DashboardColors.secondaryText)
                 }
             }
         }
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.small)
+            RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.small)
                 .fill(.ultraThinMaterial)
                 .overlay(
-                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.small)
-                        .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                    RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.small)
+                        .stroke(CyntientOpsDesign.DashboardColors.borderSubtle, lineWidth: 1)
                 )
         )
         .glassHover()
     }
     
     private func getCategoryIcon(_ category: CoreTypes.TaskCategory) -> String {
-        FrancoSphereDesign.Icons.categoryIcon(for: category.rawValue)
+        CyntientOpsDesign.Icons.categoryIcon(for: category.rawValue)
     }
 }
 
@@ -454,7 +454,7 @@ struct SkillsView: View {
         VStack(alignment: .leading, spacing: 20) {
             HStack {
                 Image(systemName: "hammer.circle.fill")
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.workerPrimary)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.workerPrimary)
                 Text("Skills & Certifications")
                     .glassHeading()
                 Spacer()
@@ -464,7 +464,7 @@ struct SkillsView: View {
                     .padding(.vertical, 4)
                     .background(
                         Capsule()
-                            .fill(FrancoSphereDesign.DashboardColors.workerPrimary.opacity(0.2))
+                            .fill(CyntientOpsDesign.DashboardColors.workerPrimary.opacity(0.2))
                     )
             }
             
@@ -472,7 +472,7 @@ struct SkillsView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "hammer.circle")
                         .font(.system(size: 48))
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     Text("No skills listed")
                         .glassSubtitle()
                 }
@@ -520,27 +520,27 @@ struct SkillChip: View {
         
         // Technical skills
         if lowercaseSkill.contains("hvac") || lowercaseSkill.contains("plumbing") || lowercaseSkill.contains("electrical") {
-            return FrancoSphereDesign.DashboardColors.info
+            return CyntientOpsDesign.DashboardColors.info
         }
         // Cleaning skills
         else if lowercaseSkill.contains("clean") || lowercaseSkill.contains("sanitation") {
-            return FrancoSphereDesign.DashboardColors.success
+            return CyntientOpsDesign.DashboardColors.success
         }
         // Maintenance skills
         else if lowercaseSkill.contains("carpentry") || lowercaseSkill.contains("painting") || lowercaseSkill.contains("repair") {
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         }
         // Outdoor skills
         else if lowercaseSkill.contains("landscaping") || lowercaseSkill.contains("snow") {
-            return FrancoSphereDesign.DashboardColors.workerAccent
+            return CyntientOpsDesign.DashboardColors.workerAccent
         }
         // Safety/Security
         else if lowercaseSkill.contains("security") || lowercaseSkill.contains("safety") {
-            return FrancoSphereDesign.DashboardColors.critical
+            return CyntientOpsDesign.DashboardColors.critical
         }
         // Default
         else {
-            return FrancoSphereDesign.DashboardColors.tertiaryAction
+            return CyntientOpsDesign.DashboardColors.tertiaryAction
         }
     }
 }

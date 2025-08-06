@@ -1,6 +1,6 @@
 //
 //  GlassTypes.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ SINGLE SOURCE OF TRUTH: Only GlassIntensity definition in entire codebase
 //  ✅ FIXED: All Animation syntax errors corrected

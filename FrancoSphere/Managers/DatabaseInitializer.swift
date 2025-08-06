@@ -1,6 +1,6 @@
 //
 //  DatabaseInitializer.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ CONSOLIDATED: Merged DatabaseStartupCoordinator + UnifiedDataInitializer + UnifiedDataService + SchemaMigrationPatch
 //  ✅ SINGLE SOURCE: All database initialization and migration in one place

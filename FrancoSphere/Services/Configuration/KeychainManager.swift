@@ -1,6 +1,6 @@
 //
 //  KeychainManager.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Created by Shawn Magloire on 8/4/25.
 //
@@ -8,7 +8,7 @@
 
 //
 //  KeychainManager.swift
-//  CyntientOps (formerly FrancoSphere)
+//  CyntientOps (formerly CyntientOps)
 //
 //  Phase 0.5: Keychain Manager for secure storage
 //  Manages secure storage of sensitive data

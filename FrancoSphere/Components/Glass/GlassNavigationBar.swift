@@ -1,11 +1,11 @@
 //
 //  GlassNavigationBar.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ UPDATED: Dark Elegance theme applied
 //  ✅ FIXED: Removed invalid @Environment property wrapper
 //  ✅ ENHANCED: Glass morphism with proper dark theme integration
-//  ✅ ALIGNED: With FrancoSphereDesign color system
+//  ✅ ALIGNED: With CyntientOpsDesign color system
 //
 
 import SwiftUI
@@ -76,13 +76,13 @@ struct GlassNavigationBar<Content: View>: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         .tracking(0.5)
                     
                     if let subtitle = subtitle {
                         Text(subtitle)
                             .font(.system(size: 14, weight: .medium, design: .rounded))
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     }
                 }
                 
@@ -103,11 +103,11 @@ struct GlassNavigationBar<Content: View>: View {
     private func navigationButton(icon: String) -> some View {
         Image(systemName: icon)
             .font(.system(size: 18, weight: .medium))
-            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             .frame(width: 36, height: 36)
             .background(
                 Circle()
-                    .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                    .fill(CyntientOpsDesign.DashboardColors.glassOverlay)
                     .overlay(
                         Circle()
                             .stroke(
@@ -129,14 +129,14 @@ struct GlassNavigationBar<Content: View>: View {
         ZStack {
             // Dark base with blur
             Rectangle()
-                .fill(FrancoSphereDesign.DashboardColors.cardBackground.opacity(0.85))
+                .fill(CyntientOpsDesign.DashboardColors.cardBackground.opacity(0.85))
                 .background(.ultraThinMaterial.opacity(0.5))
             
             // Gradient overlay for depth
             LinearGradient(
                 colors: [
-                    FrancoSphereDesign.DashboardColors.glassOverlay.opacity(0.3),
-                    FrancoSphereDesign.DashboardColors.glassOverlay.opacity(0.1),
+                    CyntientOpsDesign.DashboardColors.glassOverlay.opacity(0.3),
+                    CyntientOpsDesign.DashboardColors.glassOverlay.opacity(0.1),
                     Color.clear
                 ],
                 startPoint: .top,
@@ -206,18 +206,18 @@ struct GlassNavigationAction: View {
                 .font(.system(size: 18, weight: .medium))
                 .foregroundColor(
                     isDestructive ?
-                    FrancoSphereDesign.DashboardColors.critical :
-                    FrancoSphereDesign.DashboardColors.primaryText
+                    CyntientOpsDesign.DashboardColors.critical :
+                    CyntientOpsDesign.DashboardColors.primaryText
                 )
                 .frame(width: 36, height: 36)
                 .background(
                     Circle()
-                        .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                        .fill(CyntientOpsDesign.DashboardColors.glassOverlay)
                         .overlay(
                             Circle()
                                 .stroke(
                                     isDestructive ?
-                                    FrancoSphereDesign.DashboardColors.critical.opacity(0.3) :
+                                    CyntientOpsDesign.DashboardColors.critical.opacity(0.3) :
                                     Color.white.opacity(0.1),
                                     lineWidth: 1
                                 )
@@ -258,7 +258,7 @@ struct GlassNavigationBar_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
             // Dark Elegance background
-            FrancoSphereDesign.DashboardColors.baseBackground
+            CyntientOpsDesign.DashboardColors.baseBackground
                 .ignoresSafeArea()
             
             VStack {

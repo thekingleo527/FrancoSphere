@@ -1,6 +1,6 @@
 
 //  StringExtensions.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Purpose: Shared String extensions used throughout the app
 //  ✅ CONSOLIDATED: Single source of truth for String extensions

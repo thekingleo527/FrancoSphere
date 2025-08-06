@@ -1,6 +1,6 @@
 //
 //  ClientMainMenuView.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ REFACTORED: Aligned with CoreTypes
 //  ✅ FIXED: Renamed conflicting declarations
@@ -26,24 +26,24 @@ public struct ClientMainMenuViewV6: View {
                         icon: "building.2",
                         title: "Buildings",
                         subtitle: "\(contextEngine.clientBuildings.count) properties",
-                        color: FrancoSphereDesign.DashboardColors.clientPrimary
+                        color: CyntientOpsDesign.DashboardColors.clientPrimary
                     )
                     
                     ClientMenuRow(
                         icon: "chart.pie",
                         title: "Analytics",
                         subtitle: "Performance insights",
-                        color: FrancoSphereDesign.DashboardColors.info
+                        color: CyntientOpsDesign.DashboardColors.info
                     )
                     
                     ClientMenuRow(
                         icon: "doc.text",
                         title: "Reports",
                         subtitle: "Monthly summaries",
-                        color: FrancoSphereDesign.DashboardColors.clientSecondary
+                        color: CyntientOpsDesign.DashboardColors.clientSecondary
                     )
                 }
-                .listRowBackground(FrancoSphereDesign.DashboardColors.cardBackground)
+                .listRowBackground(CyntientOpsDesign.DashboardColors.cardBackground)
                 
                 // Compliance Section
                 Section("Compliance") {
@@ -52,18 +52,18 @@ public struct ClientMainMenuViewV6: View {
                         title: "Compliance Dashboard",
                         subtitle: "\(Int(contextEngine.complianceOverview.overallScore * 100))% compliant",
                         color: contextEngine.complianceOverview.overallScore > 0.9 ?
-                            FrancoSphereDesign.DashboardColors.compliant :
-                            FrancoSphereDesign.DashboardColors.warning
+                            CyntientOpsDesign.DashboardColors.compliant :
+                            CyntientOpsDesign.DashboardColors.warning
                     )
                     
                     ClientMenuRow(
                         icon: "doc.badge.clock",
                         title: "Audit History",
                         subtitle: "Past inspections",
-                        color: FrancoSphereDesign.DashboardColors.clientAccent
+                        color: CyntientOpsDesign.DashboardColors.clientAccent
                     )
                 }
-                .listRowBackground(FrancoSphereDesign.DashboardColors.cardBackground)
+                .listRowBackground(CyntientOpsDesign.DashboardColors.cardBackground)
                 
                 // Communication Section
                 Section("Communication") {
@@ -71,7 +71,7 @@ public struct ClientMainMenuViewV6: View {
                         icon: "message",
                         title: "Messages",
                         subtitle: "Team communication",
-                        color: FrancoSphereDesign.DashboardColors.info
+                        color: CyntientOpsDesign.DashboardColors.info
                     )
                     
                     ClientMenuRow(
@@ -80,11 +80,11 @@ public struct ClientMainMenuViewV6: View {
                         subtitle: contextEngine.realtimeAlerts.isEmpty ?
                             "No new alerts" : "\(contextEngine.realtimeAlerts.count) new",
                         color: contextEngine.criticalAlerts.isEmpty ?
-                            FrancoSphereDesign.DashboardColors.inactive :
-                            FrancoSphereDesign.DashboardColors.warning
+                            CyntientOpsDesign.DashboardColors.inactive :
+                            CyntientOpsDesign.DashboardColors.warning
                     )
                 }
-                .listRowBackground(FrancoSphereDesign.DashboardColors.cardBackground)
+                .listRowBackground(CyntientOpsDesign.DashboardColors.cardBackground)
                 
                 // Support Section
                 Section("Support") {
@@ -92,20 +92,20 @@ public struct ClientMainMenuViewV6: View {
                         icon: "questionmark.circle",
                         title: "Help Center",
                         subtitle: "FAQs and guides",
-                        color: FrancoSphereDesign.DashboardColors.tertiaryText
+                        color: CyntientOpsDesign.DashboardColors.tertiaryText
                     )
                     
                     ClientMenuRow(
                         icon: "gear",
                         title: "Settings",
                         subtitle: "Account preferences",
-                        color: FrancoSphereDesign.DashboardColors.tertiaryText
+                        color: CyntientOpsDesign.DashboardColors.tertiaryText
                     )
                 }
-                .listRowBackground(FrancoSphereDesign.DashboardColors.cardBackground)
+                .listRowBackground(CyntientOpsDesign.DashboardColors.cardBackground)
             }
             .scrollContentBackground(.hidden)
-            .background(FrancoSphereDesign.DashboardColors.baseBackground)
+            .background(CyntientOpsDesign.DashboardColors.baseBackground)
             .navigationTitle("Menu")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -113,7 +113,7 @@ public struct ClientMainMenuViewV6: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.clientPrimary)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.clientPrimary)
                 }
             }
         }
@@ -183,11 +183,11 @@ public struct ClientBuildingsListView: View {
                 // Search bar
                 HStack {
                     Image(systemName: "magnifyingglass")
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     
                     TextField("Search buildings...", text: $searchText)
                         .textFieldStyle(PlainTextFieldStyle())
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
                 .padding(12)
                 .background(
@@ -226,19 +226,19 @@ public struct ClientBuildingsListView: View {
                                 Text("Sort")
                                     .font(.caption)
                             }
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.clientPrimary)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.clientPrimary)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
                             .background(
                                 Capsule()
-                                    .stroke(FrancoSphereDesign.DashboardColors.clientPrimary.opacity(0.3), lineWidth: 1)
+                                    .stroke(CyntientOpsDesign.DashboardColors.clientPrimary.opacity(0.3), lineWidth: 1)
                             )
                         }
                     }
                 }
             }
             .padding()
-            .background(FrancoSphereDesign.DashboardColors.cardBackground)
+            .background(CyntientOpsDesign.DashboardColors.cardBackground)
             
             // Buildings list
             ScrollView {
@@ -258,7 +258,7 @@ public struct ClientBuildingsListView: View {
             HStack {
                 Text("\(filteredBuildings.count) of \(buildings.count) buildings")
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 
                 Spacer()
                 
@@ -271,9 +271,9 @@ public struct ClientBuildingsListView: View {
             }
             .padding(.horizontal)
             .padding(.vertical, 12)
-            .background(FrancoSphereDesign.DashboardColors.cardBackground)
+            .background(CyntientOpsDesign.DashboardColors.cardBackground)
         }
-        .background(FrancoSphereDesign.DashboardColors.baseBackground)
+        .background(CyntientOpsDesign.DashboardColors.baseBackground)
     }
     
     private var averagePerformance: Double? {
@@ -285,23 +285,23 @@ public struct ClientBuildingsListView: View {
     private func chipColor(for option: FilterOption) -> Color {
         switch option {
         case .all:
-            return FrancoSphereDesign.DashboardColors.clientPrimary
+            return CyntientOpsDesign.DashboardColors.clientPrimary
         case .highPerformance:
-            return FrancoSphereDesign.DashboardColors.success
+            return CyntientOpsDesign.DashboardColors.success
         case .needsAttention:
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         case .critical:
-            return FrancoSphereDesign.DashboardColors.critical
+            return CyntientOpsDesign.DashboardColors.critical
         }
     }
     
     private func performanceColor(for value: Double) -> Color {
         if value >= 0.8 {
-            return FrancoSphereDesign.DashboardColors.success
+            return CyntientOpsDesign.DashboardColors.success
         } else if value >= 0.6 {
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         } else {
-            return FrancoSphereDesign.DashboardColors.critical
+            return CyntientOpsDesign.DashboardColors.critical
         }
     }
 }
@@ -337,21 +337,21 @@ public struct ClientComplianceOverview: View {
                         title: "Open Issues",
                         value: "\(filteredIssues.filter { $0.status == .open }.count)",
                         icon: "exclamationmark.circle",
-                        color: FrancoSphereDesign.DashboardColors.warning
+                        color: CyntientOpsDesign.DashboardColors.warning
                     )
                     
                     ClientQuickStatCard(
                         title: "Critical",
                         value: "\(complianceOverview.criticalViolations)",
                         icon: "exclamationmark.triangle.fill",
-                        color: FrancoSphereDesign.DashboardColors.critical
+                        color: CyntientOpsDesign.DashboardColors.critical
                     )
                     
                     ClientQuickStatCard(
                         title: "Pending",
                         value: "\(complianceOverview.pendingInspections)",
                         icon: "calendar",
-                        color: FrancoSphereDesign.DashboardColors.info
+                        color: CyntientOpsDesign.DashboardColors.info
                     )
                 }
                 
@@ -359,7 +359,7 @@ public struct ClientComplianceOverview: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Filter Issues")
                         .font(.headline)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     
                     // Severity filter
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -407,14 +407,14 @@ public struct ClientComplianceOverview: View {
                     HStack {
                         Text("Issues (\(filteredIssues.count))")
                             .font(.headline)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         
                         Spacer()
                         
                         Button(action: {}) {
                             Label("Export", systemImage: "square.and.arrow.up")
                                 .font(.caption)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.clientPrimary)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.clientPrimary)
                         }
                     }
                     
@@ -428,7 +428,7 @@ public struct ClientComplianceOverview: View {
             }
             .padding()
         }
-        .background(FrancoSphereDesign.DashboardColors.baseBackground)
+        .background(CyntientOpsDesign.DashboardColors.baseBackground)
         .sheet(isPresented: $showingIssueDetail) {
             if let issue = detailIssue {
                 ClientComplianceIssueDetailSheet(issue: issue)
@@ -444,19 +444,19 @@ public struct ClientComplianceOverview: View {
     
     private func severityColor(_ severity: CoreTypes.ComplianceSeverity) -> Color {
         switch severity {
-        case .low: return FrancoSphereDesign.DashboardColors.info
-        case .medium: return FrancoSphereDesign.DashboardColors.warning
-        case .high: return FrancoSphereDesign.DashboardColors.critical
-        case .critical: return FrancoSphereDesign.DashboardColors.violation
+        case .low: return CyntientOpsDesign.DashboardColors.info
+        case .medium: return CyntientOpsDesign.DashboardColors.warning
+        case .high: return CyntientOpsDesign.DashboardColors.critical
+        case .critical: return CyntientOpsDesign.DashboardColors.violation
         }
     }
     
     private func statusColor(_ status: CoreTypes.ComplianceStatus) -> Color {
         switch status {
-        case .open: return FrancoSphereDesign.DashboardColors.warning
-        case .inProgress: return FrancoSphereDesign.DashboardColors.info
-        case .resolved: return FrancoSphereDesign.DashboardColors.success
-        default: return FrancoSphereDesign.DashboardColors.inactive
+        case .open: return CyntientOpsDesign.DashboardColors.warning
+        case .inProgress: return CyntientOpsDesign.DashboardColors.info
+        case .resolved: return CyntientOpsDesign.DashboardColors.success
+        default: return CyntientOpsDesign.DashboardColors.inactive
         }
     }
 }
@@ -480,18 +480,18 @@ struct ClientMenuRow: View {
                 Text(title)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Text(subtitle)
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             }
             
             Spacer()
             
             Image(systemName: "chevron.right")
                 .font(.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
         }
         .padding(.vertical, 4)
     }
@@ -500,7 +500,7 @@ struct ClientMenuRow: View {
 struct ClientFilterChip: View {
     let title: String
     let isSelected: Bool
-    var color: Color = FrancoSphereDesign.DashboardColors.clientPrimary
+    var color: Color = CyntientOpsDesign.DashboardColors.clientPrimary
     let action: () -> Void
     
     var body: some View {
@@ -531,11 +531,11 @@ struct ClientBuildingListRow: View {
     
     private var performanceColor: Color {
         if performance >= 0.8 {
-            return FrancoSphereDesign.DashboardColors.success
+            return CyntientOpsDesign.DashboardColors.success
         } else if performance >= 0.6 {
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         } else {
-            return FrancoSphereDesign.DashboardColors.critical
+            return CyntientOpsDesign.DashboardColors.critical
         }
     }
     
@@ -546,11 +546,11 @@ struct ClientBuildingListRow: View {
                 ZStack(alignment: .bottomTrailing) {
                     Image(systemName: "building.2.fill")
                         .font(.title2)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.clientPrimary)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.clientPrimary)
                         .frame(width: 44, height: 44)
                         .background(
                             Circle()
-                                .fill(FrancoSphereDesign.DashboardColors.clientPrimary.opacity(0.1))
+                                .fill(CyntientOpsDesign.DashboardColors.clientPrimary.opacity(0.1))
                         )
                     
                     Circle()
@@ -558,7 +558,7 @@ struct ClientBuildingListRow: View {
                         .frame(width: 12, height: 12)
                         .overlay(
                             Circle()
-                                .stroke(FrancoSphereDesign.DashboardColors.cardBackground, lineWidth: 2)
+                                .stroke(CyntientOpsDesign.DashboardColors.cardBackground, lineWidth: 2)
                         )
                 }
                 
@@ -567,12 +567,12 @@ struct ClientBuildingListRow: View {
                     Text(building.name)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         .lineLimit(1)
                     
                     Text(building.address)
                         .font(.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                         .lineLimit(1)
                     
                     // Performance bar
@@ -601,12 +601,12 @@ struct ClientBuildingListRow: View {
                 // Chevron
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
             }
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(FrancoSphereDesign.DashboardColors.cardBackground)
+                    .fill(CyntientOpsDesign.DashboardColors.cardBackground)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -618,11 +618,11 @@ struct ClientComplianceScoreCard: View {
     
     private var scoreColor: Color {
         if overview.overallScore >= 0.9 {
-            return FrancoSphereDesign.DashboardColors.compliant
+            return CyntientOpsDesign.DashboardColors.compliant
         } else if overview.overallScore >= 0.7 {
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         } else {
-            return FrancoSphereDesign.DashboardColors.violation
+            return CyntientOpsDesign.DashboardColors.violation
         }
     }
     
@@ -632,7 +632,7 @@ struct ClientComplianceScoreCard: View {
             VStack(spacing: 8) {
                 Text("Overall Compliance Score")
                     .font(.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Text("\(Int(overview.overallScore * 100))%")
                     .font(.system(size: 48, weight: .bold, design: .rounded))
@@ -664,7 +664,7 @@ struct ClientComplianceScoreCard: View {
                     systemImage: "checkmark.seal"
                 )
                 .font(.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             }
         }
         .padding(24)
@@ -688,11 +688,11 @@ struct ClientQuickStatCard: View {
             Text(value)
                 .font(.title3)
                 .fontWeight(.bold)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             Text(title)
                 .font(.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
         }
         .frame(maxWidth: .infinity)
         .padding()
@@ -748,12 +748,12 @@ struct ClientComplianceIssueCard: View {
                     Text(issue.title)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         .lineLimit(2)
                     
                     Text(issue.description)
                         .font(.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                         .lineLimit(2)
                 }
                 
@@ -762,22 +762,22 @@ struct ClientComplianceIssueCard: View {
                     if let buildingName = issue.buildingName {
                         Label(buildingName, systemImage: "building.2")
                             .font(.caption2)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.info)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.info)
                     }
                     
                     if let dueDate = issue.dueDate {
                         Label(dueDate.formatted(.dateTime.day().month()), systemImage: "calendar")
                             .font(.caption2)
                             .foregroundColor(Date() > dueDate ?
-                                FrancoSphereDesign.DashboardColors.critical :
-                                FrancoSphereDesign.DashboardColors.secondaryText)
+                                CyntientOpsDesign.DashboardColors.critical :
+                                CyntientOpsDesign.DashboardColors.secondaryText)
                     }
                     
                     Spacer()
                     
                     Image(systemName: "chevron.right")
                         .font(.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 }
             }
             .padding()
@@ -788,19 +788,19 @@ struct ClientComplianceIssueCard: View {
     
     private var severityColor: Color {
         switch issue.severity {
-        case .low: return FrancoSphereDesign.DashboardColors.info
-        case .medium: return FrancoSphereDesign.DashboardColors.warning
-        case .high: return FrancoSphereDesign.DashboardColors.critical
-        case .critical: return FrancoSphereDesign.DashboardColors.violation
+        case .low: return CyntientOpsDesign.DashboardColors.info
+        case .medium: return CyntientOpsDesign.DashboardColors.warning
+        case .high: return CyntientOpsDesign.DashboardColors.critical
+        case .critical: return CyntientOpsDesign.DashboardColors.violation
         }
     }
     
     private var statusColor: Color {
         switch issue.status {
-        case .open: return FrancoSphereDesign.DashboardColors.warning
-        case .inProgress: return FrancoSphereDesign.DashboardColors.info
-        case .resolved: return FrancoSphereDesign.DashboardColors.success
-        default: return FrancoSphereDesign.DashboardColors.inactive
+        case .open: return CyntientOpsDesign.DashboardColors.warning
+        case .inProgress: return CyntientOpsDesign.DashboardColors.info
+        case .resolved: return CyntientOpsDesign.DashboardColors.success
+        default: return CyntientOpsDesign.DashboardColors.inactive
         }
     }
 }
@@ -838,11 +838,11 @@ struct ClientComplianceIssueDetailSheet: View {
                         Text(issue.title)
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         
                         Text(issue.description)
                             .font(.body)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     }
                     .padding()
                     .francoDarkCardBackground()
@@ -858,7 +858,7 @@ struct ClientComplianceIssueDetailSheet: View {
                                 label: "Due Date",
                                 value: dueDate.formatted(.dateTime.day().month().year()),
                                 icon: "clock",
-                                color: Date() > dueDate ? FrancoSphereDesign.DashboardColors.critical : nil
+                                color: Date() > dueDate ? CyntientOpsDesign.DashboardColors.critical : nil
                             )
                         }
                         
@@ -886,14 +886,14 @@ struct ClientComplianceIssueDetailSheet: View {
                     .padding()
                 }
             }
-            .background(FrancoSphereDesign.DashboardColors.baseBackground)
+            .background(CyntientOpsDesign.DashboardColors.baseBackground)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.clientPrimary)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.clientPrimary)
                 }
             }
         }
@@ -902,19 +902,19 @@ struct ClientComplianceIssueDetailSheet: View {
     
     private var severityColor: Color {
         switch issue.severity {
-        case .low: return FrancoSphereDesign.DashboardColors.info
-        case .medium: return FrancoSphereDesign.DashboardColors.warning
-        case .high: return FrancoSphereDesign.DashboardColors.critical
-        case .critical: return FrancoSphereDesign.DashboardColors.violation
+        case .low: return CyntientOpsDesign.DashboardColors.info
+        case .medium: return CyntientOpsDesign.DashboardColors.warning
+        case .high: return CyntientOpsDesign.DashboardColors.critical
+        case .critical: return CyntientOpsDesign.DashboardColors.violation
         }
     }
     
     private var statusColor: Color {
         switch issue.status {
-        case .open: return FrancoSphereDesign.DashboardColors.warning
-        case .inProgress: return FrancoSphereDesign.DashboardColors.info
-        case .resolved: return FrancoSphereDesign.DashboardColors.success
-        default: return FrancoSphereDesign.DashboardColors.inactive
+        case .open: return CyntientOpsDesign.DashboardColors.warning
+        case .inProgress: return CyntientOpsDesign.DashboardColors.info
+        case .resolved: return CyntientOpsDesign.DashboardColors.success
+        default: return CyntientOpsDesign.DashboardColors.inactive
         }
     }
 }
@@ -929,14 +929,14 @@ struct ClientDetailRow: View {
         HStack {
             Label(label, systemImage: icon)
                 .font(.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             
             Spacer()
             
             Text(value)
                 .font(.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(color ?? FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(color ?? CyntientOpsDesign.DashboardColors.primaryText)
         }
     }
 }

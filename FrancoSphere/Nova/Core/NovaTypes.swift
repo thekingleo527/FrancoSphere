@@ -1,6 +1,6 @@
 //
 //  NovaTypes.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ COMPLETE: All Nova types in one place
 //  ✅ SIMPLIFIED: Uses CoreTypes for all shared concepts

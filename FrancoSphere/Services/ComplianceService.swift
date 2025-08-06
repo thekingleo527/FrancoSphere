@@ -1,6 +1,6 @@
 //
 //  ComplianceService.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: Actor isolation and duplicate declaration issues resolved
 //  ✅ PRODUCTION READY: Real compliance tracking and monitoring

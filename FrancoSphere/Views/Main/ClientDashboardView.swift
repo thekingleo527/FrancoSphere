@@ -1,6 +1,6 @@
 //
 //  ClientDashboardView.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: All compilation errors resolved
 //  ✅ ALIGNED: Matches Worker/Admin dashboard structure
@@ -97,7 +97,7 @@ struct ClientDashboardView: View {
         ) {
             ZStack {
                 // Dark Elegance Background
-                FrancoSphereDesign.DashboardColors.baseBackground
+                CyntientOpsDesign.DashboardColors.baseBackground
                     .ignoresSafeArea()
                 
                 // Main content
@@ -144,7 +144,7 @@ struct ClientDashboardView: View {
                             onNavigate: handleIntelligenceNavigation
                         )
                         .transition(.move(edge: .bottom).combined(with: .opacity))
-                        .animation(FrancoSphereDesign.Animations.spring, value: intelligencePanelState)
+                        .animation(CyntientOpsDesign.Animations.spring, value: intelligencePanelState)
                     }
                 }
             }
@@ -195,10 +195,10 @@ struct ClientDashboardView: View {
                         Button("Done") {
                             showAllBuildings = false
                         }
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     }
                 }
-                .background(FrancoSphereDesign.DashboardColors.baseBackground)
+                .background(CyntientOpsDesign.DashboardColors.baseBackground)
             }
             .preferredColorScheme(.dark)
         }
@@ -216,10 +216,10 @@ struct ClientDashboardView: View {
                         Button("Done") {
                             showComplianceReport = false
                         }
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     }
                 }
-                .background(FrancoSphereDesign.DashboardColors.baseBackground)
+                .background(CyntientOpsDesign.DashboardColors.baseBackground)
             }
             .preferredColorScheme(.dark)
             .onAppear { currentContext = .compliance }
@@ -454,7 +454,7 @@ struct CollapsibleClientHeroWrapper: View {
                     complianceScore: complianceStatus.overallScore,
                     budgetUtilization: monthlyMetrics.budgetUtilization,
                     onExpand: {
-                        withAnimation(FrancoSphereDesign.Animations.spring) {
+                        withAnimation(CyntientOpsDesign.Animations.spring) {
                             isCollapsed = false
                         }
                     }
@@ -471,15 +471,15 @@ struct CollapsibleClientHeroWrapper: View {
                     
                     // Collapse button overlay
                     Button(action: {
-                        withAnimation(FrancoSphereDesign.Animations.spring) {
+                        withAnimation(CyntientOpsDesign.Animations.spring) {
                             isCollapsed = true
                         }
                     }) {
                         Image(systemName: "chevron.up")
                             .font(.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                             .padding(8)
-                            .background(Circle().fill(FrancoSphereDesign.DashboardColors.glassOverlay))
+                            .background(Circle().fill(CyntientOpsDesign.DashboardColors.glassOverlay))
                     }
                     .padding(8)
                 }
@@ -519,14 +519,14 @@ struct MinimalClientHeroCard: View {
                     ClientMetricPill(
                         value: "\(totalBuildings)",
                         label: "Properties",
-                        color: FrancoSphereDesign.DashboardColors.info
+                        color: CyntientOpsDesign.DashboardColors.info
                     )
                     
                     if behindSchedule > 0 {
                         ClientMetricPill(
                             value: "\(behindSchedule)",
                             label: "Behind",
-                            color: FrancoSphereDesign.DashboardColors.warning
+                            color: CyntientOpsDesign.DashboardColors.warning
                         )
                     }
                     
@@ -540,14 +540,14 @@ struct MinimalClientHeroCard: View {
                         ClientMetricPill(
                             value: "\(Int(budgetUtilization * 100))%",
                             label: "Budget",
-                            color: FrancoSphereDesign.DashboardColors.critical
+                            color: CyntientOpsDesign.DashboardColors.critical
                         )
                     }
                     
                     ClientMetricPill(
                         value: "\(activeWorkers)",
                         label: "Active",
-                        color: FrancoSphereDesign.DashboardColors.success
+                        color: CyntientOpsDesign.DashboardColors.success
                     )
                 }
                 
@@ -556,7 +556,7 @@ struct MinimalClientHeroCard: View {
                 // Expand indicator
                 Image(systemName: "chevron.down")
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -567,11 +567,11 @@ struct MinimalClientHeroCard: View {
     
     private var statusColor: Color {
         if behindSchedule > 0 || complianceScore < 0.7 {
-            return FrancoSphereDesign.DashboardColors.critical
+            return CyntientOpsDesign.DashboardColors.critical
         } else if completionRate < 0.7 || budgetUtilization > 0.9 {
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         } else {
-            return FrancoSphereDesign.DashboardColors.success
+            return CyntientOpsDesign.DashboardColors.success
         }
     }
     
@@ -581,11 +581,11 @@ struct MinimalClientHeroCard: View {
     
     private var completionColor: Color {
         if completionRate > 0.8 {
-            return FrancoSphereDesign.DashboardColors.success
+            return CyntientOpsDesign.DashboardColors.success
         } else if completionRate > 0.6 {
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         } else {
-            return FrancoSphereDesign.DashboardColors.critical
+            return CyntientOpsDesign.DashboardColors.critical
         }
     }
 }
@@ -606,7 +606,7 @@ struct ClientMetricPill: View {
             
             Text(label)
                 .font(.caption2)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
         }
     }
 }
@@ -626,7 +626,7 @@ struct ClientProfileView: View {
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(FrancoSphereDesign.DashboardColors.baseBackground)
+            .background(CyntientOpsDesign.DashboardColors.baseBackground)
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -634,7 +634,7 @@ struct ClientProfileView: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.clientPrimary)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.clientPrimary)
                 }
             }
         }

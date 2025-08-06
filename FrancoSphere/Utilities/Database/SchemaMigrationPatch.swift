@@ -1,6 +1,6 @@
 //
 //  SchemaMigrationPatch.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  🔧 GRDB VERSION: Essential Schema Fixes with Complete Data Preservation
 //  ✅ Migrated to GRDB.swift - All original data preserved

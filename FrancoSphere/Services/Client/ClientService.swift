@@ -1,6 +1,6 @@
 //
 //  ClientService.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Created by Shawn Magloire on 8/4/25.
 //
@@ -8,7 +8,7 @@
 
 //
 //  ClientService.swift
-//  CyntientOps (formerly FrancoSphere)
+//  CyntientOps (formerly CyntientOps)
 //
 //  Phase 0B.4: ClientService
 //  Manages client data access and portfolio filtering

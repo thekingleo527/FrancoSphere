@@ -1,6 +1,6 @@
 //
 //  BuildingDetailViewModel.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: All type ambiguities resolved
 //  ✅ NAMESPACED: Proper CoreTypes usage

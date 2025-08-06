@@ -1,6 +1,6 @@
 //
 //  UnifiedTaskDetailView.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ UNIFIED: Single task detail view for all roles and modes
 //  ✅ SIMPLIFIED: Dedicated mode for accessibility and simplified interface
@@ -82,7 +82,7 @@ struct UnifiedTaskDetailView: View {
         NavigationView {
             ZStack {
                 // Background
-                FrancoSphereDesign.DashboardColors.baseBackground
+                CyntientOpsDesign.DashboardColors.baseBackground
                     .ignoresSafeArea()
                 
                 // Content based on mode
@@ -147,18 +147,18 @@ struct UnifiedTaskDetailView: View {
                     // Task icon
                     Image(systemName: task.category?.icon ?? "checkmark.circle")
                         .font(.system(size: 60))
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.workerPrimary)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.workerPrimary)
                         .padding()
                         .background(
                             Circle()
-                                .fill(FrancoSphereDesign.DashboardColors.workerPrimary.opacity(0.1))
+                                .fill(CyntientOpsDesign.DashboardColors.workerPrimary.opacity(0.1))
                         )
                     
                     // Task title
                     Text(task.title)
                         .font(.largeTitle)
                         .fontWeight(.bold)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                     
@@ -172,7 +172,7 @@ struct UnifiedTaskDetailView: View {
                             Image(systemName: "building.2.fill")
                                 .font(.title2)
                         }
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     }
                 }
                 .padding(.vertical)
@@ -187,11 +187,11 @@ struct UnifiedTaskDetailView: View {
                             Label("Instructions", systemImage: "doc.text")
                                 .font(.title3)
                                 .fontWeight(.semibold)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                             
                             Text(description)
                                 .font(.title3)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         .padding()
@@ -204,17 +204,17 @@ struct UnifiedTaskDetailView: View {
                         HStack(spacing: 16) {
                             Image(systemName: "clock.fill")
                                 .font(.largeTitle)
-                                .foregroundColor(task.isOverdue ? FrancoSphereDesign.DashboardColors.critical : FrancoSphereDesign.DashboardColors.warning)
+                                .foregroundColor(task.isOverdue ? CyntientOpsDesign.DashboardColors.critical : CyntientOpsDesign.DashboardColors.warning)
                             
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(task.isOverdue ? "OVERDUE" : "Due By")
                                     .font(.headline)
-                                    .foregroundColor(task.isOverdue ? FrancoSphereDesign.DashboardColors.critical : FrancoSphereDesign.DashboardColors.secondaryText)
+                                    .foregroundColor(task.isOverdue ? CyntientOpsDesign.DashboardColors.critical : CyntientOpsDesign.DashboardColors.secondaryText)
                                 
                                 Text(dueDate.formatted(date: .abbreviated, time: .shortened))
                                     .font(.title2)
                                     .fontWeight(.medium)
-                                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                             }
                             
                             Spacer()
@@ -230,7 +230,7 @@ struct UnifiedTaskDetailView: View {
                         Label("Photo Required", systemImage: "camera.fill")
                             .font(.title2)
                             .fontWeight(.semibold)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
                         
                         if let photo = capturedPhoto {
                             // Show captured photo
@@ -252,7 +252,7 @@ struct UnifiedTaskDetailView: View {
                                         .foregroundColor(.white)
                                         .padding()
                                         .background(
-                                            FrancoSphereDesign.DashboardColors.success
+                                            CyntientOpsDesign.DashboardColors.success
                                                 .opacity(0.9)
                                         )
                                     }
@@ -262,7 +262,7 @@ struct UnifiedTaskDetailView: View {
                             Button(action: { showPhotoCapture = true }) {
                                 Label("Take New Photo", systemImage: "camera")
                                     .font(.title3)
-                                    .foregroundColor(FrancoSphereDesign.DashboardColors.workerPrimary)
+                                    .foregroundColor(CyntientOpsDesign.DashboardColors.workerPrimary)
                             }
                             .padding(.top)
                         } else {
@@ -278,7 +278,7 @@ struct UnifiedTaskDetailView: View {
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 120)
-                                .background(FrancoSphereDesign.DashboardColors.warning)
+                                .background(CyntientOpsDesign.DashboardColors.warning)
                                 .cornerRadius(16)
                             }
                         }
@@ -293,17 +293,17 @@ struct UnifiedTaskDetailView: View {
                     VStack(spacing: 16) {
                         Image(systemName: "checkmark.seal.fill")
                             .font(.system(size: 80))
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.success)
                         
                         Text("Task Completed")
                             .font(.largeTitle)
                             .fontWeight(.bold)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.success)
                         
                         if let completedDate = task.completedAt {
                             Text("Completed \(completedDate.formatted(.relative(presentation: .named)))")
                                 .font(.title3)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                         }
                     }
                     .padding(.vertical, 40)
@@ -331,8 +331,8 @@ struct UnifiedTaskDetailView: View {
                         .frame(height: 100)
                         .background(
                             canCompleteSimplifiedTask ?
-                            FrancoSphereDesign.DashboardColors.success :
-                            FrancoSphereDesign.DashboardColors.inactive
+                            CyntientOpsDesign.DashboardColors.success :
+                            CyntientOpsDesign.DashboardColors.inactive
                         )
                         .cornerRadius(20)
                     }
@@ -342,7 +342,7 @@ struct UnifiedTaskDetailView: View {
                     if task.requiresPhoto == true && capturedPhoto == nil {
                         Label("Take a photo before completing", systemImage: "exclamationmark.circle")
                             .font(.title3)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
                             .padding(.top)
                     }
                 }
@@ -478,12 +478,12 @@ struct UnifiedTaskDetailView: View {
             Text(task.title)
                 .font(.title2)
                 .fontWeight(.bold)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             if let category = task.category {
                 Label(category.rawValue, systemImage: category.icon)
                     .font(.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             }
         }
         .padding()
@@ -494,26 +494,26 @@ struct UnifiedTaskDetailView: View {
         VStack(alignment: .leading, spacing: 16) {
             Label("Details", systemImage: "info.circle")
                 .font(.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             if let description = task.description {
                 Text(description)
                     .font(.body)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             }
             
             Divider()
-                .background(FrancoSphereDesign.DashboardColors.borderSubtle)
+                .background(CyntientOpsDesign.DashboardColors.borderSubtle)
             
             // Timing information
             VStack(alignment: .leading, spacing: 8) {
                 if let scheduled = task.scheduledDate {
                     HStack {
                         Label("Scheduled", systemImage: "calendar")
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                         Spacer()
                         Text(scheduled.formatted(date: .abbreviated, time: .shortened))
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     }
                     .font(.subheadline)
                 }
@@ -521,10 +521,10 @@ struct UnifiedTaskDetailView: View {
                 if let due = task.dueDate {
                     HStack {
                         Label("Due", systemImage: "clock")
-                            .foregroundColor(task.isOverdue ? FrancoSphereDesign.DashboardColors.critical : FrancoSphereDesign.DashboardColors.secondaryText)
+                            .foregroundColor(task.isOverdue ? CyntientOpsDesign.DashboardColors.critical : CyntientOpsDesign.DashboardColors.secondaryText)
                         Spacer()
                         Text(due.formatted(date: .abbreviated, time: .shortened))
-                            .foregroundColor(task.isOverdue ? FrancoSphereDesign.DashboardColors.critical : FrancoSphereDesign.DashboardColors.primaryText)
+                            .foregroundColor(task.isOverdue ? CyntientOpsDesign.DashboardColors.critical : CyntientOpsDesign.DashboardColors.primaryText)
                             .fontWeight(task.isOverdue ? .bold : .regular)
                     }
                     .font(.subheadline)
@@ -533,10 +533,10 @@ struct UnifiedTaskDetailView: View {
                 if let duration = task.estimatedDuration {
                     HStack {
                         Label("Estimated Duration", systemImage: "timer")
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                         Spacer()
                         Text(formatDuration(duration))
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     }
                     .font(.subheadline)
                 }
@@ -550,18 +550,18 @@ struct UnifiedTaskDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Location", systemImage: "location")
                 .font(.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             if let building = task.building {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(building.name)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     
                     Text(building.address)
                         .font(.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     
                     // Mini map
                     Map(coordinateRegion: .constant(
@@ -570,7 +570,7 @@ struct UnifiedTaskDetailView: View {
                             span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
                         )
                     ), annotationItems: [building]) { location in
-                        MapMarker(coordinate: location.coordinate, tint: FrancoSphereDesign.DashboardColors.workerPrimary)
+                        MapMarker(coordinate: location.coordinate, tint: CyntientOpsDesign.DashboardColors.workerPrimary)
                     }
                     .frame(height: 150)
                     .cornerRadius(12)
@@ -581,7 +581,7 @@ struct UnifiedTaskDetailView: View {
                         Button(action: openInMaps) {
                             Label("Get Directions", systemImage: "arrow.triangle.turn.up.right.diamond")
                                 .font(.subheadline)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.workerPrimary)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.workerPrimary)
                         }
                         .padding(.top, 8)
                     }
@@ -597,7 +597,7 @@ struct UnifiedTaskDetailView: View {
             HStack {
                 Label("Photo Evidence", systemImage: "camera")
                     .font(.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Spacer()
                 
@@ -609,7 +609,7 @@ struct UnifiedTaskDetailView: View {
                         .padding(.vertical, 4)
                         .background(
                             Capsule()
-                                .fill(FrancoSphereDesign.DashboardColors.warning)
+                                .fill(CyntientOpsDesign.DashboardColors.warning)
                         )
                         .foregroundColor(.white)
                 }
@@ -630,7 +630,7 @@ struct UnifiedTaskDetailView: View {
                     Button(action: { showPhotoCapture = true }) {
                         Label("Retake Photo", systemImage: "camera")
                             .font(.subheadline)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.workerPrimary)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.workerPrimary)
                     }
                     .padding(.top, 8)
                 }
@@ -647,7 +647,7 @@ struct UnifiedTaskDetailView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(FrancoSphereDesign.DashboardColors.workerPrimary)
+                        .background(CyntientOpsDesign.DashboardColors.workerPrimary)
                         .cornerRadius(12)
                     }
                     
@@ -658,12 +658,12 @@ struct UnifiedTaskDetailView: View {
                             Text("Choose from Library")
                                 .fontWeight(.medium)
                         }
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.workerPrimary)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.workerPrimary)
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(FrancoSphereDesign.DashboardColors.workerPrimary, lineWidth: 2)
+                                .stroke(CyntientOpsDesign.DashboardColors.workerPrimary, lineWidth: 2)
                         )
                     }
                     .onChange(of: photoPickerItem) { newValue in
@@ -685,7 +685,7 @@ struct UnifiedTaskDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Notes", systemImage: "note.text")
                 .font(.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             if mode.allowsEditing && task.status != .completed {
                 TextField("Add notes about this task...", text: $taskNotes, axis: .vertical)
@@ -693,18 +693,18 @@ struct UnifiedTaskDetailView: View {
                     .padding(12)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(FrancoSphereDesign.DashboardColors.cardBackground)
+                            .fill(CyntientOpsDesign.DashboardColors.cardBackground)
                     )
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     .lineLimit(3...6)
             } else if !taskNotes.isEmpty {
                 Text(taskNotes)
                     .font(.body)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             } else {
                 Text("No notes added")
                     .font(.body)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     .italic()
             }
         }
@@ -734,8 +734,8 @@ struct UnifiedTaskDetailView: View {
                 .padding()
                 .background(
                     canCompleteTask ?
-                    FrancoSphereDesign.DashboardColors.success :
-                    FrancoSphereDesign.DashboardColors.inactive
+                    CyntientOpsDesign.DashboardColors.success :
+                    CyntientOpsDesign.DashboardColors.inactive
                 )
                 .cornerRadius(12)
             }
@@ -744,7 +744,7 @@ struct UnifiedTaskDetailView: View {
             if task.requiresPhoto == true && capturedPhoto == nil {
                 Text("Photo evidence required to complete task")
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
             }
         }
         .padding()
@@ -774,7 +774,7 @@ struct UnifiedTaskDetailView: View {
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .font(.title2)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.adminPrimary)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.adminPrimary)
                 }
             }
         }
@@ -784,31 +784,31 @@ struct UnifiedTaskDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Worker Assignment", systemImage: "person.badge.shield.checkmark")
                 .font(.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             if let worker = task.worker {
                 HStack {
                     // Worker avatar
                     Circle()
-                        .fill(FrancoSphereDesign.DashboardColors.adminPrimary.opacity(0.2))
+                        .fill(CyntientOpsDesign.DashboardColors.adminPrimary.opacity(0.2))
                         .frame(width: 40, height: 40)
                         .overlay(
                             Text(worker.name.prefix(2).uppercased())
                                 .font(.caption)
                                 .fontWeight(.bold)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.adminPrimary)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.adminPrimary)
                         )
                     
                     VStack(alignment: .leading) {
                         Text(worker.name)
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         
                         if let phone = worker.phone {
                             Text(phone)
                                 .font(.caption)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                         }
                     }
                     
@@ -818,13 +818,13 @@ struct UnifiedTaskDetailView: View {
                     Button(action: contactWorker) {
                         Image(systemName: "phone.circle.fill")
                             .font(.title2)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.adminPrimary)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.adminPrimary)
                     }
                 }
             } else {
                 Text("No worker assigned")
                     .font(.body)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     .italic()
             }
         }
@@ -836,14 +836,14 @@ struct UnifiedTaskDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Task History", systemImage: "clock.arrow.circlepath")
                 .font(.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             VStack(alignment: .leading, spacing: 8) {
                 historyItem(
                     icon: "plus.circle",
                     text: "Task created",
                     date: task.createdAt,
-                    color: FrancoSphereDesign.DashboardColors.info
+                    color: CyntientOpsDesign.DashboardColors.info
                 )
                 
                 if let scheduled = task.scheduledDate {
@@ -851,7 +851,7 @@ struct UnifiedTaskDetailView: View {
                         icon: "calendar.badge.plus",
                         text: "Scheduled",
                         date: scheduled,
-                        color: FrancoSphereDesign.DashboardColors.info
+                        color: CyntientOpsDesign.DashboardColors.info
                     )
                 }
                 
@@ -860,7 +860,7 @@ struct UnifiedTaskDetailView: View {
                         icon: "checkmark.circle",
                         text: "Completed",
                         date: completed,
-                        color: FrancoSphereDesign.DashboardColors.success
+                        color: CyntientOpsDesign.DashboardColors.success
                     )
                 }
             }
@@ -878,13 +878,13 @@ struct UnifiedTaskDetailView: View {
             
             Text(text)
                 .font(.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             
             Spacer()
             
             Text(date.formatted(.relative(presentation: .named)))
                 .font(.caption2)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
         }
     }
     
@@ -896,12 +896,12 @@ struct UnifiedTaskDetailView: View {
                         Label("Reassign", systemImage: "person.2")
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.adminPrimary)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.adminPrimary)
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(FrancoSphereDesign.DashboardColors.adminPrimary, lineWidth: 2)
+                                    .stroke(CyntientOpsDesign.DashboardColors.adminPrimary, lineWidth: 2)
                             )
                     }
                     
@@ -909,12 +909,12 @@ struct UnifiedTaskDetailView: View {
                         Label("Reschedule", systemImage: "calendar")
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.adminPrimary)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.adminPrimary)
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(FrancoSphereDesign.DashboardColors.adminPrimary, lineWidth: 2)
+                                    .stroke(CyntientOpsDesign.DashboardColors.adminPrimary, lineWidth: 2)
                             )
                     }
                 }
@@ -928,7 +928,7 @@ struct UnifiedTaskDetailView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(FrancoSphereDesign.DashboardColors.adminPrimary)
+                        .background(CyntientOpsDesign.DashboardColors.adminPrimary)
                         .cornerRadius(12)
                 }
             }
@@ -970,15 +970,15 @@ struct UnifiedTaskDetailView: View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.clientPrimary)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.clientPrimary)
             
             Text(value)
                 .font(.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             Text(label)
                 .font(.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
         }
         .frame(maxWidth: .infinity)
     }
@@ -987,15 +987,15 @@ struct UnifiedTaskDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Completion Evidence", systemImage: "checkmark.seal")
                 .font(.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.success)
             
             if let completedAt = task.completedAt {
                 HStack {
                     Text("Completed")
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     Spacer()
                     Text(completedAt.formatted(date: .abbreviated, time: .shortened))
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
                 .font(.subheadline)
             }
@@ -1003,10 +1003,10 @@ struct UnifiedTaskDetailView: View {
             if let worker = task.worker {
                 HStack {
                     Text("By")
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     Spacer()
                     Text(worker.name)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
                 .font(.subheadline)
             }
@@ -1015,7 +1015,7 @@ struct UnifiedTaskDetailView: View {
             if task.requiresPhoto == true && capturedPhoto != nil {
                 Text("Photo evidence provided")
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.success)
                     .padding(.top, 8)
             }
         }
@@ -1036,10 +1036,10 @@ struct UnifiedTaskDetailView: View {
                         Text("Back")
                             .font(.title3)
                     }
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 } else {
                     Image(systemName: "xmark")
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
             }
         }
@@ -1062,7 +1062,7 @@ struct UnifiedTaskDetailView: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.adminPrimary)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.adminPrimary)
                 }
             }
         }
@@ -1205,11 +1205,11 @@ struct UnifiedTaskDetailView: View {
     }
     
     private var statusColor: Color {
-        FrancoSphereDesign.EnumColors.taskStatus(task.status)
+        CyntientOpsDesign.EnumColors.taskStatus(task.status)
     }
     
     private var urgencyColor: Color {
-        FrancoSphereDesign.EnumColors.taskUrgency(task.urgency ?? .low)
+        CyntientOpsDesign.EnumColors.taskUrgency(task.urgency ?? .low)
     }
 }
 

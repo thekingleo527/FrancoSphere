@@ -1,6 +1,6 @@
 //
 //  AdaptiveGlassModifier.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: Removed conflicting GlassIntensity enum
 //  ✅ UNIFIED: Now uses GlassIntensity from GlassTypes.swift
@@ -9,7 +9,7 @@
 //  ✅ CONSOLIDATED: Extracted all button styles from GlassButtonModifier.swift
 //  ✅ CONSOLIDATED: Extracted all animation components from GlassTransitions.swift
 //  🔧 HF-25: UNIFIED GLASSMORPHISM SYSTEM (2040 STANDARD)
-//  Consistent glass styling across all FrancoSphere components
+//  Consistent glass styling across all CyntientOps components
 //
 
 import SwiftUI
@@ -220,7 +220,7 @@ extension Color {
 // MARK: - Glass Layout Helpers (Extracted from GlassMorphismStyles)
 
 extension View {
-    /// Standard glass card spacing for FrancoSphere
+    /// Standard glass card spacing for CyntientOps
     func francoSpacing() -> some View {
         self.padding(.vertical, 12)
     }

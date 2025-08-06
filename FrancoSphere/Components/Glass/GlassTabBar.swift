@@ -1,11 +1,11 @@
 //
 //  GlassTabBar.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ UPDATED: Dark Elegance theme applied
 //  ✅ ENHANCED: Glass morphism with sophisticated animations
 //  ✅ ADDED: Haptic feedback and accessibility
-//  ✅ ALIGNED: With FrancoSphereDesign color system
+//  ✅ ALIGNED: With CyntientOpsDesign color system
 //
 
 import SwiftUI
@@ -57,7 +57,7 @@ struct GlassTabBar: View {
         .padding(.horizontal, 20)
         .padding(.bottom, 20)
         .onChange(of: selectedTab) { newValue in
-            withAnimation(FrancoSphereDesign.Animations.spring) {
+            withAnimation(CyntientOpsDesign.Animations.spring) {
                 animatedTab = newValue
             }
         }
@@ -68,7 +68,7 @@ struct GlassTabBar: View {
     private func tabButton(for index: Int) -> some View {
         Button(action: {
             impactFeedback.impactOccurred()
-            withAnimation(FrancoSphereDesign.Animations.spring) {
+            withAnimation(CyntientOpsDesign.Animations.spring) {
                 selectedTab = index
                 animatedTab = index
             }
@@ -97,8 +97,8 @@ struct GlassTabBar: View {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        FrancoSphereDesign.DashboardColors.glassOverlay.opacity(0.3),
-                                        FrancoSphereDesign.DashboardColors.glassOverlay.opacity(0.1)
+                                        CyntientOpsDesign.DashboardColors.glassOverlay.opacity(0.3),
+                                        CyntientOpsDesign.DashboardColors.glassOverlay.opacity(0.1)
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
@@ -133,10 +133,10 @@ struct GlassTabBar: View {
     private func tabColor(for index: Int) -> Color {
         if animatedTab == index {
             // Selected tab uses accent color
-            return FrancoSphereDesign.DashboardColors.info
+            return CyntientOpsDesign.DashboardColors.info
         } else {
             // Unselected tabs use muted text
-            return FrancoSphereDesign.DashboardColors.secondaryText
+            return CyntientOpsDesign.DashboardColors.secondaryText
         }
     }
     
@@ -144,7 +144,7 @@ struct GlassTabBar: View {
         ZStack {
             // Dark base with heavy blur
             RoundedRectangle(cornerRadius: 24)
-                .fill(FrancoSphereDesign.DashboardColors.cardBackground.opacity(0.9))
+                .fill(CyntientOpsDesign.DashboardColors.cardBackground.opacity(0.9))
                 .background(
                     RoundedRectangle(cornerRadius: 24)
                         .fill(.ultraThinMaterial)
@@ -156,7 +156,7 @@ struct GlassTabBar: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            FrancoSphereDesign.DashboardColors.glassOverlay.opacity(0.2),
+                            CyntientOpsDesign.DashboardColors.glassOverlay.opacity(0.2),
                             Color.clear
                         ],
                         startPoint: .top,
@@ -199,7 +199,7 @@ struct FloatingGlassTabBar: View {
         .padding(.vertical, 16)
         .background(
             Capsule()
-                .fill(FrancoSphereDesign.DashboardColors.cardBackground.opacity(0.95))
+                .fill(CyntientOpsDesign.DashboardColors.cardBackground.opacity(0.95))
                 .background(
                     Capsule()
                         .fill(.ultraThinMaterial)
@@ -230,7 +230,7 @@ struct FloatingGlassTabBar: View {
     
     private func floatingTabButton(for index: Int) -> some View {
         Button(action: {
-            withAnimation(FrancoSphereDesign.Animations.spring) {
+            withAnimation(CyntientOpsDesign.Animations.spring) {
                 selectedTab = index
             }
         }) {
@@ -239,8 +239,8 @@ struct FloatingGlassTabBar: View {
                     .font(.system(size: 24, weight: selectedTab == index ? .semibold : .regular))
                     .foregroundColor(
                         selectedTab == index ?
-                        FrancoSphereDesign.DashboardColors.info :
-                        FrancoSphereDesign.DashboardColors.secondaryText
+                        CyntientOpsDesign.DashboardColors.info :
+                        CyntientOpsDesign.DashboardColors.secondaryText
                     )
                     .scaleEffect(selectedTab == index ? 1.15 : 1.0)
                 
@@ -249,8 +249,8 @@ struct FloatingGlassTabBar: View {
                         .font(.system(size: 10, weight: .medium))
                         .foregroundColor(
                             selectedTab == index ?
-                            FrancoSphereDesign.DashboardColors.info :
-                            FrancoSphereDesign.DashboardColors.tertiaryText
+                            CyntientOpsDesign.DashboardColors.info :
+                            CyntientOpsDesign.DashboardColors.tertiaryText
                         )
                         .opacity(selectedTab == index ? 1.0 : 0.6)
                 }
@@ -266,7 +266,7 @@ struct GlassTabBar_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
             // Dark Elegance background
-            FrancoSphereDesign.DashboardColors.baseBackground
+            CyntientOpsDesign.DashboardColors.baseBackground
                 .ignoresSafeArea()
             
             VStack {
@@ -276,7 +276,7 @@ struct GlassTabBar_Previews: PreviewProvider {
                 VStack(spacing: 40) {
                     Text("Standard Tab Bar")
                         .font(.headline)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     
                     GlassTabBar(
                         selectedTab: .constant(0),
@@ -295,7 +295,7 @@ struct GlassTabBar_Previews: PreviewProvider {
                 VStack(spacing: 40) {
                     Text("Floating Variant")
                         .font(.headline)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     
                     FloatingGlassTabBar(
                         selectedTab: .constant(1),

@@ -1,7 +1,7 @@
 //
 //
 //  GlassCard.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ FIXED: Animation typo corrected to Animation
 //  ✅ FIXED: Removed duplicate GlassIntensity enum - using one from GlassTypes.swift

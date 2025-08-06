@@ -1,6 +1,6 @@
 //
 //  ProfileView.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ ALL COMPILATION ERRORS FIXED
 //  ✅ No async operations in computed properties or view builders
@@ -44,7 +44,7 @@ struct ProfileView: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: FrancoSphereDesign.Spacing.lg) {
+                VStack(spacing: CyntientOpsDesign.Spacing.lg) {
                     // Profile header
                     profileHeader
                     
@@ -62,10 +62,10 @@ struct ProfileView: View {
                     
                     Spacer(minLength: 40)
                 }
-                .padding(.horizontal, FrancoSphereDesign.Spacing.md)
-                .padding(.top, FrancoSphereDesign.Spacing.md)
+                .padding(.horizontal, CyntientOpsDesign.Spacing.md)
+                .padding(.top, CyntientOpsDesign.Spacing.md)
             }
-            .background(FrancoSphereDesign.DashboardColors.baseBackground.ignoresSafeArea())
+            .background(CyntientOpsDesign.DashboardColors.baseBackground.ignoresSafeArea())
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.large)
             .navigationBarBackButtonHidden(true)
@@ -98,7 +98,7 @@ struct ProfileView: View {
         .navigationViewStyle(StackNavigationViewStyle())
         .preferredColorScheme(.dark)
         .sheet(isPresented: $showImagePicker) {
-            FrancoSphereImagePicker(
+            CyntientOpsImagePicker(
                 isPresented: $showImagePicker,
                 selectedImage: $profileImage
             )
@@ -121,7 +121,7 @@ struct ProfileView: View {
     // MARK: - Profile Header
     
     private var profileHeader: some View {
-        VStack(spacing: FrancoSphereDesign.Spacing.md) {
+        VStack(spacing: CyntientOpsDesign.Spacing.md) {
             // Profile image
             Button(action: {
                 HapticManager.impact(.light)
@@ -172,19 +172,19 @@ struct ProfileView: View {
             .buttonStyle(PlainButtonStyle())
             
             // Worker name and role
-            VStack(spacing: FrancoSphereDesign.Spacing.xs) {
+            VStack(spacing: CyntientOpsDesign.Spacing.xs) {
                 Text(authManager.currentWorkerName)
-                    .francoTypography(FrancoSphereDesign.Typography.title2)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.title2)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Text(currentWorkerRole)
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
                     .foregroundColor(dashboardRole.primaryColor)
                 
                 if let email = currentWorkerEmail {
                     Text(email)
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 }
             }
         }
@@ -193,12 +193,12 @@ struct ProfileView: View {
     // MARK: - Worker Information
     
     private var workerInfoSection: some View {
-        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.md) {
+        VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.md) {
             Text("Worker Information")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
-            VStack(spacing: FrancoSphereDesign.Spacing.md) {
+            VStack(spacing: CyntientOpsDesign.Spacing.md) {
                 ProfileInfoRow(
                     icon: "person.badge.key.fill",
                     label: "Worker ID",
@@ -235,37 +235,37 @@ struct ProfileView: View {
     // MARK: - Statistics Section
     
     private var statisticsSection: some View {
-        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.md) {
+        VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.md) {
             Text("Performance Stats")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
-            VStack(spacing: FrancoSphereDesign.Spacing.md) {
-                HStack(spacing: FrancoSphereDesign.Spacing.md) {
+            VStack(spacing: CyntientOpsDesign.Spacing.md) {
+                HStack(spacing: CyntientOpsDesign.Spacing.md) {
                     ProfileStatCard(
                         title: "Tasks Today",
                         value: "\(contextEngine.todaysTasks.count)",
-                        color: FrancoSphereDesign.DashboardColors.info
+                        color: CyntientOpsDesign.DashboardColors.info
                     )
                     
                     ProfileStatCard(
                         title: "Completed",
                         value: "\(getCompletedTasksCount())",
-                        color: FrancoSphereDesign.DashboardColors.success
+                        color: CyntientOpsDesign.DashboardColors.success
                     )
                 }
                 
-                HStack(spacing: FrancoSphereDesign.Spacing.md) {
+                HStack(spacing: CyntientOpsDesign.Spacing.md) {
                     ProfileStatCard(
                         title: "Pending",
                         value: "\(getPendingTasksCount())",
-                        color: FrancoSphereDesign.DashboardColors.warning
+                        color: CyntientOpsDesign.DashboardColors.warning
                     )
                     
                     ProfileStatCard(
                         title: "Urgent",
                         value: "\(getUrgentTasksCount())",
-                        color: FrancoSphereDesign.DashboardColors.critical
+                        color: CyntientOpsDesign.DashboardColors.critical
                     )
                 }
             }
@@ -277,10 +277,10 @@ struct ProfileView: View {
     // MARK: - Settings Section
     
     private var settingsSection: some View {
-        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.md) {
+        VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.md) {
             Text("Settings")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             VStack(spacing: 0) {
                 SettingsRow(
@@ -294,8 +294,8 @@ struct ProfileView: View {
                 }
                 
                 Divider()
-                    .background(FrancoSphereDesign.DashboardColors.borderSubtle)
-                    .padding(.vertical, FrancoSphereDesign.Spacing.sm)
+                    .background(CyntientOpsDesign.DashboardColors.borderSubtle)
+                    .padding(.vertical, CyntientOpsDesign.Spacing.sm)
                 
                 SettingsRow(
                     icon: "moon.fill",
@@ -308,8 +308,8 @@ struct ProfileView: View {
                 }
                 
                 Divider()
-                    .background(FrancoSphereDesign.DashboardColors.borderSubtle)
-                    .padding(.vertical, FrancoSphereDesign.Spacing.sm)
+                    .background(CyntientOpsDesign.DashboardColors.borderSubtle)
+                    .padding(.vertical, CyntientOpsDesign.Spacing.sm)
                 
                 SettingsRow(
                     icon: "questionmark.circle.fill",
@@ -329,7 +329,7 @@ struct ProfileView: View {
     // MARK: - Actions Section
     
     private var actionsSection: some View {
-        VStack(spacing: FrancoSphereDesign.Spacing.sm) {
+        VStack(spacing: CyntientOpsDesign.Spacing.sm) {
             Button {
                 HapticManager.impact(.medium)
                 Task {
@@ -346,7 +346,7 @@ struct ProfileView: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(dashboardRole.primaryColor)
-                .francoCornerRadius(FrancoSphereDesign.CornerRadius.md)
+                .francoCornerRadius(CyntientOpsDesign.CornerRadius.md)
             }
             
             Button {
@@ -359,15 +359,15 @@ struct ProfileView: View {
                     Text("Sign Out")
                         .font(.subheadline.weight(.semibold))
                 }
-                .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.critical)
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(
-                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.md)
-                        .fill(FrancoSphereDesign.DashboardColors.critical.opacity(0.1))
+                    RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.md)
+                        .fill(CyntientOpsDesign.DashboardColors.critical.opacity(0.1))
                         .overlay(
-                            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.md)
-                                .stroke(FrancoSphereDesign.DashboardColors.critical.opacity(0.3), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.md)
+                                .stroke(CyntientOpsDesign.DashboardColors.critical.opacity(0.3), lineWidth: 1)
                         )
                 )
             }
@@ -442,15 +442,15 @@ struct ProfileInfoRow: View {
                 .frame(width: 20)
             
             Text(label)
-                .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             
             Spacer()
             
             Text(value)
-                .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                .francoTypography(CyntientOpsDesign.Typography.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
         }
     }
 }
@@ -461,23 +461,23 @@ struct ProfileStatCard: View {
     let color: Color
     
     var body: some View {
-        VStack(spacing: FrancoSphereDesign.Spacing.sm) {
+        VStack(spacing: CyntientOpsDesign.Spacing.sm) {
             Text(value)
-                .francoTypography(FrancoSphereDesign.Typography.title)
+                .francoTypography(CyntientOpsDesign.Typography.title)
                 .foregroundColor(color)
             
             Text(title)
-                .francoTypography(FrancoSphereDesign.Typography.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                .francoTypography(CyntientOpsDesign.Typography.caption)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, FrancoSphereDesign.Spacing.md)
+        .padding(.vertical, CyntientOpsDesign.Spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.md)
+            RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.md)
                 .fill(color.opacity(0.1))
                 .overlay(
-                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.md)
+                    RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.md)
                         .stroke(color.opacity(0.3), lineWidth: 1)
                 )
         )
@@ -494,21 +494,21 @@ struct SettingsRow: View {
     
     var body: some View {
         Button(action: action) {
-            HStack(spacing: FrancoSphereDesign.Spacing.sm) {
+            HStack(spacing: CyntientOpsDesign.Spacing.sm) {
                 Image(systemName: icon)
                     .font(.subheadline)
                     .foregroundColor(role.primaryColor)
                     .frame(width: 20)
                 
-                VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.xs / 2) {
+                VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.xs / 2) {
                     Text(title)
-                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                        .francoTypography(CyntientOpsDesign.Typography.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     
                     Text(subtitle)
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 }
                 
                 Spacer()
@@ -516,10 +516,10 @@ struct SettingsRow: View {
                 if hasChevron {
                     Image(systemName: "chevron.right")
                         .font(.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 }
             }
-            .padding(.vertical, FrancoSphereDesign.Spacing.xs)
+            .padding(.vertical, CyntientOpsDesign.Spacing.xs)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -527,7 +527,7 @@ struct SettingsRow: View {
 
 // MARK: - Image Picker
 
-struct FrancoSphereImagePicker: UIViewControllerRepresentable {
+struct CyntientOpsImagePicker: UIViewControllerRepresentable {
     @Binding var isPresented: Bool
     @Binding var selectedImage: UIImage?
     
@@ -546,9 +546,9 @@ struct FrancoSphereImagePicker: UIViewControllerRepresentable {
     }
     
     class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: FrancoSphereImagePicker
+        let parent: CyntientOpsImagePicker
         
-        init(_ parent: FrancoSphereImagePicker) {
+        init(_ parent: CyntientOpsImagePicker) {
             self.parent = parent
         }
         

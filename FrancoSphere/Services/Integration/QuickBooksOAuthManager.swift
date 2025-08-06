@@ -1,6 +1,6 @@
 //
 //  QuickBooksOAuthManager.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ FIXED: Actor initialization and isolation issues resolved
 //  ✅ V6.0 COMPLETE: Actor-based OAuth manager with GRDB integration

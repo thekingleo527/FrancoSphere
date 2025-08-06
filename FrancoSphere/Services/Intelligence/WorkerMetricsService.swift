@@ -1,6 +1,6 @@
 //
 //  WorkerMetricsService.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ REAL METRICS: Calculates actual worker performance from task data
 //  ✅ NO MOCK DATA: Uses database queries and real calculations

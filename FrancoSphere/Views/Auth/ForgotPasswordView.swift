@@ -1,6 +1,6 @@
 ////
 //  ForgotPasswordView.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ FIXED: withAnimation syntax errors resolved
 //  ✅ FIXED: Missing closing parentheses in animation calls
@@ -118,7 +118,7 @@ struct ForgotPasswordView: View {
                                     
                                     // Icon for password reset
                                     ZStack {
-                                        AbstractFrancoSphereLogo(size: 60)
+                                        AbstractCyntientOpsLogo(size: 60)
                                             .opacity(0.3)
                                         
                                         Image(systemName: "lock.rotation")

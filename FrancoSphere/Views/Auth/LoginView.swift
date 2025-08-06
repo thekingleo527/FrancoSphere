@@ -1,6 +1,6 @@
 //
 //  LoginView.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ ENHANCED: Biometric authentication support
 //  ✅ SECURE: No more hardcoded passwords
@@ -108,7 +108,7 @@ struct LoginView: View {
                                 .shadow(color: Color.black.opacity(0.3), radius: 20, y: 10)
                             
                             // Logo
-                            AbstractFrancoSphereLogo(size: 100)
+                            AbstractCyntientOpsLogo(size: 100)
                                 .rotationEffect(.degrees(logoRotation))
                         }
                         .scaleEffect(logoScale)
@@ -116,7 +116,7 @@ struct LoginView: View {
                         
                         // App name
                         VStack(spacing: 8) {
-                            Text("FrancoSphere")
+                            Text("CyntientOps")
                                 .font(.system(size: 38, weight: .bold, design: .rounded))
                                 .foregroundStyle(
                                     LinearGradient(

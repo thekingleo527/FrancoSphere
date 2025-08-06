@@ -1,9 +1,9 @@
 //
 //  GlassStatusBadge.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ UPDATED: Dark Elegance theme applied
-//  ✅ ENHANCED: Integrated with FrancoSphereDesign color system
+//  ✅ ENHANCED: Integrated with CyntientOpsDesign color system
 //  ✅ IMPROVED: Glass effects optimized for dark theme
 //  ✅ ADDED: Smooth animations and better visual hierarchy
 //
@@ -22,15 +22,15 @@ enum GlassBadgeStyle {
     var color: Color {
         switch self {
         case .success:
-            return FrancoSphereDesign.DashboardColors.success
+            return CyntientOpsDesign.DashboardColors.success
         case .warning:
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         case .danger:
-            return FrancoSphereDesign.DashboardColors.critical
+            return CyntientOpsDesign.DashboardColors.critical
         case .info:
-            return FrancoSphereDesign.DashboardColors.info
+            return CyntientOpsDesign.DashboardColors.info
         case .neutral:
-            return FrancoSphereDesign.DashboardColors.inactive
+            return CyntientOpsDesign.DashboardColors.inactive
         case .custom(let color):
             return color
         }
@@ -113,7 +113,7 @@ struct GlassStatusBadge: View {
                 .font(size.fontSize)
                 .fontWeight(.medium)
         }
-        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
         .padding(size.padding)
         .background(badgeBackground)
         .clipShape(Capsule())
@@ -138,7 +138,7 @@ struct GlassStatusBadge: View {
         ZStack {
             // Dark base
             Capsule()
-                .fill(FrancoSphereDesign.DashboardColors.cardBackground.opacity(0.8))
+                .fill(CyntientOpsDesign.DashboardColors.cardBackground.opacity(0.8))
             
             // Color overlay
             Capsule()
@@ -209,7 +209,7 @@ struct GlassNotificationBadge: View {
             Text(count > 99 ? "99+" : "\(count)")
                 .font(size.fontSize)
                 .fontWeight(.bold)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 .frame(minWidth: 20)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
@@ -218,7 +218,7 @@ struct GlassNotificationBadge: View {
                         .fill(style.color)
                         .overlay(
                             Capsule()
-                                .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                                .fill(CyntientOpsDesign.DashboardColors.glassOverlay)
                                 .opacity(0.3)
                         )
                 )
@@ -255,11 +255,11 @@ struct GlassProgressBadge: View {
     
     private var progressColor: Color {
         if percentage >= 75 {
-            return FrancoSphereDesign.DashboardColors.success
+            return CyntientOpsDesign.DashboardColors.success
         } else if percentage >= 50 {
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         } else {
-            return FrancoSphereDesign.DashboardColors.critical
+            return CyntientOpsDesign.DashboardColors.critical
         }
     }
     
@@ -282,7 +282,7 @@ struct GlassProgressBadge: View {
             // Progress ring
             ZStack {
                 Circle()
-                    .stroke(FrancoSphereDesign.DashboardColors.glassOverlay, lineWidth: 3)
+                    .stroke(CyntientOpsDesign.DashboardColors.glassOverlay, lineWidth: 3)
                     .frame(width: 20, height: 20)
                 
                 Circle()
@@ -298,18 +298,18 @@ struct GlassProgressBadge: View {
                 Text("\(Int(percentage))%")
                     .font(size.fontSize)
                     .fontWeight(.semibold)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             } else {
                 Text("\(Int(progress))/\(Int(total))")
                     .font(size.fontSize)
                     .fontWeight(.semibold)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             }
         }
         .padding(size.padding)
         .background(
             Capsule()
-                .fill(FrancoSphereDesign.DashboardColors.cardBackground.opacity(0.8))
+                .fill(CyntientOpsDesign.DashboardColors.cardBackground.opacity(0.8))
                 .overlay(
                     Capsule()
                         .fill(progressColor.opacity(0.2))
@@ -341,21 +341,21 @@ struct GlassLoadingBadge: View {
     var body: some View {
         HStack(spacing: 6) {
             ProgressView()
-                .progressViewStyle(CircularProgressViewStyle(tint: FrancoSphereDesign.DashboardColors.info))
+                .progressViewStyle(CircularProgressViewStyle(tint: CyntientOpsDesign.DashboardColors.info))
                 .scaleEffect(0.7)
             
             Text(text)
                 .font(size.fontSize)
                 .fontWeight(.medium)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
         }
         .padding(size.padding)
         .background(
             Capsule()
-                .fill(FrancoSphereDesign.DashboardColors.cardBackground.opacity(0.8))
+                .fill(CyntientOpsDesign.DashboardColors.cardBackground.opacity(0.8))
                 .overlay(
                     Capsule()
-                        .fill(FrancoSphereDesign.DashboardColors.info.opacity(0.2))
+                        .fill(CyntientOpsDesign.DashboardColors.info.opacity(0.2))
                 )
                 .background(.ultraThinMaterial.opacity(0.3))
         )
@@ -364,8 +364,8 @@ struct GlassLoadingBadge: View {
                 .stroke(
                     LinearGradient(
                         colors: [
-                            FrancoSphereDesign.DashboardColors.info.opacity(isAnimating ? 0.6 : 0.2),
-                            FrancoSphereDesign.DashboardColors.info.opacity(isAnimating ? 0.2 : 0.6)
+                            CyntientOpsDesign.DashboardColors.info.opacity(isAnimating ? 0.6 : 0.2),
+                            CyntientOpsDesign.DashboardColors.info.opacity(isAnimating ? 0.2 : 0.6)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -420,7 +420,7 @@ struct GlassStatusBadge_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
             // Dark Elegance Background
-            FrancoSphereDesign.DashboardColors.baseBackground
+            CyntientOpsDesign.DashboardColors.baseBackground
                 .ignoresSafeArea()
             
             ScrollView {
@@ -429,7 +429,7 @@ struct GlassStatusBadge_Previews: PreviewProvider {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Status Badges")
                             .font(.headline)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         
                         HStack(spacing: 12) {
                             GlassStatusBadge(text: "Active", style: .success, size: .small)
@@ -450,13 +450,13 @@ struct GlassStatusBadge_Previews: PreviewProvider {
                     }
                     
                     Divider()
-                        .background(FrancoSphereDesign.DashboardColors.glassOverlay)
+                        .background(CyntientOpsDesign.DashboardColors.glassOverlay)
                     
                     // Progress badges
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Progress Badges")
                             .font(.headline)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         
                         HStack(spacing: 12) {
                             GlassProgressBadge(progress: 8, total: 10)
@@ -471,51 +471,51 @@ struct GlassStatusBadge_Previews: PreviewProvider {
                     }
                     
                     Divider()
-                        .background(FrancoSphereDesign.DashboardColors.glassOverlay)
+                        .background(CyntientOpsDesign.DashboardColors.glassOverlay)
                     
                     // Notification badges
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Notification Badges")
                             .font(.headline)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         
                         HStack(spacing: 40) {
                             Image(systemName: "bell.fill")
                                 .font(.title)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                                 .glassNotificationBadge(count: 3)
                             
                             Image(systemName: "envelope.fill")
                                 .font(.title)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                                 .glassNotificationBadge(count: 12, style: .info)
                             
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .font(.title)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                                 .glassNotificationBadge(count: 1, style: .warning)
                         }
                     }
                     
                     Divider()
-                        .background(FrancoSphereDesign.DashboardColors.glassOverlay)
+                        .background(CyntientOpsDesign.DashboardColors.glassOverlay)
                     
                     // Badge on cards
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Badges on Cards")
                             .font(.headline)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         
                         // Card with badge
                         HStack {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("12 West 18th Street")
                                     .font(.headline)
-                                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                                 
                                 Text("5 active tasks")
                                     .font(.subheadline)
-                                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                             }
                             
                             Spacer()
@@ -529,11 +529,11 @@ struct GlassStatusBadge_Previews: PreviewProvider {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("HVAC Maintenance")
                                     .font(.headline)
-                                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                                 
                                 Text("Due in 2 hours")
                                     .font(.subheadline)
-                                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                             }
                             
                             Spacer()

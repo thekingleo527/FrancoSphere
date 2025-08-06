@@ -1,9 +1,9 @@
 //
 //  PressableGlassCard.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ UPDATED: Dark Elegance theme applied
-//  ✅ ENHANCED: Integrated with FrancoSphereDesign color system
+//  ✅ ENHANCED: Integrated with CyntientOpsDesign color system
 //  ✅ IMPROVED: Glass effects and press animations
 //  ✅ ADDED: Haptic feedback and accessibility support
 //
@@ -53,7 +53,7 @@ struct PressableGlassCard<Content: View>: View {
         self.shadowRadius = shadowRadius
         self.borderWidth = borderWidth
         self.hasGlow = hasGlow
-        self.glowColor = glowColor ?? FrancoSphereDesign.DashboardColors.info
+        self.glowColor = glowColor ?? CyntientOpsDesign.DashboardColors.info
         self.isDisabled = isDisabled
     }
     
@@ -65,7 +65,7 @@ struct PressableGlassCard<Content: View>: View {
             impactFeedback.impactOccurred()
             
             // Quick press animation
-            withAnimation(FrancoSphereDesign.Animations.spring) {
+            withAnimation(CyntientOpsDesign.Animations.spring) {
                 isPressed = true
             }
             
@@ -74,7 +74,7 @@ struct PressableGlassCard<Content: View>: View {
             
             // Reset press state
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation(FrancoSphereDesign.Animations.spring) {
+                withAnimation(CyntientOpsDesign.Animations.spring) {
                     isPressed = false
                 }
             }
@@ -88,7 +88,7 @@ struct PressableGlassCard<Content: View>: View {
         .buttonStyle(PlainButtonStyle())
         .scaleEffect(isPressed ? 0.96 : (isHovered ? 1.02 : 1.0))
         .shadow(
-            color: FrancoSphereDesign.DashboardColors.baseBackground.opacity(isPressed ? 0.4 : 0.3),
+            color: CyntientOpsDesign.DashboardColors.baseBackground.opacity(isPressed ? 0.4 : 0.3),
             radius: isPressed ? shadowRadius + 5 : shadowRadius,
             x: 0,
             y: isPressed ? 8 : 5
@@ -96,12 +96,12 @@ struct PressableGlassCard<Content: View>: View {
         .opacity(isDisabled ? 0.6 : 1.0)
         .disabled(isDisabled)
         .onHover { hovering in
-            withAnimation(FrancoSphereDesign.Animations.spring) {
+            withAnimation(CyntientOpsDesign.Animations.spring) {
                 isHovered = hovering
             }
         }
         .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            withAnimation(FrancoSphereDesign.Animations.spring) {
+            withAnimation(CyntientOpsDesign.Animations.spring) {
                 isPressed = pressing
             }
         }, perform: {})
@@ -112,7 +112,7 @@ struct PressableGlassCard<Content: View>: View {
         ZStack {
             // Dark base with blur
             RoundedRectangle(cornerRadius: cornerRadius)
-                .fill(FrancoSphereDesign.DashboardColors.cardBackground.opacity(0.8))
+                .fill(CyntientOpsDesign.DashboardColors.cardBackground.opacity(0.8))
                 .background(
                     RoundedRectangle(cornerRadius: cornerRadius)
                         .fill(intensity.material)
@@ -124,8 +124,8 @@ struct PressableGlassCard<Content: View>: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            FrancoSphereDesign.DashboardColors.glassOverlay.opacity(isPressed ? 0.1 : 0.3),
-                            FrancoSphereDesign.DashboardColors.glassOverlay.opacity(isPressed ? 0.05 : 0.1),
+                            CyntientOpsDesign.DashboardColors.glassOverlay.opacity(isPressed ? 0.1 : 0.3),
+                            CyntientOpsDesign.DashboardColors.glassOverlay.opacity(isPressed ? 0.05 : 0.1),
                             Color.clear
                         ],
                         startPoint: .topLeading,
@@ -144,7 +144,7 @@ struct PressableGlassCard<Content: View>: View {
             // Pressed state overlay
             if isPressed {
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(FrancoSphereDesign.DashboardColors.glassOverlay.opacity(0.1))
+                    .fill(CyntientOpsDesign.DashboardColors.glassOverlay.opacity(0.1))
             }
         }
     }
@@ -179,15 +179,15 @@ enum PressableCardStyle {
     var glowColor: Color {
         switch self {
         case .primary:
-            return FrancoSphereDesign.DashboardColors.info
+            return CyntientOpsDesign.DashboardColors.info
         case .secondary:
-            return FrancoSphereDesign.DashboardColors.inactive
+            return CyntientOpsDesign.DashboardColors.inactive
         case .success:
-            return FrancoSphereDesign.DashboardColors.success
+            return CyntientOpsDesign.DashboardColors.success
         case .danger:
-            return FrancoSphereDesign.DashboardColors.critical
+            return CyntientOpsDesign.DashboardColors.critical
         case .warning:
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         }
     }
 }
@@ -216,28 +216,28 @@ struct PressableGlassCard_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
             // Dark Elegance background
-            FrancoSphereDesign.DashboardColors.baseBackground
+            CyntientOpsDesign.DashboardColors.baseBackground
                 .ignoresSafeArea()
             
             VStack(spacing: 20) {
                 // Clock In Card
-                PressableGlassCard(hasGlow: true, glowColor: FrancoSphereDesign.DashboardColors.success) {
+                PressableGlassCard(hasGlow: true, glowColor: CyntientOpsDesign.DashboardColors.success) {
                     print("Clock In tapped")
                 } content: {
                     HStack {
                         Image(systemName: "clock.badge.checkmark")
                             .font(.title2)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         
                         Text("CLOCK IN")
                             .font(.headline)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         
                         Spacer()
                         
                         Image(systemName: "chevron.right")
                             .font(.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -250,13 +250,13 @@ struct PressableGlassCard_Previews: PreviewProvider {
                     VStack(spacing: 12) {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.title)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.success)
                         Text("Complete Task")
                             .font(.headline)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         Text("Mark this task as complete")
                             .font(.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     }
                 }
                 .cardStyle(.primary)
@@ -268,13 +268,13 @@ struct PressableGlassCard_Previews: PreviewProvider {
                     VStack(spacing: 12) {
                         Image(systemName: "gear")
                             .font(.title2)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         Text("Settings")
                             .font(.subheadline)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         Text("Configure your preferences")
                             .font(.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     }
                 }
                 
@@ -285,10 +285,10 @@ struct PressableGlassCard_Previews: PreviewProvider {
                     HStack {
                         Image(systemName: "lock.fill")
                             .font(.body)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                         Text("Locked Feature")
                             .font(.subheadline)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     }
                 }
                 
@@ -299,11 +299,11 @@ struct PressableGlassCard_Previews: PreviewProvider {
                     HStack {
                         Image(systemName: "trash.fill")
                             .font(.body)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.critical)
                         Text("Delete Item")
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.critical)
                     }
                 }
                 .cardStyle(.danger)

@@ -1,5 +1,5 @@
 //  EmergencyContactsSheet.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ COMPLETE: Emergency contacts for quick actions
 //

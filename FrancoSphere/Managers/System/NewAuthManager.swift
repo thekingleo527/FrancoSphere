@@ -1,13 +1,13 @@
 //
 //  NewAuthManager.swift
-//  FrancoSphere v6.0
+//  CyntientOps (formerly CyntientOps) v6.0
 //
-//  ✅ PHASE 2 COMPLIANT: Secure authentication with Keychain storage
+//  ✅ REFACTORED: Works with ServiceContainer architecture
+//  ✅ FIXED: Renamed AuthError to NewAuthError to avoid conflicts
 //  ✅ BIOMETRIC: Face ID/Touch ID support
 //  ✅ SESSION MANAGEMENT: Token expiration and refresh
 //  ✅ ROLE-BASED ACCESS: Proper permission handling
 //  ✅ NO HARDCODED CREDENTIALS: All passwords hashed and stored securely
-//  ✅ ENHANCED SECURITY: SHA256 hashing with salt, password requirements
 //
 
 import Foundation
@@ -35,7 +35,7 @@ public class NewAuthManager: ObservableObject {
     @Published public private(set) var currentUser: CoreTypes.User?
     @Published public private(set) var isAuthenticated = false
     @Published public private(set) var isLoading = false
-    @Published public private(set) var authError: AuthError?
+    @Published public private(set) var authError: NewAuthError?
     @Published public private(set) var biometricType: LABiometryType = .none
     @Published public private(set) var isBiometricEnabled = false
     @Published public private(set) var sessionStatus: SessionStatus = .none
@@ -49,6 +49,10 @@ public class NewAuthManager: ObservableObject {
     
     public var workerId: CoreTypes.WorkerID? {
         currentUser?.workerId
+    }
+    
+    public var currentUserId: String? {
+        currentUser?.id
     }
     
     public var currentWorkerName: String {
@@ -108,7 +112,7 @@ public class NewAuthManager: ObservableObject {
     public func authenticate(email: String, password: String) async throws {
         // Check for too many login attempts
         guard loginAttempts < maxLoginAttempts else {
-            throw AuthError.tooManyAttempts
+            throw NewAuthError.tooManyAttempts
         }
         
         isLoading = true
@@ -124,13 +128,13 @@ public class NewAuthManager: ObservableObject {
             
             guard let userRow = userRows.first else {
                 loginAttempts += 1
-                throw AuthError.authenticationFailed("Invalid credentials")
+                throw NewAuthError.authenticationFailed("Invalid credentials")
             }
             
             // Get stored password hash
             guard let storedPasswordHash = userRow["password"] as? String,
                   let workerId = userRow["id"] as? String else {
-                throw AuthError.authenticationFailed("Invalid user data")
+                throw NewAuthError.authenticationFailed("Invalid user data")
             }
             
             // For migration: Check if password is still plain text
@@ -147,7 +151,7 @@ public class NewAuthManager: ObservableObject {
                 let isValid = try await verifyPassword(password, hash: storedPasswordHash, for: email)
                 guard isValid else {
                     loginAttempts += 1
-                    throw AuthError.authenticationFailed("Invalid credentials")
+                    throw NewAuthError.authenticationFailed("Invalid credentials")
                 }
             }
             
@@ -200,7 +204,7 @@ public class NewAuthManager: ObservableObject {
             }
             
         } catch {
-            authError = error as? AuthError ?? .unknown(error.localizedDescription)
+            authError = error as? NewAuthError ?? .unknown(error.localizedDescription)
             throw error
         }
     }
@@ -208,12 +212,12 @@ public class NewAuthManager: ObservableObject {
     /// Change password for current user
     public func changePassword(currentPassword: String, newPassword: String) async throws {
         guard let user = currentUser else {
-            throw AuthError.notAuthenticated
+            throw NewAuthError.notAuthenticated
         }
         
         // Validate new password
         guard isPasswordValid(newPassword) else {
-            throw AuthError.weakPassword
+            throw NewAuthError.weakPassword
         }
         
         // Verify current password
@@ -224,12 +228,12 @@ public class NewAuthManager: ObservableObject {
         
         guard let userRow = userRows.first,
               let storedHash = userRow["password"] as? String else {
-            throw AuthError.userNotFound
+            throw NewAuthError.userNotFound
         }
         
         let isValid = try await verifyPassword(currentPassword, hash: storedHash, for: user.email)
         guard isValid else {
-            throw AuthError.authenticationFailed("Current password is incorrect")
+            throw NewAuthError.authenticationFailed("Current password is incorrect")
         }
         
         // Hash new password
@@ -248,12 +252,12 @@ public class NewAuthManager: ObservableObject {
     /// Reset password (admin function)
     public func resetPassword(for email: String, newPassword: String) async throws {
         guard hasAdminAccess else {
-            throw AuthError.insufficientPermissions
+            throw NewAuthError.insufficientPermissions
         }
         
         // Validate new password
         guard isPasswordValid(newPassword) else {
-            throw AuthError.weakPassword
+            throw NewAuthError.weakPassword
         }
         
         // Get user
@@ -264,7 +268,7 @@ public class NewAuthManager: ObservableObject {
         
         guard let userRow = userRows.first,
               let workerId = userRow["id"] as? String else {
-            throw AuthError.userNotFound
+            throw NewAuthError.userNotFound
         }
         
         // Hash new password
@@ -282,11 +286,11 @@ public class NewAuthManager: ObservableObject {
     /// Authenticate with biometrics
     public func authenticateWithBiometrics() async throws {
         guard isBiometricEnabled else {
-            throw AuthError.biometricsNotEnabled
+            throw NewAuthError.biometricsNotEnabled
         }
         
         guard let lastEmail = UserDefaults.standard.string(forKey: lastAuthenticatedUserKey) else {
-            throw AuthError.noStoredCredentials
+            throw NewAuthError.noStoredCredentials
         }
         
         isLoading = true
@@ -294,7 +298,7 @@ public class NewAuthManager: ObservableObject {
         defer { isLoading = false }
         
         // Authenticate with biometrics
-        let reason = "Authenticate to access FrancoSphere"
+        let reason = "Authenticate to access CyntientOps"
         
         do {
             let success = try await laContext.evaluatePolicy(
@@ -324,22 +328,22 @@ public class NewAuthManager: ObservableObject {
                         try await refreshSession()
                     }
                 } else {
-                    throw AuthError.noStoredSession
+                    throw NewAuthError.noStoredSession
                 }
             }
         } catch let error as LAError {
-            throw AuthError.biometricAuthenticationFailed(error.localizedDescription)
+            throw NewAuthError.biometricAuthenticationFailed(error.localizedDescription)
         }
     }
     
     /// Enable biometric authentication
     public func enableBiometrics() async throws {
         guard isAuthenticated else {
-            throw AuthError.notAuthenticated
+            throw NewAuthError.notAuthenticated
         }
         
         guard biometricType != .none else {
-            throw AuthError.biometricsNotAvailable
+            throw NewAuthError.biometricsNotAvailable
         }
         
         let reason = "Enable \(biometricTypeString) for faster authentication"
@@ -356,7 +360,7 @@ public class NewAuthManager: ObservableObject {
                 print("✅ Biometrics enabled successfully")
             }
         } catch {
-            throw AuthError.biometricEnrollmentFailed(error.localizedDescription)
+            throw NewAuthError.biometricEnrollmentFailed(error.localizedDescription)
         }
     }
     
@@ -401,7 +405,7 @@ public class NewAuthManager: ObservableObject {
     /// Refresh the current session
     public func refreshSession() async throws {
         guard let refreshToken = refreshToken else {
-            throw AuthError.noActiveSession
+            throw NewAuthError.noActiveSession
         }
         
         sessionStatus = .refreshing
@@ -429,7 +433,7 @@ public class NewAuthManager: ObservableObject {
             print("✅ Session refreshed successfully")
         } catch {
             sessionStatus = .expired
-            throw AuthError.sessionRefreshFailed
+            throw NewAuthError.sessionRefreshFailed
         }
     }
     
@@ -717,13 +721,13 @@ public class NewAuthManager: ObservableObject {
         
         let status = SecItemAdd(query as CFDictionary, nil)
         guard status == errSecSuccess else {
-            throw AuthError.keychainError("Failed to store in keychain: \(status)")
+            throw NewAuthError.keychainError("Failed to store in keychain: \(status)")
         }
     }
     
     private func storeInKeychain(_ string: String, for key: String) throws {
         guard let data = string.data(using: .utf8) else {
-            throw AuthError.keychainError("Failed to encode string")
+            throw NewAuthError.keychainError("Failed to encode string")
         }
         try storeInKeychain(data, for: key)
     }
@@ -745,7 +749,7 @@ public class NewAuthManager: ObservableObject {
         }
         
         guard status == errSecSuccess else {
-            throw AuthError.keychainError("Failed to retrieve from keychain: \(status)")
+            throw NewAuthError.keychainError("Failed to retrieve from keychain: \(status)")
         }
         
         return result
@@ -840,9 +844,9 @@ private struct Session: Codable {
     let user: CoreTypes.User
 }
 
-// MARK: - Auth Errors
+// MARK: - Auth Errors (Renamed to NewAuthError to avoid conflicts)
 
-public enum AuthError: LocalizedError {
+public enum NewAuthError: LocalizedError {
     case authenticationFailed(String)
     case sessionCreationFailed
     case sessionExpired
@@ -903,3 +907,8 @@ public enum AuthError: LocalizedError {
         }
     }
 }
+
+// MARK: - Legacy Support
+// For compatibility with existing code that might reference AuthManager
+
+public typealias AuthManager = NewAuthManager

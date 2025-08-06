@@ -1,6 +1,6 @@
 //
 //  ContentView.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: Now delegates ViewModel creation to role-specific container views.
 //  ✅ CLEAN: Only handles top-level routing based on user role.
@@ -18,7 +18,7 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             // Dark Elegance Background
-            FrancoSphereDesign.DashboardColors.baseBackground
+            CyntientOpsDesign.DashboardColors.baseBackground
                 .ignoresSafeArea()
             
             // Main content with role-based routing
@@ -46,7 +46,7 @@ struct ContentView: View {
                         .transition(.opacity.combined(with: .scale(scale: 0.95)))
                 }
             }
-            .animation(FrancoSphereDesign.Animations.dashboardTransition, value: authManager.userRole)
+            .animation(CyntientOpsDesign.Animations.dashboardTransition, value: authManager.userRole)
             
             // Optional role indicator overlay (for debugging in dev mode)
             #if DEBUG
@@ -112,20 +112,20 @@ struct UndefinedRoleView: View {
     @State private var isRetrying = false
     
     var body: some View {
-        VStack(spacing: FrancoSphereDesign.Spacing.xl) {
+        VStack(spacing: CyntientOpsDesign.Spacing.xl) {
             // Loading indicator
             ProgressView()
-                .progressViewStyle(CircularProgressViewStyle(tint: FrancoSphereDesign.DashboardColors.primaryText))
+                .progressViewStyle(CircularProgressViewStyle(tint: CyntientOpsDesign.DashboardColors.primaryText))
                 .scaleEffect(1.5)
             
-            VStack(spacing: FrancoSphereDesign.Spacing.md) {
+            VStack(spacing: CyntientOpsDesign.Spacing.md) {
                 Text("Setting up your dashboard...")
-                    .francoTypography(FrancoSphereDesign.Typography.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Text("We're preparing your personalized experience")
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     .multilineTextAlignment(.center)
             }
             
@@ -141,7 +141,7 @@ struct UndefinedRoleView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 10)
-                    .background(FrancoSphereDesign.DashboardColors.primaryAction)
+                    .background(CyntientOpsDesign.DashboardColors.primaryAction)
                     .cornerRadius(8)
                 }
                 .opacity(0)
@@ -217,9 +217,9 @@ struct RoleIndicatorPill: View {
     
     private var roleColor: Color {
         switch role {
-        case .admin, .manager: return FrancoSphereDesign.DashboardColors.adminPrimary
-        case .client: return FrancoSphereDesign.DashboardColors.clientPrimary
-        case .worker: return FrancoSphereDesign.DashboardColors.workerPrimary
+        case .admin, .manager: return CyntientOpsDesign.DashboardColors.adminPrimary
+        case .client: return CyntientOpsDesign.DashboardColors.clientPrimary
+        case .worker: return CyntientOpsDesign.DashboardColors.workerPrimary
         }
     }
 }

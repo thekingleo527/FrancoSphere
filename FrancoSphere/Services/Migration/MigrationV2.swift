@@ -1,6 +1,6 @@
 //
 //  MigrationV2.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Created by Shawn Magloire on 7/31/25.
 //
@@ -8,7 +8,7 @@
 
 //
 //  MigrationV2.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Stream D: Features & Polish
 //  Mission: Create a framework for future database schema migrations.

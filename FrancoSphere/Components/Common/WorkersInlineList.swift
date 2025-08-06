@@ -1,6 +1,6 @@
 //
 //  WorkersInlineList.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  🔧 FIXED: WorkerContextEngine.todayWorkers() compilation error
 //  ✅ Changed to use WorkerService.getAllActiveWorkers() for multiple workers

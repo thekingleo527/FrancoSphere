@@ -1,11 +1,11 @@
 //
 //
 //  StatCard.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ UPDATED: Dark Elegance theme applied
 //  ✅ ENHANCED: Glass morphism effects
-//  ✅ ALIGNED: With FrancoSphereDesign system
+//  ✅ ALIGNED: With CyntientOpsDesign system
 //  ✅ IMPROVED: Trend indicators and animations
 //  ✅ FIXED: Renamed to avoid redeclaration conflicts
 //
@@ -19,13 +19,13 @@ struct EnhancedStatCard: View {
     let value: String
     let trend: String?
     let icon: String
-    var color: Color = FrancoSphereDesign.DashboardColors.primaryAction
+    var color: Color = CyntientOpsDesign.DashboardColors.primaryAction
     var trendDirection: CoreTypes.TrendDirection? = nil
     
     @State private var isPressed = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.sm) {
+        VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.sm) {
             // Header row
             HStack {
                 Image(systemName: icon)
@@ -52,30 +52,30 @@ struct EnhancedStatCard: View {
             
             // Value
             Text(value)
-                .francoTypography(FrancoSphereDesign.Typography.largeTitle)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.largeTitle)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             
             // Title
             Text(title)
-                .francoTypography(FrancoSphereDesign.Typography.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .francoTypography(CyntientOpsDesign.Typography.caption)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 .lineLimit(2)
         }
         .francoCardPadding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
-                .fill(FrancoSphereDesign.DashboardColors.cardBackground)
+            RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.lg)
+                .fill(CyntientOpsDesign.DashboardColors.cardBackground)
                 .overlay(
-                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
-                        .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                    RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.lg)
+                        .stroke(CyntientOpsDesign.DashboardColors.borderSubtle, lineWidth: 1)
                 )
         )
-        .francoShadow(FrancoSphereDesign.Shadow.sm)
+        .francoShadow(CyntientOpsDesign.Shadow.sm)
         .scaleEffect(isPressed ? 0.98 : 1.0)
-        .animation(FrancoSphereDesign.Animations.quick, value: isPressed)
+        .animation(CyntientOpsDesign.Animations.quick, value: isPressed)
     }
     
     // Basic trend indicator (legacy support)
@@ -83,20 +83,20 @@ struct EnhancedStatCard: View {
         HStack(spacing: 4) {
             if trend.contains("↑") || trend.contains("up") {
                 Image(systemName: "arrow.up.circle.fill")
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.success)
             } else if trend.contains("↓") || trend.contains("down") {
                 Image(systemName: "arrow.down.circle.fill")
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.critical)
             } else {
                 Image(systemName: "minus.circle.fill")
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
             }
             
             Text(trend.replacingOccurrences(of: "↑", with: "")
                     .replacingOccurrences(of: "↓", with: "")
                     .trimmingCharacters(in: .whitespaces))
-                .francoTypography(FrancoSphereDesign.Typography.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .francoTypography(CyntientOpsDesign.Typography.caption)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
         }
         .font(.caption)
     }
@@ -106,20 +106,20 @@ struct EnhancedStatCard: View {
         HStack(spacing: 4) {
             Image(systemName: trendIcon(for: direction))
                 .font(.caption)
-                .foregroundColor(FrancoSphereDesign.EnumColors.trendDirection(direction))
+                .foregroundColor(CyntientOpsDesign.EnumColors.trendDirection(direction))
             
             Text(direction.rawValue.capitalized)
-                .francoTypography(FrancoSphereDesign.Typography.caption2)
-                .foregroundColor(FrancoSphereDesign.EnumColors.trendDirection(direction))
+                .francoTypography(CyntientOpsDesign.Typography.caption2)
+                .foregroundColor(CyntientOpsDesign.EnumColors.trendDirection(direction))
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(
             Capsule()
-                .fill(FrancoSphereDesign.EnumColors.trendDirection(direction).opacity(0.15))
+                .fill(CyntientOpsDesign.EnumColors.trendDirection(direction).opacity(0.15))
                 .overlay(
                     Capsule()
-                        .stroke(FrancoSphereDesign.EnumColors.trendDirection(direction).opacity(0.25), lineWidth: 1)
+                        .stroke(CyntientOpsDesign.EnumColors.trendDirection(direction).opacity(0.25), lineWidth: 1)
                 )
         )
     }
@@ -143,7 +143,7 @@ struct PressableStatCard: View {
     let value: String
     let trend: String?
     let icon: String
-    var color: Color = FrancoSphereDesign.DashboardColors.primaryAction
+    var color: Color = CyntientOpsDesign.DashboardColors.primaryAction
     var trendDirection: CoreTypes.TrendDirection? = nil
     let onTap: () -> Void
     
@@ -160,12 +160,12 @@ struct PressableStatCard: View {
         )
         .contentShape(Rectangle())
         .onTapGesture {
-            withAnimation(FrancoSphereDesign.Animations.quick) {
+            withAnimation(CyntientOpsDesign.Animations.quick) {
                 isPressed = true
             }
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation(FrancoSphereDesign.Animations.quick) {
+                withAnimation(CyntientOpsDesign.Animations.quick) {
                     isPressed = false
                 }
                 onTap()
@@ -181,10 +181,10 @@ struct CompactStatCard: View {
     let title: String
     let value: String
     let icon: String
-    var color: Color = FrancoSphereDesign.DashboardColors.primaryAction
+    var color: Color = CyntientOpsDesign.DashboardColors.primaryAction
     
     var body: some View {
-        HStack(spacing: FrancoSphereDesign.Spacing.sm) {
+        HStack(spacing: CyntientOpsDesign.Spacing.sm) {
             Image(systemName: icon)
                 .font(.title3)
                 .foregroundColor(color)
@@ -196,20 +196,20 @@ struct CompactStatCard: View {
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(value)
-                    .francoTypography(FrancoSphereDesign.Typography.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Text(title)
-                    .francoTypography(FrancoSphereDesign.Typography.caption2)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.caption2)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
             }
             
             Spacer()
         }
-        .padding(FrancoSphereDesign.Spacing.sm)
+        .padding(CyntientOpsDesign.Spacing.sm)
         .background(
-            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.sm)
-                .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+            RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.sm)
+                .fill(CyntientOpsDesign.DashboardColors.glassOverlay)
         )
     }
 }
@@ -230,7 +230,7 @@ struct StatCard_Previews: PreviewProvider {
                     value: "24",
                     trend: "↑ 2",
                     icon: "building.2",
-                    color: FrancoSphereDesign.DashboardColors.info
+                    color: CyntientOpsDesign.DashboardColors.info
                 )
                 
                 EnhancedStatCard(
@@ -238,7 +238,7 @@ struct StatCard_Previews: PreviewProvider {
                     value: "87%",
                     trend: nil,
                     icon: "checkmark.circle",
-                    color: FrancoSphereDesign.DashboardColors.success,
+                    color: CyntientOpsDesign.DashboardColors.success,
                     trendDirection: .up
                 )
             }
@@ -249,7 +249,7 @@ struct StatCard_Previews: PreviewProvider {
                 value: "142",
                 trend: "↓ 3",
                 icon: "person.2",
-                color: FrancoSphereDesign.DashboardColors.tertiaryAction
+                color: CyntientOpsDesign.DashboardColors.tertiaryAction
             ) {
                 print("Tapped!")
             }
@@ -260,19 +260,19 @@ struct StatCard_Previews: PreviewProvider {
                     title: "Tasks Today",
                     value: "32",
                     icon: "checklist",
-                    color: FrancoSphereDesign.DashboardColors.primaryAction
+                    color: CyntientOpsDesign.DashboardColors.primaryAction
                 )
                 
                 CompactStatCard(
                     title: "On Schedule",
                     value: "94%",
                     icon: "clock",
-                    color: FrancoSphereDesign.DashboardColors.warning
+                    color: CyntientOpsDesign.DashboardColors.warning
                 )
             }
         }
         .padding()
-        .background(FrancoSphereDesign.DashboardColors.baseBackground)
+        .background(CyntientOpsDesign.DashboardColors.baseBackground)
         .preferredColorScheme(.dark)
     }
 }

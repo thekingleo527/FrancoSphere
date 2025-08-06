@@ -1,6 +1,6 @@
 //
 //  DailyOpsReset.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: Correct ContextualTask initializer usage (removed scheduledDate)
 //  ✅ FIXED: Removed extra arguments from task creation

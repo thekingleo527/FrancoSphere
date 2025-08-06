@@ -1,6 +1,6 @@
 //
 //  DailyOpsReset.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ PRODUCTION READY: Complete one-time migration and daily operations
 //  ✅ SAFE: Transaction-wrapped with rollback support

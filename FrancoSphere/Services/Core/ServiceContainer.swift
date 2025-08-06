@@ -1,6 +1,6 @@
 //
 //  ServiceContainer.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Created by Shawn Magloire on 8/4/25.
 //
@@ -56,6 +56,10 @@ public final class ServiceContainer: ObservableObject {
     // MARK: - Layer 6: Offline Support
     public let offlineQueue: OfflineQueueManager
     public let cache: CacheManager
+    
+    // MARK: - Layer 7: NYC API Integration
+    public let nycIntegration: NYCIntegrationManager
+    public let nycCompliance: NYCComplianceService
     
     // MARK: - Nova AI Reference
     private weak var novaManager: NovaAIManager?
@@ -171,6 +175,14 @@ public final class ServiceContainer: ObservableObject {
         
         print("✅ Layer 6: Offline support initialized")
         
+        // Layer 7: NYC API Integration
+        print("🏢 Layer 7: Initializing NYC API integration...")
+        
+        self.nycCompliance = NYCComplianceService(database: database)
+        self.nycIntegration = NYCIntegrationManager(database: database)
+        
+        print("✅ Layer 7: NYC API integration initialized")
+        
         // Start background services
         await startBackgroundServices()
         
@@ -233,6 +245,12 @@ public final class ServiceContainer: ObservableObject {
             await metrics.startPeriodicCalculation()
         }
         backgroundTasks.insert(metricsTask)
+        
+        // 7. NYC Compliance monitoring
+        let nycTask = Task {
+            await nycIntegration.performFullSync()
+        }
+        backgroundTasks.insert(nycTask)
         
         print("✅ Background services started")
     }

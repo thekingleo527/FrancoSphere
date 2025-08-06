@@ -1,6 +1,6 @@
 //
 //  WebSocketManager.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Stream B: Gemini - Backend Services
 //  Mission: Implement real-time WebSocket communication layer.

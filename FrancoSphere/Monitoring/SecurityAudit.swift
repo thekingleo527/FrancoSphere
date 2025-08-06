@@ -1,6 +1,6 @@
 //
 //  SecurityAudit.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Created by Shawn Magloire on 7/31/25.
 //
@@ -8,7 +8,7 @@
 
 //
 //  SecurityAudit.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Stream D: Features & Polish
 //  Mission: Create internal tools for security auditing.

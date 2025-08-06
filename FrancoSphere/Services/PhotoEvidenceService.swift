@@ -1,6 +1,6 @@
 //
 //  PhotoEvidenceService.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ PRODUCTION READY: Complete photo evidence system
 //  ✅ INTEGRATED: Aligned with ImagePicker and FrancoPhotoStorageService

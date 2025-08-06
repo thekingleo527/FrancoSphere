@@ -1,6 +1,6 @@
 //
 //  V003_WorkerAssignments.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ FIXED: Uses GRDBManager instead of GRDBManager
 //  ✅ FIXED: Added explicit type annotations for query results

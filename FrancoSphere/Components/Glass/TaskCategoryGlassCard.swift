@@ -1,9 +1,9 @@
 //
 //  TaskCategoryGlassCard.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ UPDATED: Dark Elegance theme applied
-//  ✅ ENHANCED: Integrated with FrancoSphereDesign color system
+//  ✅ ENHANCED: Integrated with CyntientOpsDesign color system
 //  ✅ IMPROVED: Glass effects and animations
 //  ✅ OPTIMIZED: Better visual hierarchy and contrast
 //
@@ -79,7 +79,7 @@ struct TaskCategoryGlassCard: View {
                     lineWidth: 1
                 )
         )
-        .animation(FrancoSphereDesign.Animations.spring, value: isExpanded)
+        .animation(CyntientOpsDesign.Animations.spring, value: isExpanded)
         .onAppear {
             // Auto-expand today's tasks
             for task in pendingTasks {
@@ -115,34 +115,34 @@ struct TaskCategoryGlassCard: View {
                     Text(title)
                         .font(.headline)
                         .fontWeight(.semibold)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     
                     HStack(spacing: 12) {
                         Text("\(pendingTasks.count) pending")
                             .font(.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                         
                         if getTodayTasksCount() > 0 {
                             HStack(spacing: 4) {
                                 Circle()
-                                    .fill(FrancoSphereDesign.DashboardColors.warning)
+                                    .fill(CyntientOpsDesign.DashboardColors.warning)
                                     .frame(width: 6, height: 6)
                                 
                                 Text("\(getTodayTasksCount()) today")
                                     .font(.caption)
-                                    .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                                    .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
                             }
                         }
                         
                         if getOverdueTasksCount() > 0 {
                             HStack(spacing: 4) {
                                 Circle()
-                                    .fill(FrancoSphereDesign.DashboardColors.critical)
+                                    .fill(CyntientOpsDesign.DashboardColors.critical)
                                     .frame(width: 6, height: 6)
                                 
                                 Text("\(getOverdueTasksCount()) overdue")
                                     .font(.caption)
-                                    .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
+                                    .foregroundColor(CyntientOpsDesign.DashboardColors.critical)
                             }
                         }
                     }
@@ -154,15 +154,15 @@ struct TaskCategoryGlassCard: View {
                 VStack(spacing: 4) {
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                         .rotationEffect(.degrees(isExpanded ? 0 : 0))
-                        .animation(FrancoSphereDesign.Animations.spring, value: isExpanded)
+                        .animation(CyntientOpsDesign.Animations.spring, value: isExpanded)
                     
                     if pendingTasks.count > 0 {
                         Text("\(pendingTasks.count)")
                             .font(.caption2)
                             .fontWeight(.semibold)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 2)
                             .background(categoryColor.opacity(0.2))
@@ -185,20 +185,20 @@ struct TaskCategoryGlassCard: View {
             HStack {
                 Text("View all \(pendingTasks.count) tasks")
                     .font(.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Spacer()
                 
                 Image(systemName: "arrow.right")
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             }
             .padding(.vertical, 12)
             .padding(.horizontal, 16)
-            .background(FrancoSphereDesign.DashboardColors.glassOverlay)
+            .background(CyntientOpsDesign.DashboardColors.glassOverlay)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(FrancoSphereDesign.DashboardColors.glassOverlay, lineWidth: 1)
+                    .stroke(CyntientOpsDesign.DashboardColors.glassOverlay, lineWidth: 1)
             )
             .cornerRadius(12)
         }
@@ -209,16 +209,16 @@ struct TaskCategoryGlassCard: View {
         VStack(spacing: 12) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 32))
-                .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.success)
             
             Text("All tasks completed!")
                 .font(.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             Text("No pending tasks in this category")
                 .font(.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -228,7 +228,7 @@ struct TaskCategoryGlassCard: View {
     // MARK: - Helper Methods
     
     private func toggleTaskExpanded(_ task: MaintenanceTask) {
-        withAnimation(FrancoSphereDesign.Animations.spring) {
+        withAnimation(CyntientOpsDesign.Animations.spring) {
             if expandedTasks.contains(task.id) {
                 expandedTasks.remove(task.id)
             } else {
@@ -283,7 +283,7 @@ struct TaskRowGlassView: View {
                     // Expand indicator
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .font(.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 }
                 .contentShape(Rectangle())
             }
@@ -294,14 +294,14 @@ struct TaskRowGlassView: View {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(
                         isToday ?
-                        FrancoSphereDesign.DashboardColors.warning.opacity(0.1) :
-                        FrancoSphereDesign.DashboardColors.glassOverlay
+                        CyntientOpsDesign.DashboardColors.warning.opacity(0.1) :
+                        CyntientOpsDesign.DashboardColors.glassOverlay
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(
                                 isToday ?
-                                FrancoSphereDesign.DashboardColors.warning.opacity(0.3) :
+                                CyntientOpsDesign.DashboardColors.warning.opacity(0.3) :
                                 Color.white.opacity(0.1),
                                 lineWidth: 1
                             )
@@ -316,7 +316,7 @@ struct TaskRowGlassView: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .animation(FrancoSphereDesign.Animations.spring, value: isExpanded)
+        .animation(CyntientOpsDesign.Animations.spring, value: isExpanded)
     }
     
     // MARK: - Sub-components
@@ -326,7 +326,7 @@ struct TaskRowGlassView: View {
             Text(task.title)
                 .font(.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 .multilineTextAlignment(.leading)
             
             HStack(spacing: 8) {
@@ -334,15 +334,15 @@ struct TaskRowGlassView: View {
                 if let dueDate = task.dueDate {
                     Text(formatTime(dueDate))
                         .font(.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 } else if task.isRecurring {
                     Text("Recurring")
                         .font(.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 } else {
                     Text(formatDuration(task.estimatedDuration))
                         .font(.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 }
                 
                 // Priority badge
@@ -352,10 +352,10 @@ struct TaskRowGlassView: View {
                     Text("TODAY")
                         .font(.caption2)
                         .fontWeight(.bold)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(FrancoSphereDesign.DashboardColors.warning.opacity(0.2))
+                        .background(CyntientOpsDesign.DashboardColors.warning.opacity(0.2))
                         .cornerRadius(6)
                 }
             }
@@ -370,7 +370,7 @@ struct TaskRowGlassView: View {
             
             if task.status == .completed {
                 Circle()
-                    .fill(FrancoSphereDesign.DashboardColors.success)
+                    .fill(CyntientOpsDesign.DashboardColors.success)
                     .frame(width: 12, height: 12)
             } else {
                 Circle()
@@ -397,7 +397,7 @@ struct TaskRowGlassView: View {
             if !task.description.isEmpty {
                 Text(task.description)
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 16)
             }
@@ -413,10 +413,10 @@ struct TaskRowGlassView: View {
                             .font(.caption)
                             .fontWeight(.medium)
                     }
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(FrancoSphereDesign.DashboardColors.glassOverlay)
+                    .background(CyntientOpsDesign.DashboardColors.glassOverlay)
                     .cornerRadius(8)
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -435,7 +435,7 @@ struct TaskRowGlassView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(FrancoSphereDesign.DashboardColors.success)
+                    .background(CyntientOpsDesign.DashboardColors.success)
                     .cornerRadius(8)
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -443,7 +443,7 @@ struct TaskRowGlassView: View {
             .padding(.horizontal, 16)
         }
         .padding(.bottom, 12)
-        .background(FrancoSphereDesign.DashboardColors.glassOverlay.opacity(0.5))
+        .background(CyntientOpsDesign.DashboardColors.glassOverlay.opacity(0.5))
         .cornerRadius(12)
     }
     
@@ -452,13 +452,13 @@ struct TaskRowGlassView: View {
     private var urgencyColor: Color {
         switch task.urgency {
         case .low:
-            return FrancoSphereDesign.DashboardColors.success
+            return CyntientOpsDesign.DashboardColors.success
         case .medium:
             return Color(hex: "fbbf24") // Amber
         case .high:
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         case .critical, .emergency:
-            return FrancoSphereDesign.DashboardColors.critical
+            return CyntientOpsDesign.DashboardColors.critical
         case .urgent:
             return Color(hex: "9333ea") // Purple
         }
@@ -524,7 +524,7 @@ struct TaskCategoryGlassCard_Previews: PreviewProvider {
     
     static var previews: some View {
         ZStack {
-            FrancoSphereDesign.DashboardColors.baseBackground
+            CyntientOpsDesign.DashboardColors.baseBackground
                 .ignoresSafeArea()
             
             ScrollView {
@@ -533,7 +533,7 @@ struct TaskCategoryGlassCard_Previews: PreviewProvider {
                         title: "Cleaning Routine",
                         icon: "sparkles",
                         tasks: sampleTasks,
-                        categoryColor: FrancoSphereDesign.DashboardColors.info,
+                        categoryColor: CyntientOpsDesign.DashboardColors.info,
                         isExpanded: true,
                         onToggleExpand: {},
                         onTaskTap: { _ in },
@@ -544,7 +544,7 @@ struct TaskCategoryGlassCard_Previews: PreviewProvider {
                         title: "Sanitation & Garbage",
                         icon: "trash",
                         tasks: [],
-                        categoryColor: FrancoSphereDesign.DashboardColors.success,
+                        categoryColor: CyntientOpsDesign.DashboardColors.success,
                         isExpanded: true,
                         onToggleExpand: {},
                         onTaskTap: { _ in },

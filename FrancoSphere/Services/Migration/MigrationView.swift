@@ -1,8 +1,8 @@
 //  MigrationView.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ PRODUCTION READY: One-time migration UI with progress tracking
-//  ✅ VISUAL: Glass morphism design matching FrancoSphere aesthetic
+//  ✅ VISUAL: Glass morphism design matching CyntientOps aesthetic
 //  ✅ SAFE: Error handling and retry capabilities
 //
 

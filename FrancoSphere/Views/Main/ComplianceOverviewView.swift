@@ -1,6 +1,6 @@
 ///
 //  ComplianceOverviewView.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ REDESIGNED: Intelligence-first with all essential functions preserved
 //  ✅ COMPLETE: Includes audit scheduling, issue details, reports, trends
@@ -98,7 +98,7 @@ struct ComplianceOverviewView: View {
     var body: some View {
         ZStack {
             // Dark Elegance Background
-            FrancoSphereDesign.DashboardColors.baseBackground
+            CyntientOpsDesign.DashboardColors.baseBackground
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
@@ -155,7 +155,7 @@ struct ComplianceOverviewView: View {
                         onNavigate: handleIntelligenceNavigation
                     )
                     .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .animation(FrancoSphereDesign.Animations.spring, value: intelligencePanelState)
+                    .animation(CyntientOpsDesign.Animations.spring, value: intelligencePanelState)
                 }
             }
         }
@@ -236,18 +236,18 @@ struct ComplianceOverviewView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Compliance Center")
-                        .francoTypography(FrancoSphereDesign.Typography.dashboardTitle)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.dashboardTitle)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     
                     if let score = intelligence?.complianceScore {
                         HStack(spacing: 8) {
                             Text("\(Int(score))%")
-                                .francoTypography(FrancoSphereDesign.Typography.headline)
+                                .francoTypography(CyntientOpsDesign.Typography.headline)
                                 .foregroundColor(complianceScoreColor(score))
                             
                             Text("Overall Score")
-                                .francoTypography(FrancoSphereDesign.Typography.caption)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                                .francoTypography(CyntientOpsDesign.Typography.caption)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                             
                             // Using TrendIndicator from ClientDashboardMainView
                             if let trend = intelligence?.monthlyTrend {
@@ -294,14 +294,14 @@ struct ComplianceOverviewView: View {
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .font(.title3)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
                 }
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
             
             Divider()
-                .background(FrancoSphereDesign.DashboardColors.borderSubtle)
+                .background(CyntientOpsDesign.DashboardColors.borderSubtle)
         }
     }
     
@@ -311,16 +311,16 @@ struct ComplianceOverviewView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Label("Critical Issues", systemImage: "exclamationmark.triangle.fill")
-                    .francoTypography(FrancoSphereDesign.Typography.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.critical)
                 
                 Spacer()
                 
                 Button("View All") {
                     showingAllIssues = true
                 }
-                .francoTypography(FrancoSphereDesign.Typography.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                .francoTypography(CyntientOpsDesign.Typography.caption)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
             }
             
             // Show top 3 critical issues
@@ -341,20 +341,20 @@ struct ComplianceOverviewView: View {
                         Image(systemName: "plus.circle.fill")
                             .font(.caption)
                         Text("\(criticalIssues.count - 3) more issues")
-                            .francoTypography(FrancoSphereDesign.Typography.caption)
+                            .francoTypography(CyntientOpsDesign.Typography.caption)
                     }
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
                 }
                 .padding(.top, 4)
             }
         }
         .francoCardPadding()
         .background(
-            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
-                .fill(FrancoSphereDesign.DashboardColors.critical.opacity(0.1))
+            RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.lg)
+                .fill(CyntientOpsDesign.DashboardColors.critical.opacity(0.1))
                 .overlay(
-                    RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
-                        .stroke(FrancoSphereDesign.DashboardColors.critical.opacity(0.3), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.lg)
+                        .stroke(CyntientOpsDesign.DashboardColors.critical.opacity(0.3), lineWidth: 1)
                 )
         )
     }
@@ -365,8 +365,8 @@ struct ComplianceOverviewView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Label("Live Activity", systemImage: "dot.radiowaves.left.and.right")
-                    .francoTypography(FrancoSphereDesign.Typography.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Spacer()
                 
@@ -419,21 +419,21 @@ struct ComplianceOverviewView: View {
                 Button("View Full History") {
                     showingAuditHistory = true
                 }
-                .francoTypography(FrancoSphereDesign.Typography.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                .francoTypography(CyntientOpsDesign.Typography.caption)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
             }
         } label: {
             HStack {
                 Label("Audit Schedule", systemImage: "calendar.badge.checkmark")
-                    .francoTypography(FrancoSphereDesign.Typography.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Spacer()
                 
                 if let days = complianceEngine.daysUntilNextAudit {
                     Text("\(days) days")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(days < 7 ? FrancoSphereDesign.DashboardColors.warning : FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(days < 7 ? CyntientOpsDesign.DashboardColors.warning : CyntientOpsDesign.DashboardColors.secondaryText)
                 }
             }
         }
@@ -451,28 +451,28 @@ struct ComplianceOverviewView: View {
             ComplianceQuickActionCard(
                 title: "Schedule Audit",
                 icon: "calendar.badge.plus",
-                color: FrancoSphereDesign.DashboardColors.info,
+                color: CyntientOpsDesign.DashboardColors.info,
                 action: { showingAuditScheduler = true }
             )
             
             ComplianceQuickActionCard(
                 title: "Export Reports",
                 icon: "doc.badge.arrow.up",
-                color: FrancoSphereDesign.DashboardColors.success,
+                color: CyntientOpsDesign.DashboardColors.success,
                 action: { showingExportOptions = true }
             )
             
             ComplianceQuickActionCard(
                 title: "View Trends",
                 icon: "chart.line.uptrend.xyaxis",
-                color: FrancoSphereDesign.DashboardColors.warning,
+                color: CyntientOpsDesign.DashboardColors.warning,
                 action: { showingTrends = true }
             )
             
             ComplianceQuickActionCard(
                 title: "Compliance Guide",
                 icon: "book.fill",
-                color: FrancoSphereDesign.DashboardColors.tertiaryAction,
+                color: CyntientOpsDesign.DashboardColors.tertiaryAction,
                 action: { showingComplianceGuide = true }
             )
         }
@@ -629,7 +629,7 @@ struct ComplianceOverviewView: View {
     }
     
     private func complianceScoreColor(_ score: Double) -> Color {
-        FrancoSphereDesign.EnumColors.genericStatusColor(for: complianceStatusText(score))
+        CyntientOpsDesign.EnumColors.genericStatusColor(for: complianceStatusText(score))
     }
     
     private func complianceStatusText(_ score: Double) -> String {
@@ -723,7 +723,7 @@ struct CollapsibleComplianceHeroWrapper: View {
                     criticalCount: criticalIssues.count,
                     nextAuditDays: daysUntilNextAudit(),
                     onExpand: {
-                        withAnimation(FrancoSphereDesign.Animations.spring) {
+                        withAnimation(CyntientOpsDesign.Animations.spring) {
                             isCollapsed = false
                         }
                     }
@@ -743,15 +743,15 @@ struct CollapsibleComplianceHeroWrapper: View {
                     
                     // Collapse button
                     Button(action: {
-                        withAnimation(FrancoSphereDesign.Animations.spring) {
+                        withAnimation(CyntientOpsDesign.Animations.spring) {
                             isCollapsed = true
                         }
                     }) {
                         Image(systemName: "chevron.up")
                             .font(.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                             .padding(8)
-                            .background(Circle().fill(FrancoSphereDesign.DashboardColors.glassOverlay))
+                            .background(Circle().fill(CyntientOpsDesign.DashboardColors.glassOverlay))
                     }
                     .padding(8)
                 }
@@ -793,11 +793,11 @@ struct MinimalComplianceHeroCard: View {
                     ComplianceMetricPill(value: "\(Int(score))%", label: "Score", color: scoreColor)
                     
                     if criticalCount > 0 {
-                        ComplianceMetricPill(value: "\(criticalCount)", label: "Critical", color: FrancoSphereDesign.DashboardColors.critical)
+                        ComplianceMetricPill(value: "\(criticalCount)", label: "Critical", color: CyntientOpsDesign.DashboardColors.critical)
                     }
                     
                     if let days = nextAuditDays {
-                        ComplianceMetricPill(value: "\(days)d", label: "Next Audit", color: FrancoSphereDesign.DashboardColors.info)
+                        ComplianceMetricPill(value: "\(days)d", label: "Next Audit", color: CyntientOpsDesign.DashboardColors.info)
                     }
                 }
                 
@@ -806,7 +806,7 @@ struct MinimalComplianceHeroCard: View {
                 // Expand indicator
                 Image(systemName: "chevron.down")
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -817,19 +817,19 @@ struct MinimalComplianceHeroCard: View {
     
     private var statusColor: Color {
         if criticalCount > 0 {
-            return FrancoSphereDesign.DashboardColors.critical
+            return CyntientOpsDesign.DashboardColors.critical
         } else if score < 70 {
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         } else {
-            return FrancoSphereDesign.DashboardColors.success
+            return CyntientOpsDesign.DashboardColors.success
         }
     }
     
     private var scoreColor: Color {
-        if score >= 90 { return FrancoSphereDesign.DashboardColors.success }
-        if score >= 80 { return FrancoSphereDesign.DashboardColors.info }
-        if score >= 70 { return FrancoSphereDesign.DashboardColors.warning }
-        return FrancoSphereDesign.DashboardColors.critical
+        if score >= 90 { return CyntientOpsDesign.DashboardColors.success }
+        if score >= 80 { return CyntientOpsDesign.DashboardColors.info }
+        if score >= 70 { return CyntientOpsDesign.DashboardColors.warning }
+        return CyntientOpsDesign.DashboardColors.critical
     }
 }
 
@@ -868,12 +868,12 @@ struct ComplianceHeroStatusCard: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Overall Compliance Score")
-                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     
                     HStack(alignment: .bottom, spacing: 8) {
                         Text("\(Int(intel.complianceScore))%")
-                            .francoTypography(FrancoSphereDesign.Typography.largeTitle)
+                            .francoTypography(CyntientOpsDesign.Typography.largeTitle)
                             .foregroundColor(complianceScoreColor(intel.complianceScore))
                         
                         if let trend = intel.monthlyTrend {
@@ -895,7 +895,7 @@ struct ComplianceHeroStatusCard: View {
                         .foregroundColor(complianceScoreColor(intel.complianceScore))
                     
                     Text(complianceStatusText(intel.complianceScore))
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
                         .fontWeight(.medium)
                         .foregroundColor(complianceScoreColor(intel.complianceScore))
                 }
@@ -905,15 +905,15 @@ struct ComplianceHeroStatusCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text("Compliant Buildings")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     
                     Spacer()
                     
                     Text("\(calculateCompliantBuildings(intel))/\(intel.totalBuildings)")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
                 
                 ProgressView(value: intel.complianceScore / 100)
@@ -932,7 +932,7 @@ struct ComplianceHeroStatusCard: View {
                 title: "Critical Issues",
                 value: "\(criticalIssues.count)",
                 icon: "exclamationmark.triangle.fill",
-                color: criticalIssues.isEmpty ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.critical,
+                color: criticalIssues.isEmpty ? CyntientOpsDesign.DashboardColors.success : CyntientOpsDesign.DashboardColors.critical,
                 onTap: criticalIssues.isEmpty ? nil : onViewAllIssues
             )
             
@@ -948,7 +948,7 @@ struct ComplianceHeroStatusCard: View {
                 title: "Recent Activity",
                 value: "\(recentActivity.count)",
                 icon: "clock.arrow.2.circlepath",
-                color: FrancoSphereDesign.DashboardColors.info
+                color: CyntientOpsDesign.DashboardColors.info
             )
             
             ComplianceMetricCard(
@@ -965,25 +965,25 @@ struct ComplianceHeroStatusCard: View {
         HStack(spacing: 12) {
             Button(action: onViewAllIssues) {
                 Label("Issues", systemImage: "exclamationmark.triangle")
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
                     .fontWeight(.medium)
             }
-            .buttonStyle(ComplianceActionButtonStyle(color: FrancoSphereDesign.DashboardColors.critical))
+            .buttonStyle(ComplianceActionButtonStyle(color: CyntientOpsDesign.DashboardColors.critical))
             .disabled(criticalIssues.isEmpty)
             
             Button(action: onScheduleAudit) {
                 Label("Schedule", systemImage: "calendar")
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
                     .fontWeight(.medium)
             }
-            .buttonStyle(ComplianceActionButtonStyle(color: FrancoSphereDesign.DashboardColors.info))
+            .buttonStyle(ComplianceActionButtonStyle(color: CyntientOpsDesign.DashboardColors.info))
             
             Button(action: onExportReport) {
                 Label("Export", systemImage: "doc.badge.arrow.up")
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
                     .fontWeight(.medium)
             }
-            .buttonStyle(ComplianceActionButtonStyle(color: FrancoSphereDesign.DashboardColors.success))
+            .buttonStyle(ComplianceActionButtonStyle(color: CyntientOpsDesign.DashboardColors.success))
         }
     }
     
@@ -995,9 +995,9 @@ struct ComplianceHeroStatusCard: View {
     }
     
     private var nextAuditColor: Color {
-        guard let nextAudit = upcomingAudits.first else { return FrancoSphereDesign.DashboardColors.warning }
+        guard let nextAudit = upcomingAudits.first else { return CyntientOpsDesign.DashboardColors.warning }
         let days = Calendar.current.dateComponents([.day], from: Date(), to: nextAudit.date).day ?? 0
-        return days < 7 ? FrancoSphereDesign.DashboardColors.warning : FrancoSphereDesign.DashboardColors.info
+        return days < 7 ? CyntientOpsDesign.DashboardColors.warning : CyntientOpsDesign.DashboardColors.info
     }
     
     private var complianceRate: Double {
@@ -1008,17 +1008,17 @@ struct ComplianceHeroStatusCard: View {
     }
     
     private var complianceRateColor: Color {
-        if complianceRate >= 90 { return FrancoSphereDesign.DashboardColors.success }
-        if complianceRate >= 70 { return FrancoSphereDesign.DashboardColors.warning }
-        return FrancoSphereDesign.DashboardColors.critical
+        if complianceRate >= 90 { return CyntientOpsDesign.DashboardColors.success }
+        if complianceRate >= 70 { return CyntientOpsDesign.DashboardColors.warning }
+        return CyntientOpsDesign.DashboardColors.critical
     }
     
     // Helper functions
     private func complianceScoreColor(_ score: Double) -> Color {
-        if score >= 90 { return FrancoSphereDesign.DashboardColors.success }
-        if score >= 80 { return FrancoSphereDesign.DashboardColors.info }
-        if score >= 70 { return FrancoSphereDesign.DashboardColors.warning }
-        return FrancoSphereDesign.DashboardColors.critical
+        if score >= 90 { return CyntientOpsDesign.DashboardColors.success }
+        if score >= 80 { return CyntientOpsDesign.DashboardColors.info }
+        if score >= 70 { return CyntientOpsDesign.DashboardColors.warning }
+        return CyntientOpsDesign.DashboardColors.critical
     }
     
     private func complianceStatusIcon(_ score: Double) -> String {
@@ -1056,7 +1056,7 @@ struct ComplianceMetricPill: View {
             
             Text(label)
                 .font(.caption2)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
         }
     }
 }
@@ -1076,21 +1076,21 @@ struct ComplianceMetricCard: View {
                     .foregroundColor(color)
                 
                 Text(value)
-                    .francoTypography(FrancoSphereDesign.Typography.title3)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.title3)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Text(title)
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity)
             .padding()
             .background(
-                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.md)
+                RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.md)
                     .fill(color.opacity(0.1))
                     .overlay(
-                        RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.md)
+                        RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.md)
                             .stroke(color.opacity(0.3), lineWidth: 1)
                     )
             )
@@ -1115,8 +1115,8 @@ struct ComplianceQuickActionCard: View {
                     .foregroundColor(color)
                 
                 Text(title)
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity)
@@ -1135,19 +1135,19 @@ struct CriticalIssueRow: View {
             HStack(spacing: 12) {
                 Image(systemName: issueTypeIcon(issue.type))
                     .font(.title3)
-                    .foregroundColor(FrancoSphereDesign.EnumColors.complianceSeverity(issue.severity))
+                    .foregroundColor(CyntientOpsDesign.EnumColors.complianceSeverity(issue.severity))
                     .frame(width: 24)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(issue.type.rawValue)
-                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                        .francoTypography(CyntientOpsDesign.Typography.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     
                     if let buildingName = issue.buildingName {
                         Text(buildingName)
-                            .francoTypography(FrancoSphereDesign.Typography.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                            .francoTypography(CyntientOpsDesign.Typography.caption)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     }
                 }
                 
@@ -1158,14 +1158,14 @@ struct CriticalIssueRow: View {
                     
                     if let dueDate = issue.dueDate {
                         Text(formattedDueDate(dueDate))
-                            .francoTypography(FrancoSphereDesign.Typography.caption2)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                            .francoTypography(CyntientOpsDesign.Typography.caption2)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     }
                 }
                 
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
             }
             .padding(.vertical, 8)
         }
@@ -1179,7 +1179,7 @@ struct CriticalIssueRow: View {
     }
     
     private func issueTypeIcon(_ type: CoreTypes.ComplianceIssueType) -> String {
-        FrancoSphereDesign.Icons.categoryIcon(for: type.rawValue)
+        CyntientOpsDesign.Icons.categoryIcon(for: type.rawValue)
     }
 }
 
@@ -1188,12 +1188,12 @@ struct SeverityBadge: View {
     
     var body: some View {
         Text(severity.rawValue)
-            .francoTypography(FrancoSphereDesign.Typography.caption2)
+            .francoTypography(CyntientOpsDesign.Typography.caption2)
             .fontWeight(.medium)
             .foregroundColor(.white)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
-            .background(FrancoSphereDesign.EnumColors.complianceSeverity(severity), in: Capsule())
+            .background(CyntientOpsDesign.EnumColors.complianceSeverity(severity), in: Capsule())
     }
 }
 
@@ -1208,21 +1208,21 @@ struct ComplianceActivityRow: View {
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(activity.description)
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     .lineLimit(1)
                 
                 HStack(spacing: 4) {
                     if let workerName = activity.workerName {
                         Text(workerName)
-                            .francoTypography(FrancoSphereDesign.Typography.caption2)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                            .francoTypography(CyntientOpsDesign.Typography.caption2)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     }
                     
                     if let buildingName = activity.buildingName {
                         Text("• \(buildingName)")
-                            .francoTypography(FrancoSphereDesign.Typography.caption2)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                            .francoTypography(CyntientOpsDesign.Typography.caption2)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     }
                 }
             }
@@ -1230,19 +1230,19 @@ struct ComplianceActivityRow: View {
             Spacer()
             
             Text(activity.timestamp, style: .relative)
-                .francoTypography(FrancoSphereDesign.Typography.caption2)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                .francoTypography(CyntientOpsDesign.Typography.caption2)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
         }
         .padding(.vertical, 4)
     }
     
     private var activityColor: Color {
         switch activity.type {
-        case .violation: return FrancoSphereDesign.DashboardColors.critical
-        case .resolved: return FrancoSphereDesign.DashboardColors.success
-        case .taskCompleted: return FrancoSphereDesign.DashboardColors.info
-        case .auditScheduled: return FrancoSphereDesign.DashboardColors.warning
-        default: return FrancoSphereDesign.DashboardColors.secondaryText
+        case .violation: return CyntientOpsDesign.DashboardColors.critical
+        case .resolved: return CyntientOpsDesign.DashboardColors.success
+        case .taskCompleted: return CyntientOpsDesign.DashboardColors.info
+        case .auditScheduled: return CyntientOpsDesign.DashboardColors.warning
+        default: return CyntientOpsDesign.DashboardColors.secondaryText
         }
     }
 }
@@ -1265,20 +1265,20 @@ struct AuditTimelineItem: View {
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Text(formattedDate(date))
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             }
             
             Spacer()
             
             if let score = score {
                 Text("\(Int(score))%")
-                    .francoTypography(FrancoSphereDesign.Typography.headline)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
                     .foregroundColor(scoreColor(score))
             }
             
@@ -1286,17 +1286,17 @@ struct AuditTimelineItem: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     if let days = daysUntil {
                         Text(daysUntilText(days))
-                            .francoTypography(FrancoSphereDesign.Typography.caption)
+                            .francoTypography(CyntientOpsDesign.Typography.caption)
                             .fontWeight(.medium)
-                            .foregroundColor(days < 7 ? FrancoSphereDesign.DashboardColors.warning : FrancoSphereDesign.DashboardColors.info)
+                            .foregroundColor(days < 7 ? CyntientOpsDesign.DashboardColors.warning : CyntientOpsDesign.DashboardColors.info)
                     }
                     
                     if let onReschedule = onReschedule {
                         Button("Reschedule") {
                             onReschedule()
                         }
-                        .francoTypography(FrancoSphereDesign.Typography.caption2)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                        .francoTypography(CyntientOpsDesign.Typography.caption2)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
                     }
                 }
             }
@@ -1318,10 +1318,10 @@ struct AuditTimelineItem: View {
     }
     
     private func scoreColor(_ score: Double) -> Color {
-        if score >= 90 { return FrancoSphereDesign.DashboardColors.success }
-        if score >= 80 { return FrancoSphereDesign.DashboardColors.info }
-        if score >= 70 { return FrancoSphereDesign.DashboardColors.warning }
-        return FrancoSphereDesign.DashboardColors.critical
+        if score >= 90 { return CyntientOpsDesign.DashboardColors.success }
+        if score >= 80 { return CyntientOpsDesign.DashboardColors.info }
+        if score >= 70 { return CyntientOpsDesign.DashboardColors.warning }
+        return CyntientOpsDesign.DashboardColors.critical
     }
 }
 
@@ -1332,21 +1332,21 @@ struct NoUpcomingAuditsCard: View {
         VStack(spacing: 12) {
             Image(systemName: "calendar.badge.exclamationmark")
                 .font(.title2)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
             
             Text("No Upcoming Audits")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             Text("Schedule your next compliance audit to maintain good standing")
-                .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 .multilineTextAlignment(.center)
             
             Button("Schedule Audit") {
                 onSchedule()
             }
-            .buttonStyle(ComplianceActionButtonStyle(color: FrancoSphereDesign.DashboardColors.primaryAction))
+            .buttonStyle(ComplianceActionButtonStyle(color: CyntientOpsDesign.DashboardColors.primaryAction))
         }
         .padding()
         .francoDarkCardBackground()
@@ -1373,23 +1373,23 @@ struct ComplianceIntelligencePanel: View {
         VStack(spacing: 0) {
             // Top border
             Rectangle()
-                .fill(FrancoSphereDesign.DashboardColors.adminPrimary.opacity(0.3))
+                .fill(CyntientOpsDesign.DashboardColors.adminPrimary.opacity(0.3))
                 .frame(height: 1)
             
             HStack(spacing: 12) {
                 // Nova AI indicator
                 ZStack {
                     Circle()
-                        .fill(FrancoSphereDesign.DashboardColors.adminPrimary.opacity(0.2))
+                        .fill(CyntientOpsDesign.DashboardColors.adminPrimary.opacity(0.2))
                         .frame(width: 24, height: 24)
                         .scaleEffect(isProcessing ? 1.2 : 1.0)
                         .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true),
                                  value: isProcessing)
                     
                     Text("AI")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
                         .fontWeight(.bold)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.adminPrimary)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.adminPrimary)
                 }
                 
                 // Scrollable insights
@@ -1410,16 +1410,16 @@ struct ComplianceIntelligencePanel: View {
                             Image(systemName: "chevron.up")
                                 .font(.caption)
                             Text("MORE")
-                                .francoTypography(FrancoSphereDesign.Typography.caption2)
+                                .francoTypography(CyntientOpsDesign.Typography.caption2)
                         }
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.adminPrimary)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.adminPrimary)
                         .frame(width: 44, height: 60)
                         .background(
                             RoundedRectangle(cornerRadius: 8)
-                                .fill(FrancoSphereDesign.DashboardColors.adminPrimary.opacity(0.1))
+                                .fill(CyntientOpsDesign.DashboardColors.adminPrimary.opacity(0.1))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8)
-                                        .stroke(FrancoSphereDesign.DashboardColors.adminPrimary.opacity(0.3),
+                                        .stroke(CyntientOpsDesign.DashboardColors.adminPrimary.opacity(0.3),
                                               lineWidth: 1)
                                 )
                         )
@@ -1429,8 +1429,8 @@ struct ComplianceIntelligencePanel: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
             .background(
-                FrancoSphereDesign.DashboardColors.cardBackground
-                    .overlay(FrancoSphereDesign.DashboardColors.glassOverlay)
+                CyntientOpsDesign.DashboardColors.cardBackground
+                    .overlay(CyntientOpsDesign.DashboardColors.glassOverlay)
             )
         }
     }
@@ -1475,21 +1475,21 @@ struct ComplianceInsightCard: View {
                         )
                     
                     Text(insight.priority.rawValue.capitalized)
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
                         .fontWeight(.semibold)
                         .foregroundColor(priorityColor)
                 }
                 
                 // Content
                 Text(insight.title)
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     .lineLimit(2)
                 
                 Text(insight.description)
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     .lineLimit(2)
                 
                 // Action button
@@ -1498,7 +1498,7 @@ struct ComplianceInsightCard: View {
                         Image(systemName: "arrow.right")
                             .font(.caption2)
                         Text(action)
-                            .francoTypography(FrancoSphereDesign.Typography.caption2)
+                            .francoTypography(CyntientOpsDesign.Typography.caption2)
                     }
                     .foregroundColor(actionColor)
                 }
@@ -1518,15 +1518,15 @@ struct ComplianceInsightCard: View {
     }
     
     private var priorityColor: Color {
-        FrancoSphereDesign.EnumColors.aiPriority(insight.priority)
+        CyntientOpsDesign.EnumColors.aiPriority(insight.priority)
     }
     
     private var actionColor: Color {
         switch insight.type {
-        case .compliance: return FrancoSphereDesign.DashboardColors.critical
-        case .operations: return FrancoSphereDesign.DashboardColors.info
-        case .efficiency: return FrancoSphereDesign.DashboardColors.success
-        default: return FrancoSphereDesign.DashboardColors.primaryAction
+        case .compliance: return CyntientOpsDesign.DashboardColors.critical
+        case .operations: return CyntientOpsDesign.DashboardColors.info
+        case .efficiency: return CyntientOpsDesign.DashboardColors.success
+        default: return CyntientOpsDesign.DashboardColors.primaryAction
         }
     }
 }
@@ -1548,9 +1548,9 @@ struct ComplianceIssueDetailView: View {
         
         var color: Color {
             switch self {
-            case .inProgress: return FrancoSphereDesign.DashboardColors.warning
-            case .resolved: return FrancoSphereDesign.DashboardColors.success
-            case .escalated: return FrancoSphereDesign.DashboardColors.critical
+            case .inProgress: return CyntientOpsDesign.DashboardColors.warning
+            case .resolved: return CyntientOpsDesign.DashboardColors.success
+            case .escalated: return CyntientOpsDesign.DashboardColors.critical
             }
         }
     }
@@ -1558,7 +1558,7 @@ struct ComplianceIssueDetailView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                FrancoSphereDesign.DashboardColors.baseBackground
+                CyntientOpsDesign.DashboardColors.baseBackground
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -1567,7 +1567,7 @@ struct ComplianceIssueDetailView: View {
                         issueHeaderSection
                         
                         Divider()
-                            .background(FrancoSphereDesign.DashboardColors.borderSubtle)
+                            .background(CyntientOpsDesign.DashboardColors.borderSubtle)
                         
                         // Issue details
                         issueDetailsSection
@@ -1586,7 +1586,7 @@ struct ComplianceIssueDetailView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") { onDismiss() }
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
             }
         }
@@ -1598,17 +1598,17 @@ struct ComplianceIssueDetailView: View {
             HStack {
                 Image(systemName: issueTypeIcon(issue.type))
                     .font(.title2)
-                    .foregroundColor(FrancoSphereDesign.EnumColors.complianceSeverity(issue.severity))
+                    .foregroundColor(CyntientOpsDesign.EnumColors.complianceSeverity(issue.severity))
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(issue.type.rawValue)
-                        .francoTypography(FrancoSphereDesign.Typography.title2)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.title2)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     
                     if let buildingName = issue.buildingName {
                         Text(buildingName)
-                            .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                            .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     }
                 }
                 
@@ -1640,8 +1640,8 @@ struct ComplianceIssueDetailView: View {
     private var resolutionSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Resolution")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             // Resolution type picker
             Picker("Status", selection: $selectedResolution) {
@@ -1654,17 +1654,17 @@ struct ComplianceIssueDetailView: View {
             // Notes field
             VStack(alignment: .leading, spacing: 8) {
                 Text("Notes")
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 
                 TextEditor(text: $notes)
                     .frame(minHeight: 100)
                     .padding(8)
-                    .background(FrancoSphereDesign.DashboardColors.cardBackground)
+                    .background(CyntientOpsDesign.DashboardColors.cardBackground)
                     .cornerRadius(8)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(FrancoSphereDesign.DashboardColors.borderSubtle, lineWidth: 1)
+                            .stroke(CyntientOpsDesign.DashboardColors.borderSubtle, lineWidth: 1)
                     )
             }
         }
@@ -1681,7 +1681,7 @@ struct ComplianceIssueDetailView: View {
                     Text("Update Status")
                 }
                 .frame(maxWidth: .infinity)
-                .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                .francoTypography(CyntientOpsDesign.Typography.subheadline)
                 .fontWeight(.medium)
             }
             .buttonStyle(ComplianceActionButtonStyle(color: selectedResolution.color))
@@ -1695,10 +1695,10 @@ struct ComplianceIssueDetailView: View {
                         Text("Dispatch Worker")
                     }
                     .frame(maxWidth: .infinity)
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
                     .fontWeight(.medium)
                 }
-                .buttonStyle(ComplianceActionButtonStyle(color: FrancoSphereDesign.DashboardColors.critical))
+                .buttonStyle(ComplianceActionButtonStyle(color: CyntientOpsDesign.DashboardColors.critical))
             }
         }
     }
@@ -1706,17 +1706,17 @@ struct ComplianceIssueDetailView: View {
     private func detailRow(label: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label)
-                .francoTypography(FrancoSphereDesign.Typography.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                .francoTypography(CyntientOpsDesign.Typography.caption)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
             
             Text(value)
-                .francoTypography(FrancoSphereDesign.Typography.body)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.body)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
         }
     }
     
     private func issueTypeIcon(_ type: CoreTypes.ComplianceIssueType) -> String {
-        FrancoSphereDesign.Icons.categoryIcon(for: type.rawValue)
+        CyntientOpsDesign.Icons.categoryIcon(for: type.rawValue)
     }
 }
 
@@ -1738,7 +1738,7 @@ struct AuditSchedulerSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                FrancoSphereDesign.DashboardColors.baseBackground
+                CyntientOpsDesign.DashboardColors.baseBackground
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -1759,7 +1759,7 @@ struct AuditSchedulerSheet: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") { dismiss() }
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -1767,7 +1767,7 @@ struct AuditSchedulerSheet: View {
                         onSchedule(selectedDate)
                         dismiss()
                     }
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
                     .fontWeight(.medium)
                 }
             }
@@ -1778,27 +1778,27 @@ struct AuditSchedulerSheet: View {
     private var currentAuditsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Scheduled Audits")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             ForEach(currentAudits) { audit in
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(audit.type)
-                            .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         
                         Text(audit.date.formatted(date: .abbreviated, time: .omitted))
-                            .francoTypography(FrancoSphereDesign.Typography.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                            .francoTypography(CyntientOpsDesign.Typography.caption)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     }
                     
                     Spacer()
                     
                     Text(daysUntilText(audit.date))
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.info)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.info)
                 }
                 .francoCardPadding()
                 .francoDarkCardBackground()
@@ -1809,14 +1809,14 @@ struct AuditSchedulerSheet: View {
     private var scheduleSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Schedule New Audit")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             // Audit type
             VStack(alignment: .leading, spacing: 8) {
                 Text("Audit Type")
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 
                 Picker("Type", selection: $auditType) {
                     ForEach(AuditType.allCases, id: \.self) { type in
@@ -1834,7 +1834,7 @@ struct AuditSchedulerSheet: View {
                 displayedComponents: .date
             )
             .datePickerStyle(.compact)
-            .francoTypography(FrancoSphereDesign.Typography.subheadline)
+            .francoTypography(CyntientOpsDesign.Typography.subheadline)
             
             // Building selection would go here
         }
@@ -1868,7 +1868,7 @@ struct ComplianceExportSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                FrancoSphereDesign.DashboardColors.baseBackground
+                CyntientOpsDesign.DashboardColors.baseBackground
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -1890,7 +1890,7 @@ struct ComplianceExportSheet: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") { dismiss() }
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
             }
         }
@@ -1900,8 +1900,8 @@ struct ComplianceExportSheet: View {
     private var reportPreviewSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Report Preview")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             VStack(alignment: .leading, spacing: 16) {
                 // Score summary
@@ -1909,11 +1909,11 @@ struct ComplianceExportSheet: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Compliance Score")
-                                .francoTypography(FrancoSphereDesign.Typography.caption)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                                .francoTypography(CyntientOpsDesign.Typography.caption)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                             
                             Text("\(Int(intel.complianceScore))%")
-                                .francoTypography(FrancoSphereDesign.Typography.title2)
+                                .francoTypography(CyntientOpsDesign.Typography.title2)
                                 .foregroundColor(scoreColor(intel.complianceScore))
                         }
                         
@@ -1921,18 +1921,18 @@ struct ComplianceExportSheet: View {
                         
                         VStack(alignment: .trailing, spacing: 4) {
                             Text("Critical Issues")
-                                .francoTypography(FrancoSphereDesign.Typography.caption)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                                .francoTypography(CyntientOpsDesign.Typography.caption)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                             
                             Text("\(intel.criticalIssues)")
-                                .francoTypography(FrancoSphereDesign.Typography.title2)
-                                .foregroundColor(intel.criticalIssues > 0 ? FrancoSphereDesign.DashboardColors.critical : FrancoSphereDesign.DashboardColors.success)
+                                .francoTypography(CyntientOpsDesign.Typography.title2)
+                                .foregroundColor(intel.criticalIssues > 0 ? CyntientOpsDesign.DashboardColors.critical : CyntientOpsDesign.DashboardColors.success)
                         }
                     }
                 }
                 
                 Divider()
-                    .background(FrancoSphereDesign.DashboardColors.borderSubtle)
+                    .background(CyntientOpsDesign.DashboardColors.borderSubtle)
                 
                 // Content preview
                 VStack(alignment: .leading, spacing: 8) {
@@ -1940,11 +1940,11 @@ struct ComplianceExportSheet: View {
                         HStack {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.caption)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.success)
                             
                             Text(section)
-                                .francoTypography(FrancoSphereDesign.Typography.caption)
-                                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                                .francoTypography(CyntientOpsDesign.Typography.caption)
+                                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                         }
                     }
                 }
@@ -1957,14 +1957,14 @@ struct ComplianceExportSheet: View {
     private var exportOptionsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Export Options")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             // Format selection
             VStack(alignment: .leading, spacing: 8) {
                 Text("Format")
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 
                 Picker("Format", selection: $selectedFormat) {
                     ForEach(ExportFormat.allCases, id: \.self) { format in
@@ -1977,8 +1977,8 @@ struct ComplianceExportSheet: View {
             // Date range
             VStack(alignment: .leading, spacing: 8) {
                 Text("Date Range")
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 
                 Picker("Date Range", selection: $dateRange) {
                     ForEach(DateRange.allCases, id: \.self) { range in
@@ -1990,8 +1990,8 @@ struct ComplianceExportSheet: View {
             
             // Include photos toggle
             Toggle("Include Photo Evidence", isOn: $includePhotos)
-                .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                .toggleStyle(SwitchToggleStyle(tint: FrancoSphereDesign.DashboardColors.primaryAction))
+                .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                .toggleStyle(SwitchToggleStyle(tint: CyntientOpsDesign.DashboardColors.primaryAction))
         }
         .francoCardPadding()
         .francoDarkCardBackground()
@@ -2007,10 +2007,10 @@ struct ComplianceExportSheet: View {
                 Text("Export Report")
             }
             .frame(maxWidth: .infinity)
-            .francoTypography(FrancoSphereDesign.Typography.subheadline)
+            .francoTypography(CyntientOpsDesign.Typography.subheadline)
             .fontWeight(.medium)
         }
-        .buttonStyle(ComplianceActionButtonStyle(color: FrancoSphereDesign.DashboardColors.primaryAction))
+        .buttonStyle(ComplianceActionButtonStyle(color: CyntientOpsDesign.DashboardColors.primaryAction))
     }
     
     private var reportSections: [String] {
@@ -2025,10 +2025,10 @@ struct ComplianceExportSheet: View {
     }
     
     private func scoreColor(_ score: Double) -> Color {
-        if score >= 90 { return FrancoSphereDesign.DashboardColors.success }
-        if score >= 80 { return FrancoSphereDesign.DashboardColors.info }
-        if score >= 70 { return FrancoSphereDesign.DashboardColors.warning }
-        return FrancoSphereDesign.DashboardColors.critical
+        if score >= 90 { return CyntientOpsDesign.DashboardColors.success }
+        if score >= 80 { return CyntientOpsDesign.DashboardColors.info }
+        if score >= 70 { return CyntientOpsDesign.DashboardColors.warning }
+        return CyntientOpsDesign.DashboardColors.critical
     }
 }
 
@@ -2057,7 +2057,7 @@ struct AllIssuesListView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                FrancoSphereDesign.DashboardColors.baseBackground
+                CyntientOpsDesign.DashboardColors.baseBackground
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
@@ -2077,7 +2077,7 @@ struct AllIssuesListView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") { dismiss() }
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
             }
         }
@@ -2089,15 +2089,15 @@ struct AllIssuesListView: View {
             // Search bar
             HStack {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 
                 TextField("Search issues...", text: $searchText)
                     .textFieldStyle(PlainTextFieldStyle())
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(FrancoSphereDesign.DashboardColors.cardBackground)
+            .background(CyntientOpsDesign.DashboardColors.cardBackground)
             .cornerRadius(8)
             
             // Filter chips
@@ -2140,7 +2140,7 @@ struct AllIssuesListView: View {
             }
         }
         .padding()
-        .background(FrancoSphereDesign.DashboardColors.cardBackground)
+        .background(CyntientOpsDesign.DashboardColors.cardBackground)
     }
     
     private var issuesList: some View {
@@ -2163,15 +2163,15 @@ struct AllIssuesListView: View {
             
             Image(systemName: "checkmark.shield")
                 .font(.system(size: 48))
-                .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.success)
             
             Text("No Issues Found")
-                .francoTypography(FrancoSphereDesign.Typography.title2)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.title2)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             Text("Try adjusting your filters")
-                .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             
             Spacer()
         }
@@ -2187,18 +2187,18 @@ struct ComplianceIssueRowCard: View {
             HStack {
                 Image(systemName: issueTypeIcon(issue.type))
                     .font(.title3)
-                    .foregroundColor(FrancoSphereDesign.EnumColors.complianceSeverity(issue.severity))
+                    .foregroundColor(CyntientOpsDesign.EnumColors.complianceSeverity(issue.severity))
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(issue.type.rawValue)
-                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                        .francoTypography(CyntientOpsDesign.Typography.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     
                     if let buildingName = issue.buildingName {
                         Text(buildingName)
-                            .francoTypography(FrancoSphereDesign.Typography.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                            .francoTypography(CyntientOpsDesign.Typography.caption)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     }
                 }
                 
@@ -2208,8 +2208,8 @@ struct ComplianceIssueRowCard: View {
             }
             
             Text(issue.description)
-                .francoTypography(FrancoSphereDesign.Typography.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .francoTypography(CyntientOpsDesign.Typography.caption)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 .lineLimit(2)
             
             if let dueDate = issue.dueDate {
@@ -2217,7 +2217,7 @@ struct ComplianceIssueRowCard: View {
                     Image(systemName: "calendar")
                         .font(.caption2)
                     Text(dueDate.formatted(date: .abbreviated, time: .omitted))
-                        .francoTypography(FrancoSphereDesign.Typography.caption2)
+                        .francoTypography(CyntientOpsDesign.Typography.caption2)
                         .fontWeight(.medium)
                 }
                 .foregroundColor(dueDateColor(dueDate))
@@ -2228,14 +2228,14 @@ struct ComplianceIssueRowCard: View {
     }
     
     private func issueTypeIcon(_ type: CoreTypes.ComplianceIssueType) -> String {
-        FrancoSphereDesign.Icons.categoryIcon(for: type.rawValue)
+        CyntientOpsDesign.Icons.categoryIcon(for: type.rawValue)
     }
     
     private func dueDateColor(_ date: Date) -> Color {
         let days = Calendar.current.dateComponents([.day], from: Date(), to: date).day ?? 0
-        if days < 0 { return FrancoSphereDesign.DashboardColors.critical }
-        if days < 7 { return FrancoSphereDesign.DashboardColors.warning }
-        return FrancoSphereDesign.DashboardColors.secondaryText
+        if days < 0 { return CyntientOpsDesign.DashboardColors.critical }
+        if days < 7 { return CyntientOpsDesign.DashboardColors.warning }
+        return CyntientOpsDesign.DashboardColors.secondaryText
     }
 }
 
@@ -2246,7 +2246,7 @@ struct AuditHistoryView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                FrancoSphereDesign.DashboardColors.baseBackground
+                CyntientOpsDesign.DashboardColors.baseBackground
                     .ignoresSafeArea()
                 
                 if audits.isEmpty {
@@ -2260,7 +2260,7 @@ struct AuditHistoryView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") { onDismiss() }
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
             }
         }
@@ -2284,15 +2284,15 @@ struct AuditHistoryView: View {
             
             Image(systemName: "doc.text.magnifyingglass")
                 .font(.system(size: 48))
-                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
             
             Text("No Audit History")
-                .francoTypography(FrancoSphereDesign.Typography.title2)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.title2)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             Text("Previous audits will appear here")
-                .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             
             Spacer()
         }
@@ -2306,17 +2306,17 @@ struct AuditHistoryCard: View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
                 Text(audit.type)
-                    .francoTypography(FrancoSphereDesign.Typography.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Text(audit.date.formatted(date: .abbreviated, time: .omitted))
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 
                 if let auditor = audit.auditor {
                     Text("Audited by: \(auditor)")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 }
             }
             
@@ -2324,12 +2324,12 @@ struct AuditHistoryCard: View {
             
             VStack(alignment: .trailing, spacing: 4) {
                 Text("\(Int(audit.score))%")
-                    .francoTypography(FrancoSphereDesign.Typography.title2)
+                    .francoTypography(CyntientOpsDesign.Typography.title2)
                     .foregroundColor(scoreColor(audit.score))
                 
                 Text("Score")
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             }
         }
         .francoCardPadding()
@@ -2337,10 +2337,10 @@ struct AuditHistoryCard: View {
     }
     
     private func scoreColor(_ score: Double) -> Color {
-        if score >= 90 { return FrancoSphereDesign.DashboardColors.success }
-        if score >= 80 { return FrancoSphereDesign.DashboardColors.info }
-        if score >= 70 { return FrancoSphereDesign.DashboardColors.warning }
-        return FrancoSphereDesign.DashboardColors.critical
+        if score >= 90 { return CyntientOpsDesign.DashboardColors.success }
+        if score >= 80 { return CyntientOpsDesign.DashboardColors.info }
+        if score >= 70 { return CyntientOpsDesign.DashboardColors.warning }
+        return CyntientOpsDesign.DashboardColors.critical
     }
 }
 
@@ -2352,7 +2352,7 @@ struct ComplianceTrendsView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                FrancoSphereDesign.DashboardColors.baseBackground
+                CyntientOpsDesign.DashboardColors.baseBackground
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -2374,7 +2374,7 @@ struct ComplianceTrendsView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") { onDismiss() }
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
             }
         }
@@ -2384,22 +2384,22 @@ struct ComplianceTrendsView: View {
     private var trendChartSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Compliance Score Trend")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             // Chart placeholder
-            RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
-                .fill(FrancoSphereDesign.DashboardColors.cardBackground)
+            RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.lg)
+                .fill(CyntientOpsDesign.DashboardColors.cardBackground)
                 .frame(height: 200)
                 .overlay(
                     VStack {
                         Image(systemName: "chart.line.uptrend.xyaxis")
                             .font(.largeTitle)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                         
                         Text("Chart visualization")
-                            .francoTypography(FrancoSphereDesign.Typography.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                            .francoTypography(CyntientOpsDesign.Typography.caption)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     }
                 )
         }
@@ -2408,8 +2408,8 @@ struct ComplianceTrendsView: View {
     private var keyMetricsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Key Metrics")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             LazyVGrid(columns: [
                 GridItem(.flexible()),
@@ -2419,28 +2419,28 @@ struct ComplianceTrendsView: View {
                     title: "Average Score",
                     value: "\(Int(intelligence?.complianceScore ?? 0))%",
                     trend: intelligence?.monthlyTrend ?? .stable,
-                    color: FrancoSphereDesign.DashboardColors.info
+                    color: CyntientOpsDesign.DashboardColors.info
                 )
                 
                 TrendMetricCard(
                     title: "Issues Resolved",
                     value: "47",
                     trend: .up,
-                    color: FrancoSphereDesign.DashboardColors.success
+                    color: CyntientOpsDesign.DashboardColors.success
                 )
                 
                 TrendMetricCard(
                     title: "Audit Frequency",
                     value: "Monthly",
                     trend: .stable,
-                    color: FrancoSphereDesign.DashboardColors.warning
+                    color: CyntientOpsDesign.DashboardColors.warning
                 )
                 
                 TrendMetricCard(
                     title: "Compliance Rate",
                     value: "92%",
                     trend: .improving,
-                    color: FrancoSphereDesign.DashboardColors.success
+                    color: CyntientOpsDesign.DashboardColors.success
                 )
             }
         }
@@ -2449,26 +2449,26 @@ struct ComplianceTrendsView: View {
     private var trendsInsightsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Insights")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             VStack(alignment: .leading, spacing: 16) {
                 TrendInsightRow(
                     icon: "arrow.up.right",
                     text: "Compliance score improved by 15% over the last quarter",
-                    color: FrancoSphereDesign.DashboardColors.success
+                    color: CyntientOpsDesign.DashboardColors.success
                 )
                 
                 TrendInsightRow(
                     icon: "building.2",
                     text: "3 buildings consistently maintain 95%+ compliance",
-                    color: FrancoSphereDesign.DashboardColors.info
+                    color: CyntientOpsDesign.DashboardColors.info
                 )
                 
                 TrendInsightRow(
                     icon: "calendar",
                     text: "Regular audits correlate with 20% fewer violations",
-                    color: FrancoSphereDesign.DashboardColors.warning
+                    color: CyntientOpsDesign.DashboardColors.warning
                 )
             }
             .francoCardPadding()
@@ -2487,8 +2487,8 @@ struct TrendMetricCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(title)
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 
                 Spacer()
                 
@@ -2501,7 +2501,7 @@ struct TrendMetricCard: View {
             }
             
             Text(value)
-                .francoTypography(FrancoSphereDesign.Typography.title3)
+                .francoTypography(CyntientOpsDesign.Typography.title3)
                 .foregroundColor(color)
         }
         .francoCardPadding()
@@ -2522,8 +2522,8 @@ struct TrendInsightRow: View {
                 .frame(width: 20)
             
             Text(text)
-                .francoTypography(FrancoSphereDesign.Typography.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.caption)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -2535,7 +2535,7 @@ struct ComplianceGuideView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                FrancoSphereDesign.DashboardColors.baseBackground
+                CyntientOpsDesign.DashboardColors.baseBackground
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -2552,7 +2552,7 @@ struct ComplianceGuideView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") { dismiss() }
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
             }
         }
@@ -2606,12 +2606,12 @@ struct GuideSection: View {
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.success)
                             .frame(width: 16)
                         
                         Text(item)
-                            .francoTypography(FrancoSphereDesign.Typography.caption)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                            .francoTypography(CyntientOpsDesign.Typography.caption)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -2621,12 +2621,12 @@ struct GuideSection: View {
             HStack {
                 Image(systemName: category.icon)
                     .font(.title3)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryAction)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
                     .frame(width: 24)
                 
                 Text(category.title)
-                    .francoTypography(FrancoSphereDesign.Typography.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             }
         }
         .francoCardPadding()
@@ -2720,10 +2720,10 @@ enum AuditStatus: String, CaseIterable {
     
     var color: Color {
         switch self {
-        case .scheduled: return FrancoSphereDesign.DashboardColors.info
-        case .inProgress: return FrancoSphereDesign.DashboardColors.warning
-        case .completed: return FrancoSphereDesign.DashboardColors.success
-        case .overdue: return FrancoSphereDesign.DashboardColors.critical
+        case .scheduled: return CyntientOpsDesign.DashboardColors.info
+        case .inProgress: return CyntientOpsDesign.DashboardColors.warning
+        case .completed: return CyntientOpsDesign.DashboardColors.success
+        case .overdue: return CyntientOpsDesign.DashboardColors.critical
         }
     }
 }
@@ -2738,15 +2738,15 @@ struct ComplianceLiveIndicator: View {
     var body: some View {
         HStack(spacing: 4) {
             Circle()
-                .fill(FrancoSphereDesign.DashboardColors.success)
+                .fill(CyntientOpsDesign.DashboardColors.success)
                 .frame(width: 6, height: 6)
                 .scaleEffect(isAnimating ? 1.2 : 1.0)
                 .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true), value: isAnimating)
             
             Text("LIVE")
-                .francoTypography(FrancoSphereDesign.Typography.caption2)
+                .francoTypography(CyntientOpsDesign.Typography.caption2)
                 .fontWeight(.semibold)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.success)
         }
         .onAppear { isAnimating = true }
     }
@@ -2759,13 +2759,13 @@ struct ComplianceFilterChip: View {
     
     var body: some View {
         Text(title)
-            .francoTypography(FrancoSphereDesign.Typography.caption)
+            .francoTypography(CyntientOpsDesign.Typography.caption)
             .fontWeight(.medium)
-            .foregroundColor(isActive ? .white : FrancoSphereDesign.DashboardColors.secondaryText)
+            .foregroundColor(isActive ? .white : CyntientOpsDesign.DashboardColors.secondaryText)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(
-                isActive ? FrancoSphereDesign.DashboardColors.primaryAction : FrancoSphereDesign.DashboardColors.cardBackground
+                isActive ? CyntientOpsDesign.DashboardColors.primaryAction : CyntientOpsDesign.DashboardColors.cardBackground
             )
             .cornerRadius(20)
     }

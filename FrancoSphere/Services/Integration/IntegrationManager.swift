@@ -1,6 +1,6 @@
 
 //  IntegrationManager.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Stream D: Features & Polish
 //  Mission: Create a skeleton for third-party integrations (e.g., QuickBooks).

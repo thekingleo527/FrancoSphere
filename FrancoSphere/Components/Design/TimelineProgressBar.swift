@@ -2,7 +2,7 @@
 // Visual timeline for task progression
 
 import SwiftUI
-// FrancoSphere Types Import
+// CyntientOps Types Import
 // (This comment helps identify our import)
 
 struct TimelineProgressBar: View {

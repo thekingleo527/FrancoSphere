@@ -1,6 +1,6 @@
 //
 //  Building.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ REFACTORED: Consolidated building utilities and extensions
 //  ✅ INTEGRATED: With DatabaseStartupCoordinator seed data

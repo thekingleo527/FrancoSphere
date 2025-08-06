@@ -1,6 +1,6 @@
 //
 //  InitializationStatus.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ FIXED: All compilation errors resolved
 //  ✅ REAL DATA: Uses actual database workers via WorkerService
@@ -18,7 +18,7 @@ struct InitializationStatusView: View {
     @State private var realWorkers: [WorkerProfile] = []
     @State private var realBuildings: [NamedCoordinate] = []
     @State private var isLoading = true
-    @State private var loadingMessage = "Initializing FrancoSphere..."
+    @State private var loadingMessage = "Initializing CyntientOps..."
     @State private var progress: Double = 0.0
     
     // Services
@@ -34,7 +34,7 @@ struct InitializationStatusView: View {
                     .font(.system(size: 60))
                     .foregroundColor(.blue)
                 
-                Text("FrancoSphere")
+                Text("CyntientOps")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                 
@@ -158,11 +158,11 @@ struct InitializationStatusView: View {
             // Mark as complete
             await MainActor.run {
                 self.isLoading = false
-                self.loadingMessage = "FrancoSphere initialized successfully!"
+                self.loadingMessage = "CyntientOps initialized successfully!"
             }
             
             // Log success
-            print("✅ FrancoSphere initialization complete:")
+            print("✅ CyntientOps initialization complete:")
             print("   - Workers loaded: \(realWorkers.count)")
             print("   - Buildings loaded: \(realBuildings.count)")
             
@@ -178,7 +178,7 @@ struct InitializationStatusView: View {
                 self.progress = 0.0
             }
             
-            print("❌ FrancoSphere initialization failed: \(error)")
+            print("❌ CyntientOps initialization failed: \(error)")
         }
     }
     

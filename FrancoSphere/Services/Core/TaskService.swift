@@ -1,6 +1,6 @@
 //
 //  TaskService.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ CONVERTED TO GRDB: Uses GRDBManager for database operations
 //  ✅ REAL DATA: Connects to actual database with preserved task data
@@ -50,6 +50,23 @@ actor TaskService {
         return rows.compactMap { row in
             convertRowToContextualTask(row)
         }
+    }
+    
+    func getTask(_ taskId: String) async throws -> ContextualTask {
+        let rows = try await grdbManager.query("""
+            SELECT t.*, w.name as worker_name, b.name as building_name
+            FROM routine_tasks t
+            LEFT JOIN workers w ON t.workerId = w.id
+            LEFT JOIN buildings b ON t.buildingId = b.id
+            WHERE t.id = ?
+        """, [taskId])
+        
+        guard let row = rows.first,
+              let task = convertRowToContextualTask(row) else {
+            throw TaskServiceError.taskNotFound(taskId)
+        }
+        
+        return task
     }
     
     // FIXED: Corrected method signature and TaskProgress initializer

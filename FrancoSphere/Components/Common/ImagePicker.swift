@@ -1,6 +1,6 @@
 //
 //  ImagePicker.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  📸 PHOTO MANAGEMENT: Unified image handling for Phase 3
 //  🖼️ GALLERY: Building photo organization with evidence tracking

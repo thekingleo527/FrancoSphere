@@ -1,6 +1,6 @@
 //
 //  QuickBooksPayrollExporter.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: Compatible with all Swift versions
 //  ✅ CORRECTED: Proper actor initialization

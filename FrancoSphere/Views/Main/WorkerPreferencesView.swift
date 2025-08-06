@@ -1,6 +1,6 @@
 //
 //  WorkerPreferencesView.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Stream A: UI/UX & Spanish
 //  Mission: Allow workers to customize their app experience.

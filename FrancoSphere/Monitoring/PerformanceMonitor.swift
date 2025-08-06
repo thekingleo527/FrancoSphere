@@ -1,6 +1,6 @@
 //
 //  PerformanceMonitor.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Created by Shawn Magloire on 7/31/25.
 //
@@ -8,7 +8,7 @@
 
 //
 //  PerformanceMonitor.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Stream D: Features & Polish
 //  Mission: Create a utility for tracking application performance.
@@ -68,7 +68,7 @@ final class PerformanceMonitor {
     // MARK: - Specific Tracking Methods
     
     /// A dedicated function to track app launch time.
-    /// Should be called from the `AppDelegate` or `FrancoSphereApp`.
+    /// Should be called from the `AppDelegate` or `CyntientOpsApp`.
     func trackLaunchTime(duration: TimeInterval) {
         logPerformance(operation: "app.launch", duration: duration)
     }

@@ -1,6 +1,6 @@
 //
 //  ClientDashboardMainView.swift  // RENAMED to avoid conflict
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: Renamed to ClientDashboardMainView to avoid redeclaration
 //  ✅ FIXED: Removed duplicate Color init(hex:) extension
@@ -14,10 +14,13 @@
 import SwiftUI
 import Combine
 
-struct ClientDashboardMainView: View {  // RENAMED from ClientDashboardContainerView
-    // MARK: - Existing ViewModels Only
-    @StateObject private var viewModel = ClientDashboardViewModel()
-    @StateObject private var contextEngine = ClientContextEngine.shared
+struct ClientDashboardMainView: View {
+    // MARK: - ServiceContainer Integration
+    let container: ServiceContainer
+    
+    // MARK: - ViewModels  
+    @StateObject private var viewModel: ClientDashboardViewModel
+    @StateObject private var contextEngine: ClientContextEngine
     
     // MARK: - Environment Objects
     @EnvironmentObject private var authManager: NewAuthManager
@@ -53,6 +56,14 @@ struct ClientDashboardMainView: View {  // RENAMED from ClientDashboardContainer
         }
     }
     
+    // MARK: - Initialization
+    
+    init(container: ServiceContainer) {
+        self.container = container
+        self._viewModel = StateObject(wrappedValue: ClientDashboardViewModel(container: container))
+        self._contextEngine = StateObject(wrappedValue: ClientContextEngine(container: container))
+    }
+    
     // MARK: - Computed Properties
     private var currentBuilding: CoreTypes.NamedCoordinate? {
         if let id = selectedBuildingId {
@@ -67,103 +78,86 @@ struct ClientDashboardMainView: View {  // RENAMED from ClientDashboardContainer
     }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                // Background
-                backgroundGradient
+        ZStack {
+            // Background
+            Color.black.ignoresSafeArea()
+            
+            // Main Content with Phase 4 Exact Structure
+            VStack(spacing: 0) {
+                // Header (70px) - Fixed
+                ClientDashboardHeader(
+                    clientName: contextEngine.clientProfile?.name ?? "Client User",
+                    portfolioValue: contextEngine.monthlyMetrics.monthlyBudget,
+                    activeBuildings: contextEngine.clientBuildings.count,
+                    complianceScore: Int(contextEngine.complianceOverview.overallScore * 100),
+                    onProfileTap: { showingProfile = true }
+                )
+                .frame(height: 70)
                 
-                VStack(spacing: 0) {
-                    // Header using actual data
-                    ClientHeaderSection(  // RENAMED from ClientHeaderView
-                        clientName: contextEngine.clientProfile?.name ?? "Client",
-                        selectedBuilding: currentBuilding,
-                        isRefreshing: viewModel.isRefreshing,
-                        onBuildingTap: { showingBuildingSelector = true },
-                        onProfileTap: { showingProfile = true },
-                        onRefresh: { Task { await viewModel.refreshData() } }
-                    )
-                    
-                    // Main Content
-                    ScrollView {
-                        VStack(spacing: 20) {
-                            // Portfolio Intelligence Card (using actual data)
-                            if let intelligence = viewModel.portfolioIntelligence {
-                                PortfolioIntelligenceCard(intelligence: intelligence)
-                                    .padding(.horizontal)
+                // Scrollable Content
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        // Portfolio Performance Hero (240px)
+                        ClientPortfolioHeroCard(
+                            portfolioHealth: contextEngine.portfolioHealth,
+                            realtimeMetrics: contextEngine.realtimeMetrics,
+                            monthlyMetrics: contextEngine.monthlyMetrics,
+                            onDrillDown: { selectedTimeRange = .month }
+                        )
+                        .frame(height: 240)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 12)
+                        
+                        // Building Performance Overview
+                        ClientBuildingGridSection(
+                            buildings: contextEngine.clientBuildings,
+                            buildingMetrics: contextEngine.buildingMetrics,
+                            onBuildingTap: { building in
+                                selectedBuildingId = building.id
+                                showingBuildingSelector = true
                             }
-                            
-                            // Metrics Overview (using actual properties)
-                            ClientMetricsOverviewGrid(  // RENAMED from MetricsOverviewGrid
-                                totalBuildings: viewModel.totalBuildings,
-                                activeWorkers: viewModel.activeWorkers,
-                                completionRate: viewModel.completionRate,
-                                complianceScore: viewModel.complianceScore,
-                                criticalIssues: viewModel.criticalIssues
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        
+                        // Compliance & Alerts Section
+                        ClientComplianceSection(
+                            complianceOverview: contextEngine.complianceOverview,
+                            criticalAlerts: contextEngine.criticalAlerts,
+                            onComplianceDetail: { showingComplianceDetail = true }
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        
+                        // Cost Analysis Section (if enabled)
+                        if showCostData {
+                            ClientCostAnalysisSection(
+                                monthlyMetrics: contextEngine.monthlyMetrics,
+                                costInsights: contextEngine.costOptimizationInsights,
+                                estimatedSavings: contextEngine.estimatedMonthlySavings
                             )
-                            .padding(.horizontal)
-                            
-                            // Building Performance (using actual buildingMetrics)
-                            if !viewModel.buildingMetrics.isEmpty {
-                                BuildingPerformanceSection(
-                                    buildings: viewModel.buildingsList,
-                                    metrics: viewModel.buildingMetrics,
-                                    selectedBuildingId: $selectedBuildingId
-                                )
-                                .padding(.horizontal)
-                            }
-                            
-                            // Real-time Metrics (using actual contextEngine data)
-                            RealtimeMetricsCard(
-                                routineMetrics: viewModel.realtimeRoutineMetrics,
-                                workerStatus: viewModel.activeWorkerStatus,
-                                monthlyMetrics: viewModel.monthlyMetrics
-                            )
-                            .padding(.horizontal)
-                            
-                            // Compliance Issues (using actual data)
-                            if !viewModel.complianceIssues.isEmpty {
-                                ComplianceIssuesSection(
-                                    issues: viewModel.complianceIssues,
-                                    onIssueTap: { issue in
-                                        selectedComplianceIssue = issue
-                                        showingComplianceDetail = true
-                                    }
-                                )
-                                .padding(.horizontal)
-                            }
-                            
-                            // Intelligence Insights (using actual data)
-                            if !viewModel.intelligenceInsights.isEmpty {
-                                IntelligenceInsightsSection(
-                                    insights: viewModel.intelligenceInsights
-                                )
-                                .padding(.horizontal)
-                            }
-                            
-                            // Strategic Recommendations (using actual data)
-                            if !viewModel.strategicRecommendations.isEmpty {
-                                StrategicRecommendationsSection(
-                                    recommendations: viewModel.strategicRecommendations
-                                )
-                                .padding(.horizontal)
-                            }
-                            
-                            // Bottom padding
-                            Spacer(minLength: 100)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
                         }
-                        .padding(.top)
-                    }
-                    .refreshable {
-                        await viewModel.refreshData()
+                        
+                        // Bottom spacing
+                        Spacer()
+                            .frame(height: 80)
                     }
                 }
             }
-            .navigationBarHidden(true)
-            .id(refreshID)
+            
+            // Nova Intelligence Bar (bottom overlay)
+            VStack {
+                Spacer()
+                NovaClientIntelligenceBar(
+                    container: container,
+                    clientContext: generateClientContext()
+                )
+                .frame(height: 60)
+            }
         }
-        .navigationViewStyle(StackNavigationViewStyle())
         .task {
-            await viewModel.loadPortfolioIntelligence()
             await contextEngine.refreshContext()
         }
         .sheet(isPresented: $showingBuildingSelector) {
@@ -181,6 +175,39 @@ struct ClientDashboardMainView: View {  // RENAMED from ClientDashboardContainer
                 ComplianceIssueDetailSheet(issue: issue)
             }
         }
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func generateClientContext() -> [String: Any] {
+        var context: [String: Any] = [:]
+        
+        // Client info
+        context["clientName"] = contextEngine.clientProfile?.name ?? "Client User"
+        context["role"] = "client"
+        
+        // Portfolio overview
+        context["totalBuildings"] = contextEngine.clientBuildings.count
+        context["activeWorkers"] = contextEngine.activeWorkerStatus.totalActive
+        context["portfolioHealth"] = contextEngine.portfolioHealth.overallScore
+        
+        // Financial metrics
+        context["monthlyBudget"] = contextEngine.monthlyMetrics.monthlyBudget
+        context["currentSpend"] = contextEngine.monthlyMetrics.currentSpend
+        context["projectedSpend"] = contextEngine.monthlyMetrics.projectedSpend
+        context["estimatedSavings"] = contextEngine.estimatedMonthlySavings
+        
+        // Compliance & performance
+        context["complianceScore"] = contextEngine.complianceOverview.overallScore
+        context["criticalViolations"] = contextEngine.complianceOverview.criticalViolations
+        context["criticalAlerts"] = contextEngine.criticalAlerts.count
+        
+        // Real-time status
+        context["lastUpdateTime"] = contextEngine.realtimeMetrics.lastUpdateTime
+        context["activeAlerts"] = contextEngine.realtimeMetrics.activeAlerts
+        context["pendingActions"] = contextEngine.realtimeMetrics.pendingActions
+        
+        return context
     }
     
     // MARK: - Background

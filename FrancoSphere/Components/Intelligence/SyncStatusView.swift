@@ -1,6 +1,6 @@
 //
 //  SyncStatusView.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Created by Shawn Magloire on 7/31/25.
 //
@@ -8,7 +8,7 @@
 
 //
 //  SyncStatusView.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Stream A: UI/UX & Spanish
 //  Mission: Create a reusable component to display data sync status.

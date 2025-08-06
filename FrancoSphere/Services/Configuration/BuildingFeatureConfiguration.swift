@@ -1,6 +1,6 @@
 //
 //  BuildingFeatureConfiguration.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ FIXED: All compilation errors resolved
 //  ✅ FIXED: Task initialization in actor init

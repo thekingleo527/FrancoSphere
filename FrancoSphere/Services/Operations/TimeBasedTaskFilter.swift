@@ -1,7 +1,7 @@
 //
 //
 //  TimeBasedTaskFilter.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ FIXED: Updated to use dueDate instead of scheduledDate
 //  ✅ FIXED: Corrected filter syntax for overdue tasks

@@ -1,6 +1,6 @@
 
 //  AnalyticsManager.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Stream D: Features & Polish
 //  Mission: Create a centralized analytics tracking service.

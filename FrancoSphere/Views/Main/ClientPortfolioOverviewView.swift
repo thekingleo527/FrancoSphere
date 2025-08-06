@@ -1,6 +1,6 @@
 //
 //  ClientPortfolioOverviewView.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ CLIENT-FILTERED: Only shows data for client's properties
 //  ✅ PRIVACY: No worker-specific information exposed
@@ -35,11 +35,11 @@ struct ClientPortfolioOverviewView: View {
     var body: some View {
         ZStack {
             // Dark Elegance Background
-            FrancoSphereDesign.DashboardColors.baseBackground
+            CyntientOpsDesign.DashboardColors.baseBackground
                 .ignoresSafeArea()
             
             ScrollView {
-                LazyVStack(spacing: FrancoSphereDesign.Spacing.lg) {
+                LazyVStack(spacing: CyntientOpsDesign.Spacing.lg) {
                     // Client Portfolio Hero Section (Collapsible)
                     ClientPortfolioHeroCard(
                         intelligence: clientIntelligence,
@@ -67,8 +67,8 @@ struct ClientPortfolioOverviewView: View {
                     // Last Updated Info
                     lastUpdatedSection
                 }
-                .padding(.horizontal, FrancoSphereDesign.Spacing.md)
-                .padding(.vertical, FrancoSphereDesign.Spacing.lg)
+                .padding(.horizontal, CyntientOpsDesign.Spacing.md)
+                .padding(.vertical, CyntientOpsDesign.Spacing.lg)
             }
             .refreshable {
                 if let onRefresh = onRefresh {
@@ -91,20 +91,20 @@ struct ClientPortfolioOverviewView: View {
     // MARK: - Metric Selector Section
     
     private var metricSelectorSection: some View {
-        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.sm) {
+        VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.sm) {
             Text("Property Metrics")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: FrancoSphereDesign.Spacing.sm) {
+                HStack(spacing: CyntientOpsDesign.Spacing.sm) {
                     ForEach(ClientMetricType.allCases, id: \.self) { metric in
                         if metric != .cost || clientIntelligence.showCostData {
                             MetricSelectorButton(
                                 metric: metric,
                                 isSelected: selectedMetric == metric,
                                 onTap: {
-                                    withAnimation(FrancoSphereDesign.Animations.spring) {
+                                    withAnimation(CyntientOpsDesign.Animations.spring) {
                                         selectedMetric = metric
                                     }
                                 }
@@ -119,15 +119,15 @@ struct ClientPortfolioOverviewView: View {
     // MARK: - Selected Metric Detail Section
     
     private var selectedMetricDetailSection: some View {
-        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.md) {
+        VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.md) {
             HStack {
                 Image(systemName: selectedMetric.icon)
                     .font(.title2)
                     .foregroundColor(selectedMetric.darkThemeColor)
                 
                 Text(selectedMetric.title)
-                    .francoTypography(FrancoSphereDesign.Typography.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Spacer()
             }
@@ -156,19 +156,19 @@ struct ClientPortfolioOverviewView: View {
     // MARK: - Service Summary Section
     
     private var serviceSummarySection: some View {
-        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.sm) {
+        VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.sm) {
             Text("Service Performance")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Service Level")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     
                     Text("\(Int(clientIntelligence.serviceLevel * 100))%")
-                        .francoTypography(FrancoSphereDesign.Typography.title2)
+                        .francoTypography(CyntientOpsDesign.Typography.title2)
                         .foregroundColor(serviceLevelColor)
                 }
                 
@@ -176,8 +176,8 @@ struct ClientPortfolioOverviewView: View {
                 
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("Trend")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     
                     HStack(spacing: 4) {
                         Image(systemName: trendIcon(for: clientIntelligence.monthlyTrend))
@@ -185,7 +185,7 @@ struct ClientPortfolioOverviewView: View {
                             .foregroundColor(trendColor(for: clientIntelligence.monthlyTrend))
                         
                         Text(clientIntelligence.monthlyTrend.rawValue.capitalized)
-                            .francoTypography(FrancoSphereDesign.Typography.caption)
+                            .francoTypography(CyntientOpsDesign.Typography.caption)
                             .fontWeight(.medium)
                             .foregroundColor(trendColor(for: clientIntelligence.monthlyTrend))
                     }
@@ -199,37 +199,37 @@ struct ClientPortfolioOverviewView: View {
     // MARK: - Cost Overview Section
     
     private var costOverviewSection: some View {
-        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.sm) {
+        VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.sm) {
             HStack {
                 Image(systemName: "dollarsign.circle")
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.info)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.info)
                 
                 Text("Cost Overview")
-                    .francoTypography(FrancoSphereDesign.Typography.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             }
             
             HStack {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("This Month")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     
                     Text(formatCurrency(clientIntelligence.monthlySpend))
-                        .francoTypography(FrancoSphereDesign.Typography.title3)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.title3)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
                 
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 8) {
                     Text("Budget")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     
                     Text(formatCurrency(clientIntelligence.monthlyBudget))
-                        .francoTypography(FrancoSphereDesign.Typography.title3)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.title3)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 }
             }
             
@@ -237,7 +237,7 @@ struct ClientPortfolioOverviewView: View {
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                        .fill(CyntientOpsDesign.DashboardColors.glassOverlay)
                         .frame(height: 8)
                     
                     RoundedRectangle(cornerRadius: 4)
@@ -262,29 +262,29 @@ struct ClientPortfolioOverviewView: View {
     // MARK: - Property Status Section
     
     private var propertyStatusSection: some View {
-        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.sm) {
+        VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.sm) {
             HStack {
                 Image(systemName: "info.circle")
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.info)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.info)
                 
                 Text("Property Status")
-                    .francoTypography(FrancoSphereDesign.Typography.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             }
             
-            VStack(spacing: FrancoSphereDesign.Spacing.sm) {
+            VStack(spacing: CyntientOpsDesign.Spacing.sm) {
                 StatusRow(
                     title: "Properties Managed",
                     value: "\(clientIntelligence.totalProperties)",
                     icon: "building.2",
-                    color: FrancoSphereDesign.DashboardColors.info
+                    color: CyntientOpsDesign.DashboardColors.info
                 )
                 
                 StatusRow(
                     title: "Service Coverage",
                     value: "\(Int(clientIntelligence.coveragePercentage))%",
                     icon: "mappin.circle",
-                    color: FrancoSphereDesign.DashboardColors.tertiaryAction
+                    color: CyntientOpsDesign.DashboardColors.tertiaryAction
                 )
                 
                 StatusRow(
@@ -292,8 +292,8 @@ struct ClientPortfolioOverviewView: View {
                     value: "\(clientIntelligence.complianceIssues)",
                     icon: "exclamationmark.triangle",
                     color: clientIntelligence.complianceIssues > 0 ?
-                        FrancoSphereDesign.DashboardColors.critical :
-                        FrancoSphereDesign.DashboardColors.success
+                        CyntientOpsDesign.DashboardColors.critical :
+                        CyntientOpsDesign.DashboardColors.success
                 )
                 
                 StatusRow(
@@ -305,11 +305,11 @@ struct ClientPortfolioOverviewView: View {
             }
             .francoCardPadding()
             .background(
-                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
-                    .fill(FrancoSphereDesign.DashboardColors.info.opacity(0.1))
+                RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.lg)
+                    .fill(CyntientOpsDesign.DashboardColors.info.opacity(0.1))
                     .overlay(
-                        RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.lg)
-                            .stroke(FrancoSphereDesign.DashboardColors.info.opacity(0.2), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.lg)
+                            .stroke(CyntientOpsDesign.DashboardColors.info.opacity(0.2), lineWidth: 1)
                     )
             )
         }
@@ -321,11 +321,11 @@ struct ClientPortfolioOverviewView: View {
         HStack {
             Image(systemName: "clock")
                 .font(.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
             
             Text("Last updated just now")
-                .francoTypography(FrancoSphereDesign.Typography.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                .francoTypography(CyntientOpsDesign.Typography.caption)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
             
             Spacer()
         }
@@ -335,23 +335,23 @@ struct ClientPortfolioOverviewView: View {
     
     private var serviceLevelColor: Color {
         if clientIntelligence.serviceLevel >= 0.9 {
-            return FrancoSphereDesign.DashboardColors.success
+            return CyntientOpsDesign.DashboardColors.success
         } else if clientIntelligence.serviceLevel >= 0.8 {
-            return FrancoSphereDesign.DashboardColors.info
+            return CyntientOpsDesign.DashboardColors.info
         } else if clientIntelligence.serviceLevel >= 0.7 {
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         }
-        return FrancoSphereDesign.DashboardColors.critical
+        return CyntientOpsDesign.DashboardColors.critical
     }
     
     private var budgetProgressColor: Color {
         let percentage = clientIntelligence.monthlySpend / clientIntelligence.monthlyBudget
         if percentage > 1.0 {
-            return FrancoSphereDesign.DashboardColors.critical
+            return CyntientOpsDesign.DashboardColors.critical
         } else if percentage > 0.9 {
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         }
-        return FrancoSphereDesign.DashboardColors.success
+        return CyntientOpsDesign.DashboardColors.success
     }
     
     private var healthStatus: String {
@@ -381,7 +381,7 @@ struct ClientPortfolioOverviewView: View {
         let compliance = Double(clientIntelligence.complianceScore) / 100.0
         let average = (service + compliance) / 2
         
-        return FrancoSphereDesign.EnumColors.dataHealthStatus(
+        return CyntientOpsDesign.EnumColors.dataHealthStatus(
             average >= 0.9 ? .healthy :
             average >= 0.7 ? .warning : .error
         )
@@ -397,11 +397,11 @@ struct ClientPortfolioOverviewView: View {
     }
     
     private func trendIcon(for trend: CoreTypes.TrendDirection) -> String {
-        FrancoSphereDesign.Icons.statusIcon(for: trend.rawValue)
+        CyntientOpsDesign.Icons.statusIcon(for: trend.rawValue)
     }
     
     private func trendColor(for trend: CoreTypes.TrendDirection) -> Color {
-        FrancoSphereDesign.EnumColors.trendDirection(trend)
+        CyntientOpsDesign.EnumColors.trendDirection(trend)
     }
 }
 
@@ -421,7 +421,7 @@ struct ClientPortfolioHeroCard: View {
                 MinimalClientPortfolioHero(
                     intelligence: intelligence,
                     onExpand: {
-                        withAnimation(FrancoSphereDesign.Animations.spring) {
+                        withAnimation(CyntientOpsDesign.Animations.spring) {
                             isCollapsed = false
                         }
                     }
@@ -431,7 +431,7 @@ struct ClientPortfolioHeroCard: View {
                 FullClientPortfolioHero(
                     intelligence: intelligence,
                     onCollapse: {
-                        withAnimation(FrancoSphereDesign.Animations.spring) {
+                        withAnimation(CyntientOpsDesign.Animations.spring) {
                             isCollapsed = true
                         }
                     }
@@ -449,18 +449,18 @@ struct MinimalClientPortfolioHero: View {
     
     var body: some View {
         Button(action: onExpand) {
-            HStack(spacing: FrancoSphereDesign.Spacing.sm) {
+            HStack(spacing: CyntientOpsDesign.Spacing.sm) {
                 // Status indicator
                 Circle()
                     .fill(statusColor)
                     .frame(width: 8, height: 8)
                 
                 Text("Property Overview")
-                    .francoTypography(FrancoSphereDesign.Typography.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 Text("•")
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 
                 // Key metrics
                 HStack(spacing: 4) {
@@ -468,34 +468,34 @@ struct MinimalClientPortfolioHero: View {
                         .font(.caption)
                     Text("\(intelligence.totalProperties)")
                 }
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 
                 Text("•")
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 
                 HStack(spacing: 4) {
                     Image(systemName: "star")
                         .font(.caption)
                     Text("\(Int(intelligence.serviceLevel * 100))%")
                 }
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 
                 Spacer()
                 
                 Image(systemName: "chevron.down")
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
             }
-            .padding(.horizontal, FrancoSphereDesign.Spacing.md)
-            .padding(.vertical, FrancoSphereDesign.Spacing.sm)
-            .francoDarkCardBackground(cornerRadius: FrancoSphereDesign.CornerRadius.md)
+            .padding(.horizontal, CyntientOpsDesign.Spacing.md)
+            .padding(.vertical, CyntientOpsDesign.Spacing.sm)
+            .francoDarkCardBackground(cornerRadius: CyntientOpsDesign.CornerRadius.md)
         }
         .buttonStyle(PlainButtonStyle())
     }
     
     private var statusColor: Color {
         let average = (intelligence.serviceLevel + Double(intelligence.complianceScore) / 100.0) / 2
-        return average >= 0.8 ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.warning
+        return average >= 0.8 ? CyntientOpsDesign.DashboardColors.success : CyntientOpsDesign.DashboardColors.warning
     }
 }
 
@@ -507,20 +507,20 @@ struct FullClientPortfolioHero: View {
     
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.md) {
+            VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.md) {
                 Text("Your Properties")
-                    .francoTypography(FrancoSphereDesign.Typography.title2)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.title2)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 LazyVGrid(columns: [
                     GridItem(.flexible()),
                     GridItem(.flexible())
-                ], spacing: FrancoSphereDesign.Spacing.sm) {
+                ], spacing: CyntientOpsDesign.Spacing.sm) {
                     SummaryCard(
                         title: "Properties",
                         value: "\(intelligence.totalProperties)",
                         icon: "building.2",
-                        color: FrancoSphereDesign.DashboardColors.info,
+                        color: CyntientOpsDesign.DashboardColors.info,
                         trend: nil
                     )
                     
@@ -553,7 +553,7 @@ struct FullClientPortfolioHero: View {
                             title: "Coverage",
                             value: "\(Int(intelligence.coveragePercentage))%",
                             icon: "mappin.circle",
-                            color: FrancoSphereDesign.DashboardColors.tertiaryAction,
+                            color: CyntientOpsDesign.DashboardColors.tertiaryAction,
                             trend: nil
                         )
                     }
@@ -566,45 +566,45 @@ struct FullClientPortfolioHero: View {
             Button(action: onCollapse) {
                 Image(systemName: "chevron.up")
                     .font(.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     .padding(8)
                     .background(
                         Circle()
-                            .fill(FrancoSphereDesign.DashboardColors.glassOverlay)
+                            .fill(CyntientOpsDesign.DashboardColors.glassOverlay)
                     )
             }
-            .padding(FrancoSphereDesign.Spacing.sm)
+            .padding(CyntientOpsDesign.Spacing.sm)
         }
     }
     
     private var serviceLevelColor: Color {
         if intelligence.serviceLevel >= 0.9 {
-            return FrancoSphereDesign.DashboardColors.success
+            return CyntientOpsDesign.DashboardColors.success
         } else if intelligence.serviceLevel >= 0.8 {
-            return FrancoSphereDesign.DashboardColors.info
+            return CyntientOpsDesign.DashboardColors.info
         }
-        return FrancoSphereDesign.DashboardColors.warning
+        return CyntientOpsDesign.DashboardColors.warning
     }
     
     private var complianceColor: Color {
         if intelligence.complianceScore >= 90 {
-            return FrancoSphereDesign.DashboardColors.success
+            return CyntientOpsDesign.DashboardColors.success
         } else if intelligence.complianceScore >= 80 {
-            return FrancoSphereDesign.DashboardColors.info
+            return CyntientOpsDesign.DashboardColors.info
         } else if intelligence.complianceScore >= 70 {
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         }
-        return FrancoSphereDesign.DashboardColors.critical
+        return CyntientOpsDesign.DashboardColors.critical
     }
     
     private var costColor: Color {
         let percentage = intelligence.monthlySpend / intelligence.monthlyBudget
         if percentage > 1.0 {
-            return FrancoSphereDesign.DashboardColors.critical
+            return CyntientOpsDesign.DashboardColors.critical
         } else if percentage > 0.9 {
-            return FrancoSphereDesign.DashboardColors.warning
+            return CyntientOpsDesign.DashboardColors.warning
         }
-        return FrancoSphereDesign.DashboardColors.success
+        return CyntientOpsDesign.DashboardColors.success
     }
     
     private func formatCurrency(_ amount: Double) -> String {
@@ -625,7 +625,7 @@ struct SummaryCard: View {
     let trend: CoreTypes.TrendDirection?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: FrancoSphereDesign.Spacing.xs) {
+        VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.xs) {
             HStack {
                 Image(systemName: icon)
                     .font(.title3)
@@ -641,12 +641,12 @@ struct SummaryCard: View {
             }
             
             Text(value)
-                .francoTypography(FrancoSphereDesign.Typography.title2)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.title2)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             Text(title)
-                .francoTypography(FrancoSphereDesign.Typography.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .francoTypography(CyntientOpsDesign.Typography.caption)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 .lineLimit(1)
         }
         .francoCardPadding()
@@ -665,7 +665,7 @@ struct SummaryCard: View {
     }
     
     private func trendColorForCard(_ trend: CoreTypes.TrendDirection) -> Color {
-        FrancoSphereDesign.EnumColors.trendDirection(trend)
+        CyntientOpsDesign.EnumColors.trendDirection(trend)
     }
 }
 
@@ -681,21 +681,21 @@ struct MetricSelectorButton: View {
                     .font(.caption)
                 
                 Text(metric.title)
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
                     .fontWeight(.medium)
             }
-            .padding(.horizontal, FrancoSphereDesign.Spacing.sm)
+            .padding(.horizontal, CyntientOpsDesign.Spacing.sm)
             .padding(.vertical, 6)
             .background(
-                RoundedRectangle(cornerRadius: FrancoSphereDesign.CornerRadius.round)
+                RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.round)
                     .fill(isSelected ?
                         metric.darkThemeColor :
-                        FrancoSphereDesign.DashboardColors.glassOverlay
+                        CyntientOpsDesign.DashboardColors.glassOverlay
                     )
             )
             .foregroundColor(isSelected ?
                 .white :
-                FrancoSphereDesign.DashboardColors.primaryText
+                CyntientOpsDesign.DashboardColors.primaryText
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -715,15 +715,15 @@ struct StatusRow: View {
                 .foregroundColor(color)
             
             Text(title)
-                .francoTypography(FrancoSphereDesign.Typography.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .francoTypography(CyntientOpsDesign.Typography.caption)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             
             Spacer()
             
             Text(value)
-                .francoTypography(FrancoSphereDesign.Typography.caption)
+                .francoTypography(CyntientOpsDesign.Typography.caption)
                 .fontWeight(.medium)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
         }
     }
 }
@@ -736,17 +736,17 @@ struct ClientServiceDetailView: View {
     let intelligence: ClientIntelligence
     
     var body: some View {
-        VStack(spacing: FrancoSphereDesign.Spacing.sm) {
+        VStack(spacing: CyntientOpsDesign.Spacing.sm) {
             HStack {
                 Text("Service Performance")
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 
                 Spacer()
                 
                 Text("\(Int(intelligence.serviceLevel * 100))%")
-                    .francoTypography(FrancoSphereDesign.Typography.title)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.title)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             }
             
             FrancoMetricsProgress(
@@ -756,8 +756,8 @@ struct ClientServiceDetailView: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 Text("Service includes regular cleaning, maintenance, and compliance monitoring for all your properties.")
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                     .multilineTextAlignment(.leading)
             }
         }
@@ -770,42 +770,42 @@ struct ClientComplianceDetailView: View {
     let intelligence: ClientIntelligence
     
     var body: some View {
-        VStack(spacing: FrancoSphereDesign.Spacing.sm) {
+        VStack(spacing: CyntientOpsDesign.Spacing.sm) {
             HStack {
                 VStack(alignment: .leading) {
                     Text("Compliance Score")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     
                     Text("\(intelligence.complianceScore)%")
-                        .francoTypography(FrancoSphereDesign.Typography.title2)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.title2)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
                 
                 Spacer()
                 
                 VStack(alignment: .trailing) {
                     Text("Issues")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     
                     Text("\(intelligence.complianceIssues)")
-                        .francoTypography(FrancoSphereDesign.Typography.title2)
+                        .francoTypography(CyntientOpsDesign.Typography.title2)
                         .foregroundColor(intelligence.complianceIssues > 0 ?
-                            FrancoSphereDesign.DashboardColors.warning :
-                            FrancoSphereDesign.DashboardColors.success
+                            CyntientOpsDesign.DashboardColors.warning :
+                            CyntientOpsDesign.DashboardColors.success
                         )
                 }
             }
             
             if intelligence.complianceIssues > 0 {
                 Text("\(intelligence.complianceIssues) compliance issues require attention across your properties.")
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
             } else {
                 Text("All properties are in good standing with local regulations.")
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.success)
             }
         }
     }
@@ -817,17 +817,17 @@ struct ClientCoverageDetailView: View {
     let intelligence: ClientIntelligence
     
     var body: some View {
-        VStack(spacing: FrancoSphereDesign.Spacing.sm) {
+        VStack(spacing: CyntientOpsDesign.Spacing.sm) {
             HStack {
                 Text("Service Coverage")
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 
                 Spacer()
                 
                 Text("\(Int(intelligence.coveragePercentage))%")
-                    .francoTypography(FrancoSphereDesign.Typography.title)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.title)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             }
             
             FrancoMetricsProgress(
@@ -836,8 +836,8 @@ struct ClientCoverageDetailView: View {
             )
             
             Text("Coverage indicates the percentage of scheduled services completed on time across all properties.")
-                .francoTypography(FrancoSphereDesign.Typography.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.tertiaryText)
+                .francoTypography(CyntientOpsDesign.Typography.caption)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.tertiaryText)
                 .multilineTextAlignment(.leading)
         }
     }
@@ -849,28 +849,28 @@ struct ClientCostDetailView: View {
     let intelligence: ClientIntelligence
     
     var body: some View {
-        VStack(spacing: FrancoSphereDesign.Spacing.sm) {
+        VStack(spacing: CyntientOpsDesign.Spacing.sm) {
             HStack {
                 VStack(alignment: .leading) {
                     Text("Monthly Spend")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     
                     Text(formatCurrency(intelligence.monthlySpend))
-                        .francoTypography(FrancoSphereDesign.Typography.title2)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.title2)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
                 
                 Spacer()
                 
                 VStack(alignment: .trailing) {
                     Text("Budget")
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     
                     Text(formatCurrency(intelligence.monthlyBudget))
-                        .francoTypography(FrancoSphereDesign.Typography.title2)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.title2)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 }
             }
             
@@ -878,13 +878,13 @@ struct ClientCostDetailView: View {
             let utilization = intelligence.monthlySpend / intelligence.monthlyBudget
             HStack {
                 Text("Budget Utilization: \(Int(utilization * 100))%")
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 
                 Spacer()
                 
                 Text(budgetStatus)
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
                     .fontWeight(.medium)
                     .foregroundColor(budgetStatusColor)
             }
@@ -907,9 +907,9 @@ struct ClientCostDetailView: View {
     
     private var budgetStatusColor: Color {
         let utilization = intelligence.monthlySpend / intelligence.monthlyBudget
-        if utilization > 1.0 { return FrancoSphereDesign.DashboardColors.critical }
-        if utilization > 0.9 { return FrancoSphereDesign.DashboardColors.warning }
-        return FrancoSphereDesign.DashboardColors.success
+        if utilization > 1.0 { return CyntientOpsDesign.DashboardColors.critical }
+        if utilization > 0.9 { return CyntientOpsDesign.DashboardColors.warning }
+        return CyntientOpsDesign.DashboardColors.success
     }
 }
 
@@ -934,10 +934,10 @@ enum ClientMetricType: String, CaseIterable {
     
     var darkThemeColor: Color {
         switch self {
-        case .service: return FrancoSphereDesign.DashboardColors.tertiaryAction
-        case .compliance: return FrancoSphereDesign.DashboardColors.success
-        case .coverage: return FrancoSphereDesign.DashboardColors.info
-        case .cost: return FrancoSphereDesign.DashboardColors.warning
+        case .service: return CyntientOpsDesign.DashboardColors.tertiaryAction
+        case .compliance: return CyntientOpsDesign.DashboardColors.success
+        case .coverage: return CyntientOpsDesign.DashboardColors.info
+        case .cost: return CyntientOpsDesign.DashboardColors.warning
         }
     }
 }

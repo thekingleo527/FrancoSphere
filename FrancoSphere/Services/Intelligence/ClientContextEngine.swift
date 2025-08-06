@@ -1,6 +1,6 @@
 //
 //  ClientContextEngine.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ FIXED: All types now use CoreTypes namespace
 //  ✅ FIXED: Removed duplicate type declarations
@@ -17,7 +17,10 @@ import SwiftUI
 
 @MainActor
 final class ClientContextEngine: ObservableObject {
-    static let shared = ClientContextEngine()
+    
+    // MARK: - ServiceContainer Integration
+    private weak var container: ServiceContainer?
+    private weak var novaManager: NovaAIManager?
     
     // MARK: - Properties for ClientDashboardView Compatibility
     // All types now correctly reference CoreTypes
@@ -84,14 +87,14 @@ final class ClientContextEngine: ObservableObject {
     // Worker Activity
     @Published var workerProductivityInsights: [CoreTypes.WorkerProductivityInsight] = []
     
-    // MARK: - Private Properties
+    // MARK: - Private Properties (Updated for ServiceContainer)
     
-    private let dashboardSync = DashboardSyncService.shared
-    private let buildingService = BuildingService.shared
-    private let taskService = TaskService.shared
-    private let complianceService = ComplianceService.shared
-    private let workerService = WorkerService.shared
-    private let analyticsService = AnalyticsService.shared
+    private var dashboardSync: DashboardSyncService? { container?.dashboardSync }
+    private var buildingService: BuildingService? { container?.buildings }
+    private var taskService: TaskService? { container?.tasks }
+    private var complianceService: ComplianceService? { container?.compliance }
+    private var workerService: WorkerService? { container?.workers }
+    // Note: AnalyticsService not yet in ServiceContainer - using shared temporarily
     
     private var cancellables = Set<AnyCancellable>()
     private var realtimeTimer: Timer?
@@ -99,10 +102,17 @@ final class ClientContextEngine: ObservableObject {
     
     // MARK: - Initialization
     
-    private init() {
+    init(container: ServiceContainer) {
+        self.container = container
         setupSubscriptions()
         startRealtimeMonitoring()
         loadClientProfile()
+    }
+    
+    // MARK: - ServiceContainer Methods
+    
+    public func setNovaManager(_ nova: NovaAIManager) {
+        self.novaManager = nova
     }
     
     // MARK: - Public Methods for ClientDashboardView
@@ -407,17 +417,22 @@ final class ClientContextEngine: ObservableObject {
     // MARK: - Private Methods (Original)
     
     private func setupSubscriptions() {
-        // Subscribe to Nova Intelligence updates
-        NovaIntelligenceEngine.shared.$insights
-            .sink { [weak self] insights in
-                self?.processNovaInsights(insights)
-            }
-            .store(in: &cancellables)
+        // Subscribe to UnifiedIntelligenceService updates via container
+        if let container = container {
+            container.intelligence.$insights
+                .sink { [weak self] insights in
+                    self?.processNovaInsights(insights)
+                }
+                .store(in: &cancellables)
+        }
     }
     
     private func fetchClientBuildings() async throws -> [CoreTypes.NamedCoordinate] {
         // Fetch buildings assigned to this client
-        let buildings = try await buildingService.getClientBuildings()
+        guard let buildingService = buildingService else {
+            throw ClientContextError.serviceUnavailable("BuildingService")
+        }
+        let buildings = try await buildingService.getAllBuildings() // Updated method
         return buildings.map { building in
             CoreTypes.NamedCoordinate(
                 id: building.id,
@@ -862,5 +877,18 @@ extension TaskService {
         }
         
         return Double(completed) / Double(total)
+    }
+}
+
+// MARK: - Supporting Types
+
+enum ClientContextError: LocalizedError {
+    case serviceUnavailable(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .serviceUnavailable(let service):
+            return "\(service) is not available"
+        }
     }
 }

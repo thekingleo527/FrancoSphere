@@ -1,6 +1,6 @@
 //
 //  TestMigrationFlow.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Created by Shawn Magloire on 7/30/25.
 //
@@ -8,7 +8,7 @@
 
 //
 //  TestMigrationFlow.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ TESTING: Helper to test migration flow
 //

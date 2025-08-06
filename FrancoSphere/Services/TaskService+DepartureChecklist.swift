@@ -1,10 +1,10 @@
 
 //  TaskService+DepartureChecklist.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Extensions to TaskService for site departure functionality
 //
-//  Place this file in: FrancoSphere/Services/
+//  Place this file in: CyntientOps/Services/
 //
 
 import Foundation

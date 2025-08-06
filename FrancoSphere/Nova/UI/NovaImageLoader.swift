@@ -1,13 +1,13 @@
 //
 //  AIAssistantImageLoader.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  Created by Shawn Magloire on 6/16/25.
 //
 
 //
 //  AIAssistantImageLoader.swift
-//  FrancoSphere
+//  CyntientOps
 //
 //  ✅ AI ASSISTANT IMAGE LOADING UTILITY
 //  ✅ Handles multiple image name variations
@@ -17,11 +17,11 @@
 //
 
 import SwiftUI
-// FrancoSphere Types Import
+// CyntientOps Types Import
 // (This comment helps identify our import)
 
 import UIKit
-// FrancoSphere Types Import
+// CyntientOps Types Import
 // (This comment helps identify our import)
 
 /// Utility for loading the AI Assistant image with multiple fallback options

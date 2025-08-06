@@ -1,6 +1,6 @@
 //
 //  BuildingIntelligencePanel.swift
-//  FrancoSphere v6.0
+//  CyntientOps v6.0
 //
 //  ✅ DARK ELEGANCE: Full theme integration with glass morphism
 //  ✅ FIXED: All compilation errors resolved
@@ -52,11 +52,11 @@ struct BuildingIntelligencePanel: View {
         
         var color: Color {
             switch self {
-            case .overview: return FrancoSphereDesign.DashboardColors.info
-            case .allWorkers: return FrancoSphereDesign.DashboardColors.success
-            case .fullSchedule: return FrancoSphereDesign.DashboardColors.tertiaryAction
-            case .history: return FrancoSphereDesign.DashboardColors.warning
-            case .emergency: return FrancoSphereDesign.DashboardColors.critical
+            case .overview: return CyntientOpsDesign.DashboardColors.info
+            case .allWorkers: return CyntientOpsDesign.DashboardColors.success
+            case .fullSchedule: return CyntientOpsDesign.DashboardColors.tertiaryAction
+            case .history: return CyntientOpsDesign.DashboardColors.warning
+            case .emergency: return CyntientOpsDesign.DashboardColors.critical
             }
         }
     }
@@ -66,7 +66,7 @@ struct BuildingIntelligencePanel: View {
         NavigationView {
             ZStack {
                 // Dark Elegance Background
-                FrancoSphereDesign.DashboardColors.baseBackground
+                CyntientOpsDesign.DashboardColors.baseBackground
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
@@ -89,7 +89,7 @@ struct BuildingIntelligencePanel: View {
                     Button("Close") {
                         dismiss()
                     }
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -108,17 +108,17 @@ struct BuildingIntelligencePanel: View {
     private var coverageIndicatorBanner: some View {
         HStack(spacing: 8) {
             Image(systemName: "info.circle.fill")
-                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
             
             Text("Coverage Mode - Emergency/Support Access")
-                .francoTypography(FrancoSphereDesign.Typography.caption)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                .francoTypography(CyntientOpsDesign.Typography.caption)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
             
             Spacer()
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(FrancoSphereDesign.DashboardColors.warning.opacity(0.1))
+        .background(CyntientOpsDesign.DashboardColors.warning.opacity(0.1))
     }
     
     // MARK: - Intelligence Tab Bar
@@ -132,7 +132,7 @@ struct BuildingIntelligencePanel: View {
             }
             .padding(.horizontal, 16)
         }
-        .background(FrancoSphereDesign.DashboardColors.cardBackground)
+        .background(CyntientOpsDesign.DashboardColors.cardBackground)
     }
     
     private func tabButton(for tab: IntelligenceTab) -> some View {
@@ -144,11 +144,11 @@ struct BuildingIntelligencePanel: View {
             VStack(spacing: 4) {
                 Image(systemName: tab.icon)
                     .font(.caption)
-                    .foregroundColor(selectedTab == tab ? tab.color : FrancoSphereDesign.DashboardColors.secondaryText)
+                    .foregroundColor(selectedTab == tab ? tab.color : CyntientOpsDesign.DashboardColors.secondaryText)
                 
                 Text(tab.rawValue)
-                    .francoTypography(FrancoSphereDesign.Typography.caption2)
-                    .foregroundColor(selectedTab == tab ? tab.color : FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.caption2)
+                    .foregroundColor(selectedTab == tab ? tab.color : CyntientOpsDesign.DashboardColors.secondaryText)
                     .fontWeight(selectedTab == tab ? .semibold : .regular)
             }
             .frame(maxWidth: .infinity)
@@ -166,16 +166,16 @@ struct BuildingIntelligencePanel: View {
     private var coverageStatusButton: some View {
         HStack(spacing: 4) {
             Circle()
-                .fill(isMyBuilding ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.warning)
+                .fill(isMyBuilding ? CyntientOpsDesign.DashboardColors.success : CyntientOpsDesign.DashboardColors.warning)
                 .frame(width: 8, height: 8)
             
             Text(isMyBuilding ? "My Building" : "Coverage")
-                .francoTypography(FrancoSphereDesign.Typography.caption2)
-                .foregroundColor(isMyBuilding ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.warning)
+                .francoTypography(CyntientOpsDesign.Typography.caption2)
+                .foregroundColor(isMyBuilding ? CyntientOpsDesign.DashboardColors.success : CyntientOpsDesign.DashboardColors.warning)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(FrancoSphereDesign.DashboardColors.glassOverlay)
+        .background(CyntientOpsDesign.DashboardColors.glassOverlay)
         .cornerRadius(12)
     }
     
@@ -263,11 +263,11 @@ struct BuildingOverviewTabView: View {
             HStack {
                 Image(systemName: "building.2.fill")
                     .font(.title2)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.info)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.info)
                 
                 Text("Building Status")
-                    .francoTypography(FrancoSphereDesign.Typography.headline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             }
             
             VStack(alignment: .leading, spacing: 8) {
@@ -286,10 +286,10 @@ struct BuildingOverviewTabView: View {
     
     private func metricsGrid(_ metrics: CoreTypes.BuildingMetrics) -> some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
-            metricCard("Completion Rate", "\(Int(metrics.completionRate * 100))%", "checkmark.circle.fill", FrancoSphereDesign.DashboardColors.success)
-            metricCard("Active Workers", "\(metrics.activeWorkers)", "person.fill", FrancoSphereDesign.DashboardColors.info)
-            metricCard("Pending Tasks", "\(metrics.pendingTasks)", "clock.fill", FrancoSphereDesign.DashboardColors.warning)
-            metricCard("Overdue Tasks", "\(metrics.overdueTasks)", "exclamationmark.triangle.fill", FrancoSphereDesign.DashboardColors.critical)
+            metricCard("Completion Rate", "\(Int(metrics.completionRate * 100))%", "checkmark.circle.fill", CyntientOpsDesign.DashboardColors.success)
+            metricCard("Active Workers", "\(metrics.activeWorkers)", "person.fill", CyntientOpsDesign.DashboardColors.info)
+            metricCard("Pending Tasks", "\(metrics.pendingTasks)", "clock.fill", CyntientOpsDesign.DashboardColors.warning)
+            metricCard("Overdue Tasks", "\(metrics.overdueTasks)", "exclamationmark.triangle.fill", CyntientOpsDesign.DashboardColors.critical)
         }
     }
     
@@ -299,14 +299,14 @@ struct BuildingOverviewTabView: View {
                 Image(systemName: icon)
                     .foregroundColor(color)
                 Text(title)
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             }
             
             Text(value)
-                .francoTypography(FrancoSphereDesign.Typography.title2)
+                .francoTypography(CyntientOpsDesign.Typography.title2)
                 .fontWeight(.bold)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
         }
         .padding()
         .francoGlassBackground()
@@ -315,12 +315,12 @@ struct BuildingOverviewTabView: View {
     private var currentActivitySection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Current Activity")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             Text("Real-time building activity and worker status")
-                .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
         }
         .francoCardPadding()
         .francoDarkCardBackground()
@@ -329,14 +329,14 @@ struct BuildingOverviewTabView: View {
     private func statusRow(_ title: String, _ value: String) -> some View {
         HStack {
             Text(title)
-                .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             
             Spacer()
             
             Text(value)
-                .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
         }
     }
 }
@@ -365,13 +365,13 @@ struct AllWorkersTab: View {
     private var currentWorkersSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Currently On Site")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             if workersOnSite.isEmpty {
                 Text("No workers currently on site")
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     .padding()
                     .francoGlassBackground()
             } else {
@@ -389,13 +389,13 @@ struct AllWorkersTab: View {
     private var primaryWorkersSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Primary Workers")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             if primaryWorkers.isEmpty {
                 Text("No primary workers assigned")
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     .padding()
                     .francoGlassBackground()
             } else {
@@ -413,13 +413,13 @@ struct AllWorkersTab: View {
     private var allWorkersSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("All Assigned Workers")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             if allWorkers.isEmpty {
                 Text("No workers assigned")
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     .padding()
                     .francoGlassBackground()
             } else {
@@ -457,13 +457,13 @@ struct FullScheduleTab: View {
     private var todaysScheduleSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Today's Schedule")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             if todaysSchedule.isEmpty {
                 Text("No scheduled activities today")
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     .padding()
                     .francoGlassBackground()
             } else {
@@ -481,13 +481,13 @@ struct FullScheduleTab: View {
     private var weeklyRoutinesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Weekly Routines")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             if weeklySchedule.isEmpty {
                 Text("No weekly routines configured")
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     .padding()
                     .francoGlassBackground()
             } else {
@@ -525,13 +525,13 @@ struct BuildingHistoryTab: View {
     private var recentHistorySection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Recent Activity")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             if history.isEmpty {
                 Text("No recent activity")
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     .padding()
                     .francoGlassBackground()
             } else {
@@ -549,13 +549,13 @@ struct BuildingHistoryTab: View {
     private var patternsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Patterns & Insights")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             if patterns.isEmpty {
                 Text("No patterns detected")
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     .padding()
                     .francoGlassBackground()
             } else {
@@ -599,13 +599,13 @@ struct EmergencyInfoTab: View {
     private var emergencyContactsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Emergency Contacts")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             if contacts.isEmpty {
                 Text("No emergency contacts configured")
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     .padding()
                     .francoGlassBackground()
             } else {
@@ -623,13 +623,13 @@ struct EmergencyInfoTab: View {
     private var emergencyProceduresSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Emergency Procedures")
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             if procedures.isEmpty {
                 Text("No emergency procedures configured")
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                     .padding()
                     .francoGlassBackground()
             } else {
@@ -661,37 +661,37 @@ struct WorkerRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Circle()
-                .fill(FrancoSphereDesign.DashboardColors.info.opacity(0.3))
+                .fill(CyntientOpsDesign.DashboardColors.info.opacity(0.3))
                 .frame(width: 40, height: 40)
                 .overlay(
                     Text(String(worker.name.prefix(1)))
-                        .francoTypography(FrancoSphereDesign.Typography.headline)
+                        .francoTypography(CyntientOpsDesign.Typography.headline)
                         .fontWeight(.bold)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.info)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.info)
                 )
             
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
                     Text(worker.name)
-                        .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                        .francoTypography(CyntientOpsDesign.Typography.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                     
                     if showPrimaryBadge {
                         Text("PRIMARY")
-                            .francoTypography(FrancoSphereDesign.Typography.caption2)
+                            .francoTypography(CyntientOpsDesign.Typography.caption2)
                             .fontWeight(.bold)
-                            .foregroundColor(FrancoSphereDesign.DashboardColors.info)
+                            .foregroundColor(CyntientOpsDesign.DashboardColors.info)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(FrancoSphereDesign.DashboardColors.info.opacity(0.2))
+                            .background(CyntientOpsDesign.DashboardColors.info.opacity(0.2))
                             .clipShape(Capsule())
                     }
                 }
                 
                 Text(worker.role.rawValue.capitalized)
-                    .francoTypography(FrancoSphereDesign.Typography.caption)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.caption)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             }
             
             Spacer()
@@ -700,18 +700,18 @@ struct WorkerRow: View {
                 if showOnSiteStatus {
                     HStack(spacing: 4) {
                         Circle()
-                            .fill(worker.isActive ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.inactive)
+                            .fill(worker.isActive ? CyntientOpsDesign.DashboardColors.success : CyntientOpsDesign.DashboardColors.inactive)
                             .frame(width: 8, height: 8)
                         
                         Text(worker.isActive ? "Active" : "Inactive")
-                            .francoTypography(FrancoSphereDesign.Typography.caption2)
-                            .foregroundColor(worker.isActive ? FrancoSphereDesign.DashboardColors.success : FrancoSphereDesign.DashboardColors.inactive)
+                            .francoTypography(CyntientOpsDesign.Typography.caption2)
+                            .foregroundColor(worker.isActive ? CyntientOpsDesign.DashboardColors.success : CyntientOpsDesign.DashboardColors.inactive)
                     }
                 }
                 
                 Text("Standard")
-                    .francoTypography(FrancoSphereDesign.Typography.caption2)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                    .francoTypography(CyntientOpsDesign.Typography.caption2)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
             }
         }
         .padding(.vertical, 4)
@@ -725,14 +725,14 @@ struct TaskScheduleRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(task.title)
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 if let description = task.description {
                     Text(description)
-                        .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.secondaryText)
+                        .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                         .lineLimit(2)
                 }
             }
@@ -742,16 +742,16 @@ struct TaskScheduleRow: View {
             VStack(alignment: .trailing, spacing: 2) {
                 if task.isCompleted {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.success)
                 } else {
                     Image(systemName: "clock")
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
                 }
                 
                 if let urgency = task.urgency {
                     Text(urgency.rawValue)
-                        .francoTypography(FrancoSphereDesign.Typography.caption2)
-                        .foregroundColor(FrancoSphereDesign.EnumColors.taskUrgency(urgency))
+                        .francoTypography(CyntientOpsDesign.Typography.caption2)
+                        .foregroundColor(CyntientOpsDesign.EnumColors.taskUrgency(urgency))
                 }
             }
         }
@@ -766,21 +766,21 @@ struct TaskHistoryRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(task.title)
-                    .francoTypography(FrancoSphereDesign.Typography.subheadline)
+                    .francoTypography(CyntientOpsDesign.Typography.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
                 
                 if let completedAt = task.completedAt {
                     Text("Completed: \(completedAt.formatted(.dateTime.month().day().hour().minute()))")
-   .francoTypography(FrancoSphereDesign.Typography.caption)
-                        .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+   .francoTypography(CyntientOpsDesign.Typography.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.success)
                 }
             }
             
             Spacer()
             
             Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(FrancoSphereDesign.DashboardColors.success)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.success)
         }
         .padding(.vertical, 4)
     }
@@ -792,11 +792,11 @@ struct PatternRow: View {
     var body: some View {
         HStack {
             Image(systemName: "chart.line.uptrend.xyaxis")
-                .foregroundColor(FrancoSphereDesign.DashboardColors.info)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.info)
             
             Text(pattern)
-                .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             Spacer()
         }
@@ -810,11 +810,11 @@ struct ContactRow: View {
     var body: some View {
         HStack {
             Image(systemName: "phone.fill")
-                .foregroundColor(FrancoSphereDesign.DashboardColors.critical)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.critical)
             
             Text(contact)
-                .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             Spacer()
         }
@@ -828,11 +828,11 @@ struct ProcedureRow: View {
     var body: some View {
         HStack(alignment: .top) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundColor(FrancoSphereDesign.DashboardColors.warning)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.warning)
             
             Text(procedure)
-                .francoTypography(FrancoSphereDesign.Typography.subheadline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.subheadline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
             
             Spacer()
         }
@@ -847,11 +847,11 @@ struct IntelligenceLoadingView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.2)
-                .progressViewStyle(CircularProgressViewStyle(tint: FrancoSphereDesign.DashboardColors.info))
+                .progressViewStyle(CircularProgressViewStyle(tint: CyntientOpsDesign.DashboardColors.info))
             
             Text(message)
-                .francoTypography(FrancoSphereDesign.Typography.headline)
-                .foregroundColor(FrancoSphereDesign.DashboardColors.primaryText)
+                .francoTypography(CyntientOpsDesign.Typography.headline)
+                .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
         }
         .frame(maxWidth: .infinity, minHeight: 100)
         .francoGlassBackground()
