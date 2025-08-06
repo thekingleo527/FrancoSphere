@@ -63,7 +63,7 @@ struct WeatherViewModifier: ViewModifier {
             return "sun.max.fill"
         case .cloudy:
             return "cloud.fill"
-        case .rainy:
+        case .rain:
             return "cloud.rain.fill"
         case .snowy:
             return "cloud.snow.fill"
@@ -92,7 +92,7 @@ struct WeatherViewModifier: ViewModifier {
             return .orange
         case .cloudy:
             return .gray
-        case .rainy:
+        case .rain:
             return .blue
         case .snowy:
             return .cyan
@@ -124,7 +124,7 @@ struct WeatherViewModifier: ViewModifier {
         switch conditionEnum {
         case .storm:
             return "Severe weather alert: Storm conditions detected"
-        case .rainy:
+        case .rain:
             // FIX: Use windSpeed as proxy for rain intensity since no precipitation property
             if weather.windSpeed > 15 {
                 return "Heavy rain alert: Consider indoor tasks"
@@ -166,7 +166,7 @@ struct WeatherViewModifier: ViewModifier {
         let conditionEnum = weather.condition
         
         // FIX: Use outdoor work risk and wind speed instead of precipitation
-        if conditionEnum == .stormy ||
+        if conditionEnum == .storm ||
            weather.outdoorWorkRisk == .extreme ||
            weather.outdoorWorkRisk == .high ||
            weather.windSpeed > 20 {
