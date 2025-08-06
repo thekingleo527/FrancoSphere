@@ -197,12 +197,12 @@ struct AssignedBuildingCard: View {
     
     var body: some View {
         HStack(spacing: CyntientOpsDesign.Spacing.md) {
-            // Building image using MySitesCard
-            MySitesCard(
+            // Building image using PropertyCard
+            PropertyCard(
                 building: building,
                 metrics: metrics,
-                showMetrics: false,
-                style: .compact
+                mode: .worker,
+                onTap: { }
             )
             .frame(width: 60, height: 60)
             
