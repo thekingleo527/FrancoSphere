@@ -84,7 +84,7 @@ struct AdminBuildingPerformanceCard: View {
                             .foregroundColor(.white)
                             .lineLimit(1)
                         
-                        Text(building.type.rawValue.capitalized)
+                        Text(building.type?.rawValue.capitalized ?? "Unknown")
                             .font(.caption2)
                             .foregroundColor(.gray)
                     }

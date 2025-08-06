@@ -32,8 +32,8 @@ struct WeatherViewModifier: ViewModifier {
     @ViewBuilder
     private var weatherOverlay: some View {
         if let weather = weatherAdapter.currentWeather {
-            // FIX: Convert String condition to enum
-            let conditionEnum = CoreTypes.WeatherCondition(rawValue: weather.condition) ?? .clear
+            // weather.condition is already a WeatherCondition enum
+            let conditionEnum = weather.condition
             
             HStack(spacing: 8) {
                 Image(systemName: getWeatherIcon(for: conditionEnum))
@@ -67,13 +67,13 @@ struct WeatherViewModifier: ViewModifier {
             return "cloud.rain.fill"
         case .snowy:
             return "cloud.snow.fill"
-        case .stormy:
+        case .storm:
             return "cloud.bolt.fill"
         case .foggy:
             return "cloud.fog.fill"
         case .windy:
             return "wind"
-        case .partlyCloudy:
+        case .cloudy:
             return "cloud.sun.fill"
         case .overcast:
             return "cloud.fill"
@@ -96,13 +96,13 @@ struct WeatherViewModifier: ViewModifier {
             return .blue
         case .snowy:
             return .cyan
-        case .stormy:
+        case .storm:
             return .purple
         case .foggy:
             return .gray.opacity(0.7)
         case .windy:
             return .mint
-        case .partlyCloudy:
+        case .cloudy:
             return .yellow.opacity(0.8)
         case .overcast:
             return .gray.opacity(0.9)
@@ -118,11 +118,11 @@ struct WeatherViewModifier: ViewModifier {
             return "No weather data available"
         }
         
-        // FIX: Convert String condition to enum
-        let conditionEnum = CoreTypes.WeatherCondition(rawValue: weather.condition) ?? .clear
+        // weather.condition is already a WeatherCondition enum
+        let conditionEnum = weather.condition
         
         switch conditionEnum {
-        case .stormy:
+        case .storm:
             return "Severe weather alert: Storm conditions detected"
         case .rainy:
             // FIX: Use windSpeed as proxy for rain intensity since no precipitation property
@@ -162,8 +162,8 @@ struct WeatherViewModifier: ViewModifier {
     private func checkWeatherAlerts() {
         guard let weather = weatherAdapter.currentWeather else { return }
         
-        // FIX: Convert String condition to enum
-        let conditionEnum = CoreTypes.WeatherCondition(rawValue: weather.condition) ?? .clear
+        // weather.condition is already a WeatherCondition enum
+        let conditionEnum = weather.condition
         
         // FIX: Use outdoor work risk and wind speed instead of precipitation
         if conditionEnum == .stormy ||
