@@ -83,7 +83,11 @@ struct BuildingMapDetailView: View {
                 TaskScheduleView(buildingID: building.id)
             }
             .navigationDestination(isPresented: $showDetails) {
-                BuildingDetailView(building: building)
+                BuildingDetailView(
+                    buildingId: building.id,
+                    buildingName: building.name,
+                    buildingAddress: building.address
+                )
             }
         }
         .onAppear {

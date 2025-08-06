@@ -174,11 +174,11 @@ public actor ComplianceService {
         
         return CoreTypes.ComplianceOverview(
             overallScore: score,
-            totalIssues: totalIssues,
-            openIssues: openIssues,
             criticalViolations: criticalViolations,
-            lastAudit: lastAudit,
-            nextAudit: nextAudit
+            pendingInspections: openIssues,
+            lastUpdated: lastAudit ?? Date(),
+            buildingCompliance: [:],
+            upcomingDeadlines: []
         )
     }
     
@@ -280,9 +280,9 @@ public actor ComplianceService {
             description: "Compliance \(action): \(issue.title)"
         )
         
-        // Access DashboardSyncService through MainActor
+        // Access DashboardSyncService through MainActor - use appropriate broadcast method
         await MainActor.run {
-            DashboardSyncService.shared.broadcastUpdate(update)
+            DashboardSyncService.shared.broadcastAdminUpdate(update)
         }
         
         // Post notification

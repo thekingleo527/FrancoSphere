@@ -1387,6 +1387,8 @@ struct NovaInsightsView: View {
         case .operations: return .gray
         case .maintenance: return .yellow
         case .routing: return .mint
+        case .weather: return .cyan
+        case .performance: return .indigo
         }
     }
 }

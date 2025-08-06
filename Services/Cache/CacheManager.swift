@@ -30,7 +30,9 @@ public final class CacheManager: ObservableObject {
     }
     
     public init() {
-        startPeriodicCleanup()
+        Task {
+            await startPeriodicCleanup()
+        }
     }
     
     // MARK: - Public Methods

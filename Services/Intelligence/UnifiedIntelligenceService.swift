@@ -486,18 +486,16 @@ public final class UnifiedIntelligenceService: ObservableObject {
             
             // Generate insights about task completion
             if let buildingId = task.buildingId {
-                let building = try await buildings.getBuilding(buildingId)
+                let building = try await buildings.getBuilding(buildingId: buildingId)
                 
                 let insight = CoreTypes.IntelligenceInsight(
                     id: UUID().uuidString,
-                    type: .operational,
-                    priority: .medium,
                     title: "Task Completed",
-                    message: "\(worker.firstName) completed \(task.title) at \(building.name)",
-                    timestamp: Date(),
-                    relatedItems: [taskId, workerId, buildingId],
-                    actionable: false,
-                    source: "TaskCompletion"
+                    description: "\(worker.name) completed \(task.title) at \(building.name)",
+                    type: .operations,
+                    priority: .medium,
+                    actionRequired: false,
+                    generatedAt: Date()
                 )
                 
                 insights.append(insight)
@@ -512,14 +510,12 @@ public final class UnifiedIntelligenceService: ObservableObject {
     public func startViolationMonitoring(_ violationId: String) async {
         let insight = CoreTypes.IntelligenceInsight(
             id: UUID().uuidString,
+            title: "Violation Monitoring Started",
+            description: "Now monitoring resolution progress for violation \(violationId)",
             type: .compliance,
             priority: .medium,
-            title: "Violation Monitoring Started",
-            message: "Now monitoring resolution progress for violation \(violationId)",
-            timestamp: Date(),
-            relatedItems: [violationId],
-            actionable: false,
-            source: "ComplianceMonitoring"
+            actionRequired: false,
+            generatedAt: Date()
         )
         
         insights.append(insight)

@@ -432,7 +432,7 @@ public class AutomatedWorkflows: ObservableObject {
         
         // Generate compliance certification document
         let certificationId = UUID().uuidString
-        let certificationData = [
+        let certificationData: [String: Any] = [
             "certificationId": certificationId,
             "taskId": taskId,
             "workflowId": workflow.id,
@@ -547,7 +547,7 @@ public class AutomatedWorkflows: ObservableObject {
     }
     
     private func calculateAverageCompletionTime() -> TimeInterval {
-        let completedWithTimes = completedWorkflows.compactMap { workflow in
+        let completedWithTimes = completedWorkflows.compactMap { workflow -> TimeInterval? in
             guard let completedAt = workflow.completedAt else { return nil }
             return completedAt.timeIntervalSince(workflow.createdAt)
         }

@@ -176,8 +176,8 @@ public class DSNYAPIService: ObservableObject {
                     building: building,
                     buildingId: building.id,
                     assignedWorkerId: workerId,
-                    requiresPhoto: true,
-                    frequency: .weekly
+                    frequency: .weekly,
+                    requiresPhoto: true
                 )
                 
                 tasks.append(task)
@@ -200,8 +200,8 @@ public class DSNYAPIService: ObservableObject {
                     building: building,
                     buildingId: building.id,
                     assignedWorkerId: workerId,
-                    requiresPhoto: false,
-                    frequency: .weekly
+                    frequency: .weekly,
+                    requiresPhoto: false
                 )
                 
                 tasks.append(task)

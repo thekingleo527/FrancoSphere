@@ -152,21 +152,21 @@ public enum AvatarSize {
         }
     }
     
-    var typography: CyntientOpsDesign.Typography {
+    var typography: CyntientOpsDesign.Typography.FontStyle {
         switch self {
-        case .small: return .caption
-        case .medium: return .callout
-        case .large: return .title3
-        case .extraLarge: return .title2
+        case .small: return CyntientOpsDesign.Typography.caption
+        case .medium: return CyntientOpsDesign.Typography.callout
+        case .large: return CyntientOpsDesign.Typography.title3
+        case .extraLarge: return CyntientOpsDesign.Typography.title2
         }
     }
     
-    var shadow: CyntientOpsDesign.Shadow {
+    var shadow: CyntientOpsDesign.Shadow.ShadowStyle {
         switch self {
-        case .small: return .sm
-        case .medium: return .md
-        case .large: return .lg
-        case .extraLarge: return .xl
+        case .small: return CyntientOpsDesign.Shadow.sm
+        case .medium: return CyntientOpsDesign.Shadow.md
+        case .large: return CyntientOpsDesign.Shadow.lg
+        case .extraLarge: return CyntientOpsDesign.Shadow.xl
         }
     }
     
