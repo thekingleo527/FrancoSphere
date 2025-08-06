@@ -13,7 +13,10 @@ import Foundation
 import Combine
 import SwiftUI
 
-// Import context engine protocols
+// Local protocol definition to avoid build issues
+public protocol AdminContextEngineProtocol: AnyObject {
+    func setNovaManager(_ nova: NovaAIManager)
+}
 
 @MainActor
 public final class AdminContextEngine: ObservableObject, AdminContextEngineProtocol {
@@ -96,8 +99,10 @@ public final class AdminContextEngine: ObservableObject, AdminContextEngineProto
     
     // MARK: - ServiceContainer Methods
     
-    public func setNovaManager(_ nova: NovaAIManager) {
-        self.novaManager = nova
+    public nonisolated func setNovaManager(_ nova: NovaAIManager) {
+        Task { @MainActor in
+            self.novaManager = nova
+        }
     }
     
     // MARK: - Public Methods
@@ -627,25 +632,4 @@ extension WorkerService {
     }
 }
 
-extension TaskService {
-    func getAllTasks() async throws -> [CoreTypes.ContextualTask] {
-        // Get all tasks from operational data
-        let operationalData = OperationalDataManager.shared
-        return operationalData.getAllRoutineTasks()
-    }
-}
 
-extension ComplianceService {
-    func getComplianceOverview() async throws -> CoreTypes.ComplianceOverview {
-        return CoreTypes.ComplianceOverview(
-            overallScore: 0.85,
-            criticalViolations: 2,
-            pendingInspections: 1
-        )
-    }
-    
-    func getCriticalIssues() async throws -> [CoreTypes.ComplianceIssue] {
-        // Return mock critical issues
-        return []
-    }
-}
