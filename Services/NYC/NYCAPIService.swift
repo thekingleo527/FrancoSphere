@@ -23,6 +23,7 @@ public final class NYCAPIService: ObservableObject {
     // MARK: - Private Properties
     private let session: URLSession
     private let cache: CacheManager
+    private let keychainManager: KeychainManager
     private var cancellables = Set<AnyCancellable>()
     
     // API Configuration
@@ -102,6 +103,7 @@ public final class NYCAPIService: ObservableObject {
         config.timeoutIntervalForResource = 30
         self.session = URLSession(configuration: config)
         self.cache = CacheManager()
+        self.keychainManager = KeychainManager.shared
         
         setupConnectivityMonitoring()
     }

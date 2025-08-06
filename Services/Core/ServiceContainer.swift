@@ -47,12 +47,12 @@ public final class ServiceContainer: ObservableObject {
     public let compliance: ComplianceService
     public let dailyOps: DailyOpsReset
     
-    // MARK: - Layer 3: Unified Intelligence
+    // MARK: - Layer 3: Unified Intelligence  
     public let intelligence: UnifiedIntelligenceService
     
     // MARK: - Layer 4: Context Engines
     public let workerContext: WorkerContextEngine
-    public private(set) var adminContext: AdminContextEngineProtocol?
+    public let adminContext: AdminContextEngine
     public let clientContext: ClientContextEngine
     
     // MARK: - Layer 5: Command Chains
@@ -136,7 +136,7 @@ public final class ServiceContainer: ObservableObject {
         print("🎯 Layer 4: Initializing context engines...")
         
         self.workerContext = WorkerContextEngine.shared
-        // AdminContextEngine initialization deferred to initializeAdminContext()
+        self.adminContext = AdminContextEngine.shared
         
         print("✅ Layer 4: Context engines initialized")
         
