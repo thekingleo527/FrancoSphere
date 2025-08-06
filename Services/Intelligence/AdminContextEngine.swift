@@ -13,13 +13,13 @@ import Foundation
 import Combine
 import SwiftUI
 
-// Protocol for breaking circular dependency with ServiceContainer
-protocol AdminContextEngineProtocol: AnyObject {
-    func setNovaManager(_ nova: NovaAIManager)
-}
+// Import context engine protocols
 
 @MainActor
 public final class AdminContextEngine: ObservableObject, AdminContextEngineProtocol {
+    
+    // MARK: - Shared Instance
+    public static let shared = AdminContextEngine()
     
     // MARK: - ServiceContainer Integration  
     private weak var container: ServiceContainer?

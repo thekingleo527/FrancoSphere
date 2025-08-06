@@ -20,11 +20,6 @@ import Foundation
 import SwiftUI
 import Combine
 
-// Forward declaration to avoid circular dependency
-public protocol AdminContextEngineProtocol: AnyObject {
-    func setNovaManager(_ nova: NovaAIManager)
-}
-
 @MainActor
 public final class ServiceContainer: ObservableObject {
     
