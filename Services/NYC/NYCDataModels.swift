@@ -349,7 +349,8 @@ public struct NYCBuildingCompliance: Codable {
                 description: violation.novDescription,
                 source: "HPD",
                 date: violation.inspectionDate,
-                deadline: violation.newCorrectByDate
+                deadline: violation.newCorrectByDate,
+                fine: nil // HPD violations may not always have fines
             ))
         }
         
@@ -374,7 +375,8 @@ public struct NYCBuildingCompliance: Codable {
                 description: "Expired \(permit.workType) permit",
                 source: "DOB",
                 date: permit.expirationDate ?? "",
-                deadline: nil
+                deadline: nil,
+                fine: nil // Permits don't typically have fines until violations occur
             ))
         }
         

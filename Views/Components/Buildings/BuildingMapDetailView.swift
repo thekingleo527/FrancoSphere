@@ -106,7 +106,7 @@ struct BuildingMapDetailView: View {
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .frame(height: 180)
-                        .clipShape(RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.large))
+                        .clipShape(RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.lg))
                         .overlay(
                             LinearGradient(
                                 colors: [
@@ -116,10 +116,10 @@ struct BuildingMapDetailView: View {
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
-                            .clipShape(RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.large))
+                            .clipShape(RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.lg))
                         )
                 } else {
-                    RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.large)
+                    RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.lg)
                         .fill(.ultraThinMaterial)
                         .frame(height: 180)
                         .overlay(
@@ -129,7 +129,7 @@ struct BuildingMapDetailView: View {
                         )
                 }
             }
-            .francoGlassCard(intensity: .ultraThin)
+            .francoGlassCard()
             
             // Building info with glass text
             VStack(spacing: 8) {
@@ -151,21 +151,21 @@ struct BuildingMapDetailView: View {
             BuildingQuickStatCard(
                 title: "Open Tasks",
                 value: "\(tasks.filter { !$0.isCompleted }.count)",
-                icon: "list.bullet",
+                trend: CoreTypes.TrendDirection.stable,
                 color: CyntientOpsDesign.DashboardColors.info
             )
             
             BuildingQuickStatCard(
                 title: "Urgent",
                 value: "\(getUrgentTaskCount())",
-                icon: "exclamationmark.triangle",
+                trend: CoreTypes.TrendDirection.up,
                 color: CyntientOpsDesign.DashboardColors.warning
             )
             
             BuildingQuickStatCard(
                 title: "Completed",
                 value: "\(tasks.filter { $0.isCompleted }.count)",
-                icon: "checkmark.circle",
+                trend: CoreTypes.TrendDirection.improving,
                 color: CyntientOpsDesign.DashboardColors.success
             )
         }
@@ -182,7 +182,7 @@ struct BuildingMapDetailView: View {
             VStack(spacing: 12) {
                 ForEach(tasks.prefix(5), id: \.id) { task in
                     BuildingTaskRow(task: task)
-                        .transition(.glassSlideUp)
+                        .transition(.opacity.combined(with: .slide))
                 }
             }
             
@@ -297,9 +297,9 @@ struct BuildingMapDetailView: View {
         return tasks.filter { task in
             guard let urgency = task.urgency else { return false }
             switch urgency {
-            case .high, .critical, .urgent, .emergency:
+            case .high, .critical:
                 return true
-            case .medium, .low:
+            case .medium, .low, .normal:
                 return false
             }
         }.count
@@ -327,7 +327,8 @@ struct BuildingTaskRow: View {
                 
                 HStack(spacing: 8) {
                     Label(getCategoryString(task.category), systemImage: getCategoryIcon(task.category))
-                        .glassCaption()
+                        .font(.caption)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 }
             }
             
@@ -345,10 +346,10 @@ struct BuildingTaskRow: View {
         }
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.small)
+            RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.sm)
                 .fill(.ultraThinMaterial)
                 .overlay(
-                    RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.small)
+                    RoundedRectangle(cornerRadius: CyntientOpsDesign.CornerRadius.sm)
                         .stroke(Color.white.opacity(0.1), lineWidth: 1)
                 )
         )
@@ -387,14 +388,12 @@ struct BuildingTaskRow: View {
             return "Low"
         case .medium:
             return "Medium"
+        case .normal:
+            return "Normal"
         case .high:
             return "High"
-        case .urgent:
-            return "Urgent"
         case .critical:
             return "Critical"
-        case .emergency:
-            return "Emergency"
         }
     }
     
@@ -406,14 +405,12 @@ struct BuildingTaskRow: View {
             return CyntientOpsDesign.DashboardColors.success
         case .medium:
             return CyntientOpsDesign.DashboardColors.info
+        case .normal:
+            return CyntientOpsDesign.DashboardColors.secondaryText
         case .high:
             return CyntientOpsDesign.DashboardColors.warning
-        case .urgent:
-            return CyntientOpsDesign.DashboardColors.warning
         case .critical:
-            return CyntientOpsDesign.DashboardColors.critical
-        case .emergency:
-            return CyntientOpsDesign.DashboardColors.critical
+            return CyntientOpsDesign.DashboardColors.error
         }
     }
 }

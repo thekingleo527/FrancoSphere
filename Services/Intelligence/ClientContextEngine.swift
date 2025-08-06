@@ -140,7 +140,6 @@ public final class ClientContextEngine: ObservableObject {
                     buildingId: building.id,
                     buildingName: building.name,
                     completionRate: metrics.completionRate,
-                    timeBlock: .current,
                     activeWorkerCount: metrics.activeWorkers,
                     isOnSchedule: metrics.completionRate >= expectedCompletionForCurrentTime(),
                     estimatedCompletion: estimateCompletionTime(metrics),

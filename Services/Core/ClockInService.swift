@@ -93,7 +93,7 @@ public final class ClockInService: ObservableObject {
             let building = try await buildingService.getBuilding(buildingId: buildingId)
             
             // Get current location if available
-            let location = locationManager.currentLocation
+            let location = locationManager.location
             
             // Clock in through the actor
             try await clockInManager.clockIn(
@@ -106,7 +106,8 @@ public final class ClockInService: ObservableObject {
             await refreshClockInStatus()
             
             // Get worker name for status
-            let workerName = try await workerService.getWorkerName(workerId)
+            let workerProfile = try await workerService.getWorkerProfile(for: workerId)
+            let workerName = workerProfile.name
             
             // Update current worker session if it's the current user
             if let currentUser = NewAuthManager.shared.currentUser,
@@ -143,7 +144,7 @@ public final class ClockInService: ObservableObject {
         do {
             // Get current session before clocking out
             let status = await clockInManager.getClockInStatus(for: workerId)
-            guard status.isClockedIn, let session = status.session else {
+            guard status.isClockedIn else {
                 throw ClockInError.notClockedIn
             }
             
@@ -174,12 +175,14 @@ public final class ClockInService: ObservableObject {
     
     /// Get available buildings for clock in
     public func getAvailableBuildings(for workerId: String) async throws -> [NamedCoordinate] {
-        return try await clockInManager.getAvailableBuildings(for: workerId)
+        // Use building service to get all available buildings for this worker
+        return try await buildingService.getAssignedBuildings(workerId: workerId)
     }
     
     /// Get assigned buildings (for UI display)
     public func getAssignedBuildings(for workerId: String) async throws -> [NamedCoordinate] {
-        return try await clockInManager.getAssignedBuildings(for: workerId)
+        // Same as available buildings - workers can only clock into assigned buildings
+        return try await buildingService.getAssignedBuildings(workerId: workerId)
     }
     
     /// Check if worker is clocked in
@@ -203,11 +206,12 @@ public final class ClockInService: ObservableObject {
             
             for session in sessions {
                 // Get worker name
-                let workerName = try? await workerService.getWorkerName(session.workerId) ?? "Unknown"
+                let workerProfile = try? await workerService.getWorkerProfile(for: session.workerId)
+                let workerName = workerProfile?.name ?? "Unknown"
                 
                 let status = ClockInStatus(
                     workerId: session.workerId,
-                    workerName: workerName ?? "Unknown",
+                    workerName: workerName,
                     buildingId: session.buildingId,
                     buildingName: session.buildingName,
                     clockInTime: session.startTime,
