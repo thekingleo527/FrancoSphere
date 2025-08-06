@@ -1198,7 +1198,7 @@
 /* Begin PBXNativeTarget section */
 		232736E22E2B8564004A52C6 /* FrancoSphere */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 232737042E2B8565004A52C6 /* Build configuration list for PBXNativeTarget "FrancoSphere" */;
+			buildConfigurationList = 232737042E2B8565004A52C6 /* Build configuration list for PBXNativeTarget "CyntientOps" */;
 			buildPhases = (
 				232736DF2E2B8564004A52C6 /* Sources */,
 				232736E02E2B8564004A52C6 /* Frameworks */,
@@ -1217,13 +1217,13 @@
 				233DBF212E4232CD00102457 /* Offline */,
 				233DBF242E4232EA00102457 /* Cache */,
 			);
-			name = FrancoSphere;
+			name = CyntientOps;
 			packageProductDependencies = (
 				239AD0972E2B955A0055CDF8 /* GRDB */,
 				2326C25B2E3BFF9B0080F005 /* Sentry */,
 				2326C25D2E3BFF9B0080F005 /* SentrySwiftUI */,
 			);
-			productName = FrancoSphere;
+			productName = CyntientOps;
 			productReference = 23273AEC2E2B86AC004A52C6 /* FrancoSphere.app */;
 			productType = "com.apple.product-type.application";
 		};
@@ -1291,7 +1291,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 232736DE2E2B8564004A52C6 /* Build configuration list for PBXProject "FrancoSphere" */;
+			buildConfigurationList = 232736DE2E2B8564004A52C6 /* Build configuration list for PBXProject "CyntientOps" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -1747,7 +1747,7 @@
 				DEVELOPMENT_TEAM = X82DB5QT3S;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "FrancoSphere-Info.plist";
+				INFOPLIST_FILE = "CyntientOps-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "";
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -1778,7 +1778,7 @@
 				DEVELOPMENT_TEAM = X82DB5QT3S;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "FrancoSphere-Info.plist";
+				INFOPLIST_FILE = "CyntientOps-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "";
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -1817,7 +1817,7 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FrancoSphere.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FrancoSphere";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CyntientOps.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CyntientOps";
 			};
 			name = Debug;
 		};
@@ -1838,7 +1838,7 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "CyntientOpsTests-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FrancoSphere.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FrancoSphere";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CyntientOps.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CyntientOps";
 			};
 			name = Release;
 		};
@@ -1855,7 +1855,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = FrancoSphere;
+				TEST_TARGET_NAME = CyntientOps;
 			};
 			name = Debug;
 		};
@@ -1872,14 +1872,14 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = FrancoSphere;
+				TEST_TARGET_NAME = CyntientOps;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		232736DE2E2B8564004A52C6 /* Build configuration list for PBXProject "FrancoSphere" */ = {
+		232736DE2E2B8564004A52C6 /* Build configuration list for PBXProject "CyntientOps" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				232737022E2B8565004A52C6 /* Debug */,
@@ -1888,7 +1888,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		232737042E2B8565004A52C6 /* Build configuration list for PBXNativeTarget "FrancoSphere" */ = {
+		232737042E2B8565004A52C6 /* Build configuration list for PBXNativeTarget "CyntientOps" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				232737052E2B8565004A52C6 /* Debug */,
