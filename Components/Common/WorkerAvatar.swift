@@ -314,9 +314,9 @@ struct WorkerAvatar_Previews: PreviewProvider {
             // With status indicators
             HStack(spacing: CyntientOpsDesign.Spacing.md) {
                 WorkerAvatar(workerName: "Edwin Lema", showStatus: true, status: .available)
-                WorkerAvatar(workerName: "Mercedes Inamagua", showStatus: true, status: .busy)
-                WorkerAvatar(workerName: "Luis Lopez", showStatus: true, status: .clockedOut)
-                WorkerAvatar(workerName: "Angel Guiracocha", showStatus: true, status: .emergency)
+                WorkerAvatar(workerName: "Mercedes Inamagua", showStatus: true, status: .clockedIn)
+                WorkerAvatar(workerName: "Luis Lopez", showStatus: true, status: .offline)
+                WorkerAvatar(workerName: "Angel Guiracocha", showStatus: true, status: .onBreak)
             }
             
             // Worker avatar group

@@ -148,6 +148,10 @@ public final class ClockInService: ObservableObject {
                 throw ClockInError.notClockedIn
             }
             
+            // Get session info before clocking out
+            let sessionBuildingId = status.building?.id ?? "unknown"
+            let sessionBuildingName = status.building?.name ?? "Unknown Building"
+            
             // Clock out through the actor
             try await clockInManager.clockOut(workerId: workerId)
             
@@ -162,10 +166,10 @@ public final class ClockInService: ObservableObject {
             // Broadcast update
             dashboardSync.onWorkerClockedOut(
                 workerId: workerId,
-                buildingId: session.buildingId
+                buildingId: sessionBuildingId
             )
             
-            print("✅ Worker clocked out from \(session.buildingName)")
+            print("✅ Worker clocked out from \(sessionBuildingName)")
             
         } catch {
             lastError = error
@@ -176,13 +180,13 @@ public final class ClockInService: ObservableObject {
     /// Get available buildings for clock in
     public func getAvailableBuildings(for workerId: String) async throws -> [NamedCoordinate] {
         // Use building service to get all available buildings for this worker
-        return try await buildingService.getAssignedBuildings(workerId: workerId)
+        return try await buildingService.getBuildingsForWorker(workerId)
     }
     
     /// Get assigned buildings (for UI display)
     public func getAssignedBuildings(for workerId: String) async throws -> [NamedCoordinate] {
         // Same as available buildings - workers can only clock into assigned buildings
-        return try await buildingService.getAssignedBuildings(workerId: workerId)
+        return try await buildingService.getBuildingsForWorker(workerId)
     }
     
     /// Check if worker is clocked in

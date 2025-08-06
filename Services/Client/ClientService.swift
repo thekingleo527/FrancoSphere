@@ -184,9 +184,9 @@ public actor ClientService {
                 COUNT(CASE WHEN isCompleted = 1 THEN 1 END) as completed,
                 COUNT(CASE WHEN isCompleted = 0 THEN 1 END) as pending
             FROM routine_tasks
-            WHERE building_id IN (\(buildingIds.map { "?" }.joined(separator: ",")))
+            WHERE building_id IN (\(buildingIds.map { _ in "?" }.joined(separator: ",")))
             AND date(createdAt) = date('now')
-        """, buildingIds)
+        """, parameters: buildingIds)
         
         let completedTasks = taskResult.first?["completed"] as? Int64 ?? 0
         let pendingTasks = taskResult.first?["pending"] as? Int64 ?? 0

@@ -137,8 +137,8 @@ public enum PillStyle {
     case outlined
     case subtle
     
-    var typography: CyntientOpsDesign.Typography {
-        return .caption2
+    var typography: CyntientOpsDesign.Typography.FontStyle {
+        return CyntientOpsDesign.Typography.caption2
     }
     
     var horizontalPadding: CGFloat {
@@ -409,7 +409,7 @@ struct StatusPill_Previews: PreviewProvider {
             // Different styles
             VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.sm) {
                 Text("Different Styles")
-                    .francoTypography(.headline)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
                 
                 HStack(spacing: CyntientOpsDesign.Spacing.sm) {
                     StatusPill(text: "Available", icon: "circle.fill", color: .green, style: .filled)
@@ -421,7 +421,7 @@ struct StatusPill_Previews: PreviewProvider {
             // Predefined status types
             VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.sm) {
                 Text("Worker Statuses")
-                    .francoTypography(.headline)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
                 
                 HStack(spacing: CyntientOpsDesign.Spacing.sm) {
                     StatusPill(.available)
@@ -434,7 +434,7 @@ struct StatusPill_Previews: PreviewProvider {
             // Task statuses
             VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.sm) {
                 Text("Task Statuses")
-                    .francoTypography(.headline)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
                 
                 HStack(spacing: CyntientOpsDesign.Spacing.sm) {
                     StatusPill(.pending)
@@ -447,7 +447,7 @@ struct StatusPill_Previews: PreviewProvider {
             // Status pill group
             VStack(alignment: .leading, spacing: CyntientOpsDesign.Spacing.sm) {
                 Text("Status Group")
-                    .francoTypography(.headline)
+                    .francoTypography(CyntientOpsDesign.Typography.headline)
                 
                 StatusPillGroup([.operational, .compliant, .online, .syncing])
             }
