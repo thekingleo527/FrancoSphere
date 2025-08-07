@@ -258,9 +258,8 @@ struct ContentView_Previews: PreviewProvider {
                     // Simulate worker login for preview
                     Task {
                         try? await workerAuth.authenticate(
-                            username: "worker@example.com",
-                            password: "preview",
-                            role: .worker
+                            email: "worker@example.com",
+                            password: "preview"
                         )
                     }
                 }
@@ -273,9 +272,8 @@ struct ContentView_Previews: PreviewProvider {
                     // Simulate admin login for preview
                     Task {
                         try? await adminAuth.authenticate(
-                            username: "admin@example.com",
-                            password: "preview",
-                            role: .admin
+                            email: "admin@example.com",
+                            password: "preview"
                         )
                     }
                 }
@@ -288,9 +286,8 @@ struct ContentView_Previews: PreviewProvider {
                     // Simulate client login for preview
                     Task {
                         try? await clientAuth.authenticate(
-                            username: "client@example.com",
-                            password: "preview",
-                            role: .client
+                            email: "client@example.com",
+                            password: "preview"
                         )
                     }
                 }

@@ -203,7 +203,7 @@ public class WorkerDashboardViewModel: ObservableObject {
             self.updateClockInState(
                 building: building,
                 time: Date(),
-                location: self.locationManager.currentLocation
+                location: self.locationManager.location
             )
             
             // Load weather and tasks
@@ -211,7 +211,7 @@ public class WorkerDashboardViewModel: ObservableObject {
             await self.loadBuildingTasks(workerId: workerId, buildingId: building.id)
             
             // Broadcast update
-            self.broadcastClockIn(workerId: workerId, building: building, hasLocation: self.locationManager.currentLocation != nil)
+            self.broadcastClockIn(workerId: workerId, building: building, hasLocation: self.locationManager.location != nil)
             
             print("✅ Clocked in at \(building.name)")
         }
@@ -287,7 +287,7 @@ public class WorkerDashboardViewModel: ObservableObject {
     public func startTask(_ task: CoreTypes.ContextualTask) async {
         guard let workerId = currentWorkerId else { return }
         
-        broadcastTaskStart(task: task, workerId: workerId, location: locationManager.currentLocation)
+        broadcastTaskStart(task: task, workerId: workerId, location: locationManager.location)
         print("✅ Task started: \(task.title)")
     }
     
@@ -359,7 +359,7 @@ public class WorkerDashboardViewModel: ObservableObject {
     
     private func loadWorkerProfile(workerId: String) async {
         do {
-            workerProfile = try await container.workers.getWorkerProfile(id: workerId)
+            workerProfile = try await container.workers.getWorkerProfile(for: workerId)
         } catch {
             print("⚠️ Failed to load worker profile: \(error)")
         }
@@ -417,7 +417,7 @@ public class WorkerDashboardViewModel: ObservableObject {
         // TODO: Replace with actual weather service when available
         weatherData = CoreTypes.WeatherData(
             temperature: 72,
-            condition: .partlyCloudy,  // Changed from "Partly Cloudy" string
+            condition: .cloudy,  // Changed from "Partly Cloudy" string
             humidity: 0.65,
             windSpeed: 10,
             outdoorWorkRisk: .low,
@@ -589,8 +589,8 @@ public class WorkerDashboardViewModel: ObservableObject {
             data: [
                 "taskId": task.id,
                 "completionTime": ISO8601DateFormatter().string(from: Date()),
-                "evidence": evidence.description,
-                "photoCount": String(evidence.photoURLs.count),
+                "evidence": evidence.description ?? "",
+                "photoCount": String(evidence.photoURLs?.count ?? 0),
                 "requiresPhoto": String(workerCapabilities?.requiresPhotoForSanitation ?? false)
             ]
         )
@@ -662,7 +662,7 @@ public class WorkerDashboardViewModel: ObservableObject {
     }
     
     private func setupLocationTracking() {
-        locationManager.requestLocation()
+        // locationManager.requestLocation() // Method not available
         
         locationManager.$location
             .receive(on: DispatchQueue.main)
@@ -767,8 +767,11 @@ public class WorkerDashboardViewModel: ObservableObject {
 #if DEBUG
 extension WorkerDashboardViewModel {
     static func preview(container: ServiceContainer? = nil) -> WorkerDashboardViewModel {
-        // Use provided container or create a mock one
-        let viewModel = WorkerDashboardViewModel(container: container ?? ServiceContainer.preview())
+        // Use provided container (for previews, assume one exists)
+        guard let container = container else {
+            fatalError("ServiceContainer required for preview")
+        }
+        let viewModel = WorkerDashboardViewModel(container: container)
         
         // Configure with sample data
         viewModel.assignedBuildings = [
@@ -785,7 +788,7 @@ extension WorkerDashboardViewModel {
             CoreTypes.ContextualTask(
                 title: "HVAC Inspection",
                 description: "Check HVAC system in main gallery",
-                isCompleted: false,
+                status: .pending,
                 scheduledDate: nil,
                 dueDate: Date().addingTimeInterval(3600),
                 category: .maintenance,
@@ -802,7 +805,7 @@ extension WorkerDashboardViewModel {
         
         viewModel.weatherData = CoreTypes.WeatherData(
             temperature: 32,
-            condition: "Snowy",
+            condition: .snowy,
             humidity: 0.85,
             windSpeed: 15,
             outdoorWorkRisk: .high,
