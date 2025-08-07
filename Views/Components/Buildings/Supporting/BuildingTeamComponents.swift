@@ -1154,36 +1154,7 @@ struct TeamMetricCard: View {
 
 // MARK: - Data Models
 
-struct WorkerScheduleAssignment: Identifiable {
-    let id: String
-    let date: Date
-    let timeSlot: String
-    let worker: WorkerProfile?
-    let durationHours: Int
-    
-    init(from row: [String: Any]) {
-        self.id = row["id"] as? String ?? UUID().uuidString
-        // Use start_date from worker_building_assignments table
-        self.date = ISO8601DateFormatter().date(from: row["start_date"] as? String ?? "") ?? Date()
-        self.timeSlot = "9-12" // Default time slot, adjust based on your business logic
-        self.durationHours = 3 // Default duration
-        
-        // Create worker profile if data exists
-        if let workerId = row["worker_id"] as? String,
-           let workerName = row["worker_name"] as? String {
-            self.worker = WorkerProfile(
-                id: workerId,
-                name: workerName,
-                email: row["worker_email"] as? String,
-                phone: row["worker_phone"] as? String,
-                role: .worker,
-                isActive: true
-            )
-        } else {
-            self.worker = nil
-        }
-    }
-}
+// Duplicate WorkerScheduleAssignment definition removed - using the one at top of file
 
 struct CoverageGap: Identifiable {
     let id = UUID()

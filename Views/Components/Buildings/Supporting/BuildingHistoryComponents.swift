@@ -10,19 +10,11 @@
 import SwiftUI
 import Combine
 
-// MARK: - Supporting Types
-struct MaintenanceRecord: Identifiable {
-    let id: String
-    let title: String
-    let description: String
-    let date: Date
-    let type: String
-    let cost: Double?
-    let vendor: String?
-}
+// MARK: - Supporting Types (using BuildingDetailViewModel types)
+// MaintenanceRecord types are defined in BuildingDetailViewModel as BDMaintenanceRecord
 
 struct MaintenanceRecordRow: View {
-    let record: MaintenanceRecord
+    let record: BDMaintenanceRecord
     
     var body: some View {
         HStack {
@@ -63,7 +55,7 @@ struct MaintenanceRecordRow: View {
 // MARK: - Maintenance History Card
 
 struct MaintenanceHistoryCard: View {
-    let maintenanceRecords: [MaintenanceRecord]
+    let maintenanceRecords: [BDMaintenanceRecord]
     let buildingId: String
     
     var body: some View {

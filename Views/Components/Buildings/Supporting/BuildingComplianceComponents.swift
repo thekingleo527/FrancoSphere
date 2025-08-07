@@ -11,51 +11,17 @@
 import SwiftUI
 import Combine
 
-// MARK: - Supporting Types
+// MARK: - Supporting Types (using CoreTypes definitions)
 struct LocalBuildingComplianceData {
     let buildingId: String
-    let overallStatus: ComplianceStatus
-    let dsnyStatus: ComplianceStatus
-    let fireSafetyStatus: ComplianceStatus
-    let healthStatus: ComplianceStatus
+    let overallStatus: CoreTypes.ComplianceStatus
+    let dsnyStatus: CoreTypes.ComplianceStatus
+    let fireSafetyStatus: CoreTypes.ComplianceStatus
+    let healthStatus: CoreTypes.ComplianceStatus
     let lastInspectionDate: Date?
     let nextInspectionDue: Date?
-    let violations: [ComplianceViolation]
+    let violations: [CoreTypes.ComplianceIssue]
     let certifications: [ComplianceCertification]
-}
-
-enum ComplianceStatus: String, CaseIterable {
-    case compliant = "Compliant"
-    case warning = "Needs Attention"
-    case violation = "Non-Compliant"
-    case pending = "Pending Review"
-    
-    var color: Color {
-        switch self {
-        case .compliant: return .green
-        case .warning: return .orange
-        case .violation: return .red
-        case .pending: return .blue
-        }
-    }
-    
-    var icon: String {
-        switch self {
-        case .compliant: return "checkmark.circle.fill"
-        case .warning: return "exclamationmark.triangle.fill"
-        case .violation: return "xmark.circle.fill"
-        case .pending: return "clock.fill"
-        }
-    }
-}
-
-struct ComplianceViolation: Identifiable {
-    let id: String
-    let type: String
-    let description: String
-    let severity: String
-    let dueDate: Date
-    let status: String
 }
 
 struct ComplianceCertification: Identifiable {
@@ -64,6 +30,29 @@ struct ComplianceCertification: Identifiable {
     let issuedDate: Date
     let expiryDate: Date
     let authority: String
+}
+
+// MARK: - Extensions for UI Support
+extension CoreTypes.ComplianceStatus {
+    var color: Color {
+        switch self {
+        case .compliant: return .green
+        case .warning, .atRisk: return .orange
+        case .violation, .nonCompliant: return .red
+        case .pending: return .blue
+        default: return .gray
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .compliant, .resolved: return "checkmark.circle.fill"
+        case .warning, .atRisk, .needsReview: return "exclamationmark.triangle.fill"
+        case .violation, .nonCompliant: return "xmark.circle.fill"
+        case .pending, .inProgress: return "clock.fill"
+        default: return "questionmark.circle.fill"
+        }
+    }
 }
 
 // MARK: - Compliance Status Card
@@ -2491,16 +2480,7 @@ struct ComplianceChecklistItem: Identifiable {
     var notes: String?
 }
 
-struct ComplianceViolation: Identifiable {
-    let id: String
-    let title: String
-    let description: String
-    let severity: CoreTypes.ComplianceSeverity
-    let dateIssued: Date
-    let resolutionDueDate: Date?
-    let fineAmount: Int?
-    let status: String
-}
+// Using CoreTypes.ComplianceIssue instead of duplicate definition
 
 struct ComplianceDocument: Identifiable {
     let id: String
