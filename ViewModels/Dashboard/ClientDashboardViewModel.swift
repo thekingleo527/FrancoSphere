@@ -189,27 +189,19 @@ public final class ClientDashboardViewModel: ObservableObject {
         isRefreshing = true
         errorMessage = nil
         
-        do {
-            await loadClientData()
-            await loadPortfolioIntelligence()
-            
+        await loadClientData()
+        await loadPortfolioIntelligence()
+        
+        await MainActor.run {
+            self.successMessage = "Dashboard updated"
+            self.isRefreshing = false
+        }
+        
+        // Clear success message after delay
+        Task {
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
             await MainActor.run {
-                self.successMessage = "Dashboard updated"
-                self.isRefreshing = false
-            }
-            
-            // Clear success message after delay
-            Task {
-                try? await Task.sleep(nanoseconds: 2_000_000_000)
-                await MainActor.run {
-                    self.successMessage = nil
-                }
-            }
-            
-        } catch {
-            await MainActor.run {
-                self.errorMessage = "Failed to refresh: \(error.localizedDescription)"
-                self.isRefreshing = false
+                self.successMessage = nil
             }
         }
     }

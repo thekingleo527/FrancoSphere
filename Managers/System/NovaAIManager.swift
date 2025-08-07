@@ -567,10 +567,10 @@ public final class NovaAIManager: ObservableObject {
         guard let channelData = buffer.floatChannelData?[0] else { return }
         
         let frameLength = Int(buffer.frameLength)
-        let stride = max(1, frameLength / 20) // Sample down to 20 points
+        let sampleStride = max(1, frameLength / 20) // Sample down to 20 points
         
         var waveformSamples: [Float] = []
-        for i in stride(from: 0, to: frameLength, by: stride) {
+        for i in stride(from: 0, to: frameLength, by: sampleStride) {
             let sample = abs(channelData[i])
             waveformSamples.append(sample)
         }

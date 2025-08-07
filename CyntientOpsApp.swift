@@ -313,10 +313,10 @@ struct CyntientOpsApp: App {
             Task {
                 do {
                     let seeder = UserAccountSeeder()
-                    await seeder.seedAccounts()
+                    try await seeder.seedAccounts()
                     
                     let clientSeeder = ClientBuildingSeeder()
-                    await clientSeeder.seedClientStructure()
+                    try await clientSeeder.seedClientStructure()
                 } catch {
                     print("⚠️ Seeding error: \(error)")
                 }
