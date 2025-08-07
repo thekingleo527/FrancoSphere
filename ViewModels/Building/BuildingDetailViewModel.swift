@@ -334,6 +334,8 @@ public class BuildingDetailViewModel: ObservableObject {
     @Published var maintenanceThisWeek: Int = 0
     @Published var repairCount: Int = 0
     @Published var totalMaintenanceCost: Double = 0
+    @Published var lastMaintenanceDate: Date?
+    @Published var nextScheduledMaintenance: Date?
     
     // Inventory
     @Published var inventorySummary = BDInventorySummary()
@@ -625,7 +627,7 @@ public class BuildingDetailViewModel: ObservableObject {
     private func loadSpaceThumbnails() async {
         for (index, space) in spaces.enumerated() {
             do {
-                let photos = try await photoStorageService.loadPhotos(for: buildingId)
+                let photos = try await photoEvidenceService.loadPhotos(for: buildingId)
                 let spacePhotoIds = photos.filter { photo in
                     if space.category == .utility && photo.category == .utilities {
                         return true
@@ -704,16 +706,16 @@ public class BuildingDetailViewModel: ObservableObject {
             await MainActor.run {
                 // Create a basic compliance status based on completion rate
                 if metrics.completionRate > 0.9 {
-                    self.dsnyCompliance = "Compliant"
+                    self.dsnyCompliance = .compliant
                 } else if metrics.completionRate > 0.7 {
-                    self.dsnyCompliance = "Needs Attention"
+                    self.dsnyCompliance = .atRisk
                 } else {
-                    self.dsnyCompliance = "Non-Compliant"
+                    self.dsnyCompliance = .nonCompliant
                 }
                 
                 // Set other compliance statuses based on completion rate
-                self.fireSafetyCompliance = metrics.completionRate > 0.8 ? "Compliant" : "Needs Attention"
-                self.healthCompliance = metrics.completionRate > 0.8 ? "Compliant" : "Needs Attention"
+                self.fireSafetyCompliance = metrics.completionRate > 0.8 ? .compliant : .atRisk
+                self.healthCompliance = metrics.completionRate > 0.8 ? .compliant : .atRisk
                 
                 // Set next actions based on compliance status
                 if metrics.completionRate < 0.8 {
@@ -881,7 +883,7 @@ public class BuildingDetailViewModel: ObservableObject {
                 timestamp: Date()
             )
             
-            let savedPhoto = try await photoStorageService.savePhoto(photo, metadata: metadata)
+            let savedPhoto = try await photoEvidenceService.savePhoto(photo, metadata: metadata)
             print("✅ Photo saved: \(savedPhoto.id)")
             
             // Reload spaces if it was a space photo

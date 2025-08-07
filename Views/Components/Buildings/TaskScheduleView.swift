@@ -92,7 +92,7 @@ struct TaskScheduleView: View {
         .onChange(of: visibleMonth) { oldValue, newValue in
             updateMonthDates()
         }
-        .sheet(item: $selectedTask) { task in
+        .sheet(item: $showTaskDetail) { task in
             NavigationView {
                 UnifiedTaskDetailView(task: task, mode: .worker)
             }

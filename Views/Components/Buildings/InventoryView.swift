@@ -69,7 +69,7 @@ public struct InventoryView: View {
             .onChange(of: searchText) { _, _ in filterItems() }
             .onChange(of: selectedCategory) { _, _ in filterItems() }
             .sheet(isPresented: $showingAddItem) {
-                AddCoreTypes.InventoryItemView(buildingId: buildingId) { success in
+                AddInventoryItemView(buildingId: buildingId) { success in
                     showingAddItem = false
                     if success {
                         loadInventoryData()
@@ -210,8 +210,8 @@ public struct InventoryView: View {
                         .padding(.top, 60)
                 } else {
                     ForEach(Array(filteredItems.enumerated()), id: \.element.id) { index, item in
-                        CoreTypes.InventoryItemRow(item: item) { updatedItem in
-                            updateCoreTypes.InventoryItem(updatedItem)
+                        InventoryItemRow(item: item) { updatedItem in
+                            updateInventoryItem(updatedItem)
                         }
                         .animatedGlassAppear(delay: Double(index) * 0.05)
                     }
@@ -460,7 +460,7 @@ public struct InventoryItemRow: View {
             isPressed = pressing
         }
         .sheet(isPresented: $showingDetail) {
-            CoreTypes.InventoryItemDetailView(item: item, onUpdate: onUpdate)
+            InventoryItemDetailView(item: item, onUpdate: onUpdate)
         }
     }
 }
