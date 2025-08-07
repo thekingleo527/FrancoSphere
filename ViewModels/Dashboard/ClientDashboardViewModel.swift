@@ -127,7 +127,7 @@ public final class ClientDashboardViewModel: ObservableObject {
     public func loadClientData() async {
         // Get current client user
         guard let currentUser = container.auth.currentUser,
-              currentUser.role == .client else {
+              currentUser.role == "client" else {
             print("⚠️ No client user logged in")
             return
         }
@@ -141,7 +141,7 @@ public final class ClientDashboardViewModel: ObservableObject {
             
             if let buildingIds = clientBuildingIds {
                 // Filter buildings to only show client's buildings
-                let allBuildings = container.operationalData.buildings
+                let allBuildings = try await container.buildings.getAllBuildings()
                 self.clientBuildings = allBuildings
                     .filter { buildingIds.contains($0.id) }
                     .map { building in

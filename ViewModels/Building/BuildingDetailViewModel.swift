@@ -277,7 +277,7 @@ public class BuildingDetailViewModel: ObservableObject {
     
     // MARK: - Services (accessed via container)
     private var photoEvidenceService: PhotoEvidenceService { container.photos }
-    private var locationManager: LocationManager { container.location }
+    private var locationManager: LocationManager { LocationManager.shared }
     private var buildingService: BuildingService { container.buildings }
     private var taskService: TaskService { container.tasks }
     private var inventoryService: InventoryService { container.inventory }
@@ -521,7 +521,7 @@ public class BuildingDetailViewModel: ObservableObject {
             let building = try await buildingService.getBuilding(buildingId: buildingId)
             
             await MainActor.run {
-                self.buildingType = building.type.rawValue.capitalized
+                self.buildingType = building.type?.rawValue.capitalized ?? "Unknown"
                 self.buildingSize = building.squareFootage
                 self.floors = building.floors
                 self.units = building.units ?? 1
@@ -591,9 +591,9 @@ public class BuildingDetailViewModel: ObservableObject {
                     BDDailyRoutine(
                         id: routine.id,
                         title: routine.title,
-                        scheduledTime: routine.scheduledTime?.formatted(date: .omitted, time: .shortened),
+                        scheduledTime: routine.scheduledDate?.formatted(date: .omitted, time: .shortened),
                         isCompleted: routine.status == .completed,
-                        assignedWorker: routine.assignedWorkerName,
+                        assignedWorker: routine.worker?.name ?? "Unassigned",
                         requiredInventory: routine.requiredInventory ?? []
                     )
                 }
@@ -609,7 +609,7 @@ public class BuildingDetailViewModel: ObservableObject {
     private func loadSpacesAndAccess() async {
         do {
             // TODO: Implement getSpaces in BuildingService
-            let buildingSpaces: [Any] = [] // Placeholder until getSpaces is implemented
+            let _ = [] // Placeholder until getSpaces is implemented
             
             await MainActor.run {
                 self.spaces = [] // Empty for now
@@ -627,7 +627,7 @@ public class BuildingDetailViewModel: ObservableObject {
     private func loadSpaceThumbnails() async {
         for (index, space) in spaces.enumerated() {
             do {
-                let photos = try await photoEvidenceService.loadPhotos(for: buildingId)
+                let photos = try await photoEvidenceService.loadBuildingPhotos(buildingId: buildingId)
                 let spacePhotoIds = photos.filter { photo in
                     if space.category == .utility && photo.category == .utilities {
                         return true
@@ -738,7 +738,7 @@ public class BuildingDetailViewModel: ObservableObject {
             let workers = try await workerService.getActiveWorkersForBuilding(buildingId)
             
             // Load building metrics to get activity data
-            let metrics = try await buildingService.getBuildingMetrics(buildingId)
+            let _ = try await buildingService.getBuildingMetrics(buildingId)
             
             await MainActor.run {
                 // Process workers
@@ -923,7 +923,7 @@ public class BuildingDetailViewModel: ObservableObject {
     public func updateInventoryItem(_ item: CoreTypes.InventoryItem) {
         Task {
             do {
-                try await inventoryService.updateItem(item)
+                try await inventoryService.updateInventoryItem(item)
                 await loadInventorySummary()
             } catch {
                 print("❌ Error updating inventory item: \(error)")
@@ -1030,7 +1030,7 @@ public class BuildingDetailViewModel: ObservableObject {
     }
     
     private func calculateMaintenanceMetrics() {
-        let calendar = Calendar.current
+        let _ = Calendar.current
         let weekAgo = Date().addingTimeInterval(-7 * 24 * 60 * 60)
         
         maintenanceThisWeek = maintenanceHistory.filter { record in
