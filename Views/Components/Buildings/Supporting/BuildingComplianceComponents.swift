@@ -34,15 +34,7 @@ struct ComplianceCertification: Identifiable {
 
 // MARK: - Extensions for UI Support
 extension CoreTypes.ComplianceStatus {
-    var color: Color {
-        switch self {
-        case .compliant: return .green
-        case .warning, .atRisk: return .orange
-        case .violation, .nonCompliant: return .red
-        case .pending: return .blue
-        default: return .gray
-        }
-    }
+    // Note: color property is already defined in Core/Models/ComplianceIssue.swift
     
     var icon: String {
         switch self {
@@ -409,7 +401,7 @@ struct ComplianceChecklistView: View {
 // MARK: - Violation Alert Banner
 
 struct ViolationAlertBanner: View {
-    let violations: [ComplianceViolation]
+    let violations: [CoreTypes.ComplianceIssue]
     @State private var showingDetails = false
     
     var body: some View {
@@ -1354,7 +1346,7 @@ struct EmptyChecklistView: View {
 }
 
 struct ViolationSummaryRow: View {
-    let violation: ComplianceViolation
+    let violation: CoreTypes.ComplianceIssue
     
     var body: some View {
         HStack {
@@ -2144,7 +2136,7 @@ struct ComplianceActionItems: View {
 }
 
 struct ViolationDetailsSheet: View {
-    let violations: [ComplianceViolation]
+    let violations: [CoreTypes.ComplianceIssue]
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -2164,7 +2156,7 @@ struct ViolationDetailsSheet: View {
 }
 
 struct ViolationDetailRow: View {
-    let violation: ComplianceViolation
+    let violation: CoreTypes.ComplianceIssue
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -2458,7 +2450,7 @@ struct DSNYScheduleDetailSheet: View {
 
 // MARK: - Data Models
 
-struct LocalBuildingComplianceData {
+struct BuildingComplianceScoreData {
     let complianceScore: Int
     let safetyStatus: CoreTypes.ComplianceStatus
     let sanitationStatus: CoreTypes.ComplianceStatus
