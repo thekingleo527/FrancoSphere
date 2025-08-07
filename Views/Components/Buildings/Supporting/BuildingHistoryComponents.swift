@@ -10,21 +10,84 @@
 import SwiftUI
 import Combine
 
-// MARK: - Maintenance History Card (Already exists in BuildingDetailComponents)
-// Using extension to add functionality without redeclaration
+// MARK: - Supporting Types
+struct MaintenanceRecord: Identifiable {
+    let id: String
+    let title: String
+    let description: String
+    let date: Date
+    let type: String
+    let cost: Double?
+    let vendor: String?
+}
 
-extension MaintenanceHistoryCard {
-    func withFiltering() -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            self
+struct MaintenanceRecordRow: View {
+    let record: MaintenanceRecord
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(record.title)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
+                
+                Text(record.description)
+                    .font(.caption)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
+                    .lineLimit(2)
+            }
             
-            // Add filter options
-            HistoryFilterBar(
-                onFilterChanged: { filter in
-                    // Apply filter logic
+            Spacer()
+            
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(record.date, style: .date)
+                    .font(.caption)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
+                
+                if let cost = record.cost {
+                    Text("$\(cost, specifier: "%.2f")")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
                 }
-            )
+            }
         }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .background(CyntientOpsDesign.DashboardColors.cardBackground.opacity(0.3))
+        .cornerRadius(8)
+    }
+}
+
+// MARK: - Maintenance History Card
+
+struct MaintenanceHistoryCard: View {
+    let maintenanceRecords: [MaintenanceRecord]
+    let buildingId: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Header
+            HStack {
+                Label("Maintenance History", systemImage: "wrench.and.screwdriver")
+                    .font(.headline)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
+                
+                Spacer()
+                
+                Text("\(maintenanceRecords.count) records")
+                    .font(.caption)
+                    .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
+            }
+            
+            // Records list
+            ForEach(maintenanceRecords.prefix(5), id: \.id) { record in
+                MaintenanceRecordRow(record: record)
+            }
+        }
+        .francoCardPadding()
+        .francoCardBackground()
     }
 }
 

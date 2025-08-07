@@ -465,6 +465,7 @@ enum CyntientOpsDesign {
             switch status {
             case .available: return DashboardColors.success
             case .clockedIn: return DashboardColors.info
+            case .clockedOut: return DashboardColors.secondaryAction
             case .onBreak: return DashboardColors.warning
             case .offline: return DashboardColors.inactive
             }
@@ -486,6 +487,7 @@ enum CyntientOpsDesign {
             case .office: return DashboardColors.info
             case .residential: return DashboardColors.success
             case .retail: return DashboardColors.tertiaryAction
+            case .commercial: return DashboardColors.secondaryAction
             case .industrial: return DashboardColors.warning
             case .warehouse: return Color(red: 146/255, green: 64/255, blue: 14/255)  // Brown
             case .medical: return DashboardColors.critical

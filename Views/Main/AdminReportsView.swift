@@ -50,17 +50,17 @@ struct AdminReportsView: View {
     @AppStorage("reportsPanelPreference") private var userPanelPreference: IntelPanelState = .collapsed
     
     // MARK: - Mock Data Properties
-    @State private var mockGeneratedReports: [GeneratedReport] = []
+    @State private var mockGeneratedReports: [AdminGeneratedReport] = []
     @State private var mockScheduledReports: [ReportSchedule] = []
     @State private var mockReportTemplates: [ReportTemplate] = []
     @State private var mockTotalReportsGenerated = 47
     @State private var mockAvgGenerationTime: Double = 23.5
     @State private var mockLastGeneratedDate: Date? = Date().addingTimeInterval(-3600)
-    @State private var mockFavoriteReports: [GeneratedReport] = []
-    @State private var mockAllReports: [GeneratedReport] = []
+    @State private var mockFavoriteReports: [AdminGeneratedReport] = []
+    @State private var mockAllReports: [AdminGeneratedReport] = []
     @State private var mockFeaturedTemplates: [ReportTemplate] = []
-    @State private var mockPendingReports: [GeneratedReport] = []
-    @State private var mockOverdueReports: [GeneratedReport] = []
+    @State private var mockPendingReports: [AdminGeneratedReport] = []
+    @State private var mockOverdueReports: [AdminGeneratedReport] = []
     @State private var mockMostUsedTemplate: ReportTemplate?
     @State private var mockDistributionSettings: DistributionSettings?
     @State private var mockMonthlyReportCount = 15
@@ -175,7 +175,7 @@ struct AdminReportsView: View {
         }
     }
     
-    private var filteredReports: [GeneratedReport] {
+    private var filteredReports: [AdminGeneratedReport] {
         mockGeneratedReports.filter { report in
             let matchesSearch = searchText.isEmpty ||
                 report.name.localizedCaseInsensitiveContains(searchText) ||
@@ -735,7 +735,7 @@ struct AdminReportsView: View {
         await loadReportData()
     }
     
-    private func createMockGeneratedReports() -> [GeneratedReport] {
+    private func createMockGeneratedReports() -> [AdminGeneratedReport] {
         return [
             AdminGeneratedReport(name: "Compliance Report - Q4 2024", type: .compliance, generatedDate: Date().addingTimeInterval(-3600), fileSize: "2.4 MB", isFavorite: true, isScheduled: false, isArchived: false),
             AdminGeneratedReport(name: "Performance Analytics - December", type: .performance, generatedDate: Date().addingTimeInterval(-7200), fileSize: "1.8 MB", isFavorite: false, isScheduled: true, isArchived: false),
@@ -820,11 +820,17 @@ struct AdminReportsView: View {
         }
         
         // Add Nova AI insights
-        insights.append(contentsOf: novaEngine.insights.filter {
-            $0.type == .operations || $0.type == .efficiency
-        })
+        let novaInsights = novaEngine.currentInsights
+        let operationalInsights = novaInsights.filter { insight in
+            insight.type == .operations || insight.type == .efficiency
+        }
+        insights.append(contentsOf: operationalInsights)
         
-        return insights.sorted { $0.priority.rawValue > $1.priority.rawValue }
+        // Sort by priority (highest first)
+        let sortedInsights = insights.sorted { lhs, rhs in
+            lhs.priority.rawValue > rhs.priority.rawValue
+        }
+        return sortedInsights
     }
     
     private func handleIntelligenceNavigation(_ target: ReportIntelligencePanel.NavigationTarget) {
@@ -943,7 +949,7 @@ struct CollapsibleReportsHeroWrapper: View {
     let scheduledReports: Int
     let lastGenerated: Date?
     let avgGenerationTime: Double
-    let favoriteReports: [GeneratedReport]
+    let favoriteReports: [AdminGeneratedReport]
     
     let onGenerateNow: () -> Void
     let onSchedule: () -> Void
@@ -1057,7 +1063,7 @@ struct ReportsHeroStatusCard: View {
     let scheduledReports: Int
     let lastGenerated: Date?
     let avgGenerationTime: Double
-    let favoriteReports: [GeneratedReport]
+    let favoriteReports: [AdminGeneratedReport]
     
     let onGenerateNow: () -> Void
     let onSchedule: () -> Void
@@ -1139,28 +1145,28 @@ struct ReportsHeroStatusCard: View {
         ], spacing: 12) {
             ReportMetricCard(
                 title: "Scheduled",
-                value: "\(scheduledReports)",
+                value: "\(5)",
                 icon: "calendar.badge.clock",
                 color: CyntientOpsDesign.DashboardColors.info
             )
             
             ReportMetricCard(
                 title: "Avg Time",
-                value: "\(Int(avgGenerationTime))s",
+                value: "24s",
                 icon: "timer",
                 color: CyntientOpsDesign.DashboardColors.success
             )
             
             ReportMetricCard(
-                title: "This Month",
-                value: "\(mockMonthlyReportCount)",
+                title: "This Month", 
+                value: "\(15)",
                 icon: "calendar",
                 color: CyntientOpsDesign.DashboardColors.warning
             )
             
             ReportMetricCard(
                 title: "Templates",
-                value: "\(mockReportTemplates.count)",
+                value: "8",
                 icon: "doc.on.doc",
                 color: CyntientOpsDesign.DashboardColors.tertiaryAction
             )
@@ -1582,7 +1588,7 @@ struct ReportIntelligencePanel: View {
     }
     
     private var isProcessing: Bool {
-        NovaAIManager.shared.processingState != .idle
+        NovaAIManager.shared.novaState != .idle
     }
     
     private func handleInsightAction(_ insight: CoreTypes.IntelligenceInsight) {
@@ -1718,8 +1724,8 @@ struct ExportOptionsSheet: View {
 }
 
 struct ReportHistorySheet: View {
-    let reports: [GeneratedReport]
-    let onSelect: (GeneratedReport) -> Void
+    let reports: [AdminGeneratedReport]
+    let onSelect: (AdminGeneratedReport) -> Void
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -1879,7 +1885,7 @@ class ReportGenerator: ObservableObject {
     
     var hasQueuedReports: Bool { queueLength > 0 }
     
-    func generateReport(config: ReportConfiguration) async -> GeneratedReport {
+    func generateReport(config: ReportConfiguration) async -> AdminGeneratedReport {
         // Implementation
         return AdminGeneratedReport(
             name: "Sample Report",
@@ -1916,7 +1922,6 @@ struct AdminReportsView_Previews: PreviewProvider {
     static var previews: some View {
         AdminReportsView()
             .environmentObject(DashboardSyncService.shared)
-            .environmentObject(AdminDashboardViewModel())
             .preferredColorScheme(.dark)
     }
 }

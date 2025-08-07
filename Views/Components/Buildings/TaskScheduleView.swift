@@ -100,7 +100,7 @@ struct TaskScheduleView: View {
         .sheet(isPresented: $showAddTask) {
             // ✅ FIXED: Use existing TaskFormView with correct constructor
             TaskFormView(buildingID: buildingID) { (newTask: CoreTypes.MaintenanceTask) in
-                // Convert MaintenanceTask to ContextualTask if needed
+                // Convert MaintenanceTask to CoreTypes.ContextualTask if needed
                 let contextualTask = CoreTypes.ContextualTask(
                     id: UUID().uuidString,
                     title: newTask.title,

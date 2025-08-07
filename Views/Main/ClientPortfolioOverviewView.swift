@@ -16,7 +16,7 @@ struct ClientPortfolioOverviewView: View {
     typealias ClientIntelligence = CoreTypes.ClientPortfolioIntelligence
     
     let clientIntelligence: ClientIntelligence
-    let onBuildingTap: ((NamedCoordinate) -> Void)?
+    let onBuildingTap: ((CoreTypes.NamedCoordinate) -> Void)?
     let onRefresh: (() async -> Void)?
     
     @State private var selectedMetric: ClientMetricType = .service
@@ -25,7 +25,7 @@ struct ClientPortfolioOverviewView: View {
     @State private var isHeroCollapsed = false
     
     init(clientIntelligence: ClientIntelligence,
-         onBuildingTap: ((NamedCoordinate) -> Void)? = nil,
+         onBuildingTap: ((CoreTypes.NamedCoordinate) -> Void)? = nil,
          onRefresh: (() async -> Void)? = nil) {
         self.clientIntelligence = clientIntelligence
         self.onBuildingTap = onBuildingTap

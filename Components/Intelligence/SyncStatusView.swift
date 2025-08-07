@@ -46,7 +46,7 @@ struct SyncStatusView: View {
             if syncService.isOnline == false || syncService.pendingUpdatesCount > 0 {
                 Button("Retry") {
                     Task {
-                        await syncService.processPendingUpdates()
+                        await syncService.processPendingUpdatesBatch()
                     }
                 }
                 .font(.caption)

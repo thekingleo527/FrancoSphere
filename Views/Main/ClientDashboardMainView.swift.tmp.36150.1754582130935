@@ -37,7 +37,7 @@ struct ClientDashboardMainView: View {
             executiveSummary: CoreTypes.ExecutiveSummary(
                 totalBuildings: 6,
                 totalWorkers: 15,
-                portfolioHealth: contextEngine.portfolioHealth.overallScore,
+                portfolioHealth: contextEngine.portfolioHealth,
                 monthlyPerformance: "Excellent",
                 generatedAt: Date()
             ),
@@ -111,7 +111,7 @@ struct ClientDashboardMainView: View {
             await contextEngine.refreshContext()
         }
         .refreshable {
-            await viewModel.refreshData()
+            try? await viewModel.refreshData()
             refreshID = UUID()
         }
         .sheet(isPresented: $showingProfile) {
@@ -236,30 +236,6 @@ struct OverviewTabView: View {
     let showCostData: Bool
     @State private var isPortfolioHeroCollapsed = false
     
-    private var mockClientIntelligence: CoreTypes.ClientPortfolioIntelligence {
-        CoreTypes.ClientPortfolioIntelligence(
-            id: UUID().uuidString,
-            portfolioHealth: contextEngine.portfolioHealth,
-            executiveSummary: CoreTypes.ExecutiveSummary(
-                totalBuildings: 6,
-                totalWorkers: 15,
-                portfolioHealth: contextEngine.portfolioHealth.overallScore,
-                monthlyPerformance: "Excellent",
-                generatedAt: Date()
-            ),
-            benchmarks: [],
-            strategicRecommendations: [],
-            performanceTrends: [85, 87, 89, 91, 93],
-            generatedAt: Date(),
-            totalProperties: 6,
-            serviceLevel: 95.0,
-            complianceScore: 92,
-            complianceIssues: 2,
-            monthlyTrend: .up,
-            coveragePercentage: 98.5
-        )
-    }
-    
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 16) {
@@ -293,12 +269,11 @@ struct OverviewTabView: View {
                     )
                 }
                 
-                // Intelligence Insights  
-                VStack {
-                    Text("Intelligence Insights")
-                        .font(.headline)
-                    Text("Cost optimization and insights coming soon...")
-                        .foregroundColor(.secondary)
+                // Intelligence Insights
+                if !contextEngine.intelligenceInsights.isEmpty {
+                    IntelligenceInsightsSection(
+                        insights: Array(contextEngine.intelligenceInsights.prefix(3))
+                    )
                 }
             }
             .padding()
@@ -556,28 +531,13 @@ struct ClientReportsTabView: View {
             .padding()
         }
         .sheet(isPresented: $showingEmissionsReport) {
-            VStack {
-                Text("LL97 Emissions Report")
-                    .font(.title)
-                Text("Loading emissions data...")
-                    .foregroundColor(.secondary)
-            }
+            LL97EmissionsView(container: container)
         }
         .sheet(isPresented: $showingComplianceReport) {
-            VStack {
-                Text("HPD Violations Report")
-                    .font(.title)
-                Text("Loading violation data...")
-                    .foregroundColor(.secondary)
-            }
+            HPDViolationsView(container: container)
         }
         .sheet(isPresented: $showingPerformanceReport) {
-            VStack {
-                Text("Performance Report")
-                    .font(.title)
-                Text("Loading performance data...")
-                    .foregroundColor(.secondary)
-            }
+            ComplianceSuiteView(buildings: buildings, container: container)
         }
     }
 }
@@ -950,7 +910,9 @@ struct ClientProfileSheet: View {
 #if DEBUG
 struct ClientDashboardMainView_Previews: PreviewProvider {
     static var previews: some View {
-        Text("Client Dashboard Preview")
+        ClientDashboardMainView(container: ServiceContainer())
+            .environmentObject(NewAuthManager.shared)
+            .environmentObject(DashboardSyncService.shared)
             .preferredColorScheme(.dark)
     }
 }

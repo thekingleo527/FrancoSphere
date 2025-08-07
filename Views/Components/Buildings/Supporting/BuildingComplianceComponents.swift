@@ -11,6 +11,61 @@
 import SwiftUI
 import Combine
 
+// MARK: - Supporting Types
+struct LocalBuildingComplianceData {
+    let buildingId: String
+    let overallStatus: ComplianceStatus
+    let dsnyStatus: ComplianceStatus
+    let fireSafetyStatus: ComplianceStatus
+    let healthStatus: ComplianceStatus
+    let lastInspectionDate: Date?
+    let nextInspectionDue: Date?
+    let violations: [ComplianceViolation]
+    let certifications: [ComplianceCertification]
+}
+
+enum ComplianceStatus: String, CaseIterable {
+    case compliant = "Compliant"
+    case warning = "Needs Attention"
+    case violation = "Non-Compliant"
+    case pending = "Pending Review"
+    
+    var color: Color {
+        switch self {
+        case .compliant: return .green
+        case .warning: return .orange
+        case .violation: return .red
+        case .pending: return .blue
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .compliant: return "checkmark.circle.fill"
+        case .warning: return "exclamationmark.triangle.fill"
+        case .violation: return "xmark.circle.fill"
+        case .pending: return "clock.fill"
+        }
+    }
+}
+
+struct ComplianceViolation: Identifiable {
+    let id: String
+    let type: String
+    let description: String
+    let severity: String
+    let dueDate: Date
+    let status: String
+}
+
+struct ComplianceCertification: Identifiable {
+    let id: String
+    let name: String
+    let issuedDate: Date
+    let expiryDate: Date
+    let authority: String
+}
+
 // MARK: - Compliance Status Card
 
 struct ComplianceStatusCard: View {

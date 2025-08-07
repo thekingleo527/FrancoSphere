@@ -2339,6 +2339,7 @@ public typealias ActionEvidence = CoreTypes.ActionEvidence
 // Note: Removed duplicate typealiases to prevent compilation errors
 // Use CoreTypes.TypeName for all type references
 
+
 // Misc Types
 public typealias SkillLevel = CoreTypes.SkillLevel
 public typealias DataHealthStatus = CoreTypes.DataHealthStatus

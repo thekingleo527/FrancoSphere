@@ -10,6 +10,26 @@
 import SwiftUI
 import Combine
 
+// MARK: - Supporting Types
+struct WorkerScheduleAssignment: Identifiable {
+    let id: String
+    let workerId: String
+    let workerName: String
+    let buildingId: String
+    let date: Date
+    let timeSlot: String
+    let status: AssignmentStatus
+    let isConfirmed: Bool
+}
+
+enum AssignmentStatus {
+    case scheduled
+    case active
+    case completed
+    case cancelled
+    case noShow
+}
+
 // MARK: - Worker Schedule Grid
 
 struct WorkerScheduleGrid: View {
@@ -17,7 +37,7 @@ struct WorkerScheduleGrid: View {
     let weekOffset: Int // 0 = current week, -1 = last week, etc.
     @State private var assignments: [WorkerScheduleAssignment] = []
     @State private var isLoading = true
-    @State private var selectedWorker: WorkerProfile?
+    @State private var selectedWorker: CoreTypes.WorkerProfile?
     @State private var showingShiftEditor = false
     @EnvironmentObject private var dashboardSync: DashboardSyncService
     

@@ -65,11 +65,11 @@ struct WeatherViewModifier: ViewModifier {
             return "cloud.fill"
         case .rain:
             return "cloud.rain.fill"
-        case .snowy:
+        case .snow, .snowy:
             return "cloud.snow.fill"
         case .storm:
             return "cloud.bolt.fill"
-        case .foggy:
+        case .fog, .foggy:
             return "cloud.fog.fill"
         case .windy:
             return "wind"
@@ -92,11 +92,11 @@ struct WeatherViewModifier: ViewModifier {
             return .gray
         case .rain:
             return .blue
-        case .snowy:
+        case .snow, .snowy:
             return .cyan
         case .storm:
             return .purple
-        case .foggy:
+        case .fog, .foggy:
             return .gray.opacity(0.7)
         case .windy:
             return .mint
@@ -127,9 +127,9 @@ struct WeatherViewModifier: ViewModifier {
             } else {
                 return "Rain detected: Monitor outdoor conditions"
             }
-        case .snowy:
+        case .snow, .snowy:
             return "Snow alert: Use caution for outdoor work"
-        case .foggy:
+        case .fog, .foggy:
             return "Fog alert: Reduced visibility conditions"
         case .windy:
             if weather.windSpeed > 25 {

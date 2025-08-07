@@ -133,16 +133,16 @@ struct AssignedBuildingsView: View {
     
     // MARK: - Helper Methods
     
-    private func isCurrentBuilding(_ building: NamedCoordinate) -> Bool {
+    private func isCurrentBuilding(_ building: CoreTypes.NamedCoordinate) -> Bool {
         contextEngine.clockInStatus.isClockedIn &&
         contextEngine.clockInStatus.building?.id == building.id
     }
     
-    private func isPrimaryAssignment(_ building: NamedCoordinate) -> Bool {
+    private func isPrimaryAssignment(_ building: CoreTypes.NamedCoordinate) -> Bool {
         contextEngine.assignedBuildings.first?.id == building.id
     }
     
-    private func getTaskCount(for building: NamedCoordinate) -> Int {
+    private func getTaskCount(for building: CoreTypes.NamedCoordinate) -> Int {
         contextEngine.getTasksForBuilding(building.id).count
     }
     
@@ -160,7 +160,7 @@ struct AssignedBuildingsView: View {
             for building in assignedBuildings {
                 group.addTask {
                     do {
-                        let metrics = try await self.buildingService.getMetrics(for: building.id)
+                        let metrics = try await self.buildingService.getBuildingMetrics(building.id)
                         return (building.id, metrics)
                     } catch {
                         return (building.id, nil)
@@ -187,7 +187,7 @@ struct AssignedBuildingsView: View {
 // MARK: - Assigned Building Card Component
 
 struct AssignedBuildingCard: View {
-    let building: NamedCoordinate
+    let building: CoreTypes.NamedCoordinate
     let metrics: BuildingMetrics?
     let isCurrentBuilding: Bool
     let isPrimaryAssignment: Bool
@@ -222,19 +222,19 @@ struct AssignedBuildingCard: View {
                 HStack(spacing: CyntientOpsDesign.Spacing.sm) {
                     if isCurrentBuilding {
                         BuildingStatusBadge(
-                            title: "CURRENT",
+                            label: "CURRENT",
                             icon: "location.fill",
                             color: CyntientOpsDesign.DashboardColors.success
                         )
                     } else if isPrimaryAssignment {
                         BuildingStatusBadge(
-                            title: "PRIMARY",
+                            label: "PRIMARY",
                             icon: "star.fill",
                             color: CyntientOpsDesign.DashboardColors.warning
                         )
                     } else {
                         BuildingStatusBadge(
-                            title: "Assigned",
+                            label: "Assigned",
                             icon: "checkmark.circle.fill",
                             color: CyntientOpsDesign.DashboardColors.info
                         )

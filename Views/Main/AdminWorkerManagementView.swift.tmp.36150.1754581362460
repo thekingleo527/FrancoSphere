@@ -128,7 +128,7 @@ struct AdminWorkerManagementView: View {
     }
     
     private func calculatePercentage() -> Int {
-        let percentage = (Double(activeWorkerCount) / Double(max(workerEngine.allWorkers.count, 1))) * 100
+        let percentage = (Double(activeWorkers) / Double(max(workerEngine.allWorkers.count, 1))) * 100
         return Int(percentage)
     }
     
@@ -656,13 +656,16 @@ struct AdminWorkerManagementView: View {
         }
         
         // Add Nova AI insights
-        let novaInsights = novaEngine.currentInsights
-        let filteredNovaInsights = novaInsights.filter { insight in
-            insight.type == .operations || insight.type == .efficiency 
+        let operationsInsights = novaEngine.insights.filter { insight in
+            insight.type == .operations || insight.type == .efficiency
         }
-        insights.append(contentsOf: filteredNovaInsights)
+        insights.append(contentsOf: operationsInsights)
         
-        return insights.sorted { $0.priority.rawValue > $1.priority.rawValue }
+        // Sort by priority (highest first)
+        let sortedInsights = insights.sorted { lhs, rhs in
+            lhs.priority.rawValue > rhs.priority.rawValue
+        }
+        return sortedInsights
     }
     
     private func handleIntelligenceNavigation(_ target: WorkerIntelligencePanel.NavigationTarget) {
@@ -922,7 +925,7 @@ struct WorkerHeroStatusCard: View {
                         secondaryColor: CyntientOpsDesign.DashboardColors.cardBackground
                     )
                     .overlay(
-                        Text("\(Int((Double(activeWorkers) / Double(max(totalWorkers, 1))) * 100))%")
+                        Text("\(calculatePercentage())%")
                             .francoTypography(CyntientOpsDesign.Typography.caption)
                             .fontWeight(.bold)
                             .foregroundColor(CyntientOpsDesign.DashboardColors.primaryText)
@@ -940,7 +943,7 @@ struct WorkerHeroStatusCard: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(clockedIn.prefix(10)) { worker in
-                                WorkerAvatar(workerName: worker.name, size: .small)
+                                WorkerAvatar(worker: worker, size: 32)
                             }
                             
                             if clockedIn.count > 10 {
@@ -1041,7 +1044,7 @@ struct WorkerCard: View {
             VStack(alignment: .leading, spacing: 12) {
                 // Header
                 HStack {
-                    WorkerAvatar(workerName: worker.name, size: .medium)
+                    WorkerAvatar(worker: worker, size: 40)
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text(worker.name)
@@ -1927,6 +1930,7 @@ struct AdminWorkerManagementView_Previews: PreviewProvider {
     static var previews: some View {
         AdminWorkerManagementView()
             .environmentObject(DashboardSyncService.shared)
+            .environmentObject(AdminDashboardViewModel(container: ServiceContainer.shared))
             .preferredColorScheme(.dark)
     }
 }
