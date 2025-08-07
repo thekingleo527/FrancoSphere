@@ -108,8 +108,16 @@ struct ComplianceStatusCard: View {
                     }
                     
                     // Next inspection
-                    if let nextInspection = data.nextInspection {
-                        NextInspectionRow(inspection: nextInspection)
+                    if let nextInspectionDate = data.nextInspectionDue {
+                        HStack {
+                            Image(systemName: "calendar")
+                                .foregroundColor(.blue)
+                            Text("Next Inspection: \(nextInspectionDate.formatted(date: .abbreviated, time: .omitted))")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.8))
+                            Spacer()
+                        }
+                        .padding(.horizontal)
                     }
                     
                     // View details button
@@ -1932,13 +1940,6 @@ struct DSNYViolationsCard: View {
                         }
                         
                         Spacer()
-                        
-                        if false { // fineAmount not available in CoreTypes.ComplianceIssue
-                            // Fine amount not available
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .foregroundColor(.red)
-                        }
                     }
                     .padding(8)
                     .background(Color.red.opacity(0.1))
