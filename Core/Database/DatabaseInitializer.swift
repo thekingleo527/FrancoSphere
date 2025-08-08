@@ -349,8 +349,8 @@ public class DatabaseInitializer: ObservableObject {
         for (id, name, address, lat, lng, imageAsset) in buildings {
             try await grdbManager.execute("""
                 INSERT OR IGNORE INTO buildings 
-                (id, name, address, latitude, longitude, imageAssetName, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+                (id, name, address, latitude, longitude, imageAssetName)
+                VALUES (?, ?, ?, ?, ?, ?)
             """, [id, name, address, lat, lng, imageAsset])
         }
         

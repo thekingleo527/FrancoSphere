@@ -341,7 +341,7 @@ public class DailyOpsReset: ObservableObject {
             """, arguments: [
                 id,
                 name,
-                "\(name.lowercased().replacingOccurrences(of: " ", with: "."))@francosphere.com",
+                "\(name.lowercased().replacingOccurrences(of: " ", with: "."))@cyntientops.com",
                 getWorkerRole(id),
                 1, // isActive
                 getWorkerShift(id),
@@ -596,9 +596,8 @@ public class DailyOpsReset: ObservableObject {
                 INSERT OR REPLACE INTO worker_capabilities (
                     worker_id, can_upload_photos, can_add_notes,
                     can_view_map, can_add_emergency_tasks,
-                    requires_photo_for_sanitation, simplified_interface,
-                    created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    requires_photo_for_sanitation, simplified_interface
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
             """, arguments: [
                 capability.workerId,
                 capability.canUploadPhotos ? 1 : 0,
@@ -606,9 +605,7 @@ public class DailyOpsReset: ObservableObject {
                 capability.canViewMap ? 1 : 0,
                 capability.canAddEmergencyTasks ? 1 : 0,
                 capability.requiresPhotoForSanitation ? 1 : 0,
-                capability.simplifiedInterface ? 1 : 0,
-                Date().ISO8601Format(),
-                Date().ISO8601Format()
+                capability.simplifiedInterface ? 1 : 0
             ])
         }
         

@@ -220,18 +220,14 @@ public final class ClientBuildingSeeder {
         if building21Exists.isEmpty {
             try await grdbManager.execute("""
                 INSERT INTO buildings (
-                    id, name, address, latitude, longitude, 
-                    isActive, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    id, name, address, latitude, longitude
+                ) VALUES (?, ?, ?, ?, ?)
             """, [
                 "21",
                 "148 Chambers Street",
                 "148 Chambers Street, New York, NY 10007",
                 40.7155, // Approximate coordinates
-                -74.0086,
-                1,
-                Date().ISO8601Format(),
-                Date().ISO8601Format()
+                -74.0086
             ])
         }
         

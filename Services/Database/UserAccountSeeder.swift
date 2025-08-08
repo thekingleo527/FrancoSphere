@@ -371,20 +371,19 @@ public final class UserAccountSeeder {
             
             try await grdbManager.execute("""
                 INSERT OR REPLACE INTO worker_capabilities (
-                    worker_id, simplified_interface, language, 
-                    requires_photo_for_sanitation, can_add_emergency_tasks, 
-                    evening_mode_ui, priority_level, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    worker_id, can_upload_photos, can_add_notes, can_view_map, 
+                    can_add_emergency_tasks, requires_photo_for_sanitation, 
+                    simplified_interface, preferred_language
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """, [
                 account.id,
-                cap.simplifiedInterface ? 1 : 0,
-                cap.language,
-                cap.requiresPhotoForSanitation ? 1 : 0,
+                1, // can_upload_photos - default enabled
+                1, // can_add_notes - default enabled  
+                1, // can_view_map - default enabled
                 cap.canAddEmergencyTasks ? 1 : 0,
-                cap.eveningModeUI ? 1 : 0,
-                account.role == "manager" ? 1 : 0, // Managers get priority
-                Date().ISO8601Format(),
-                Date().ISO8601Format()
+                cap.requiresPhotoForSanitation ? 1 : 0,
+                cap.simplifiedInterface ? 1 : 0,
+                cap.language
             ])
         }
         

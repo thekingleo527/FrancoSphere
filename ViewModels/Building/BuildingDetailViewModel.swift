@@ -535,7 +535,7 @@ public class BuildingDetailViewModel: ObservableObject {
                 self.emergencyContact = BDBuildingContact(
                     name: "24/7 Emergency Line",
                     role: "Franco Response Team",
-                    email: "emergency@francosphere.com",
+                    email: "emergency@cyntientops.com",
                     phone: "(212) 555-0911",
                     isEmergencyContact: true
                 )

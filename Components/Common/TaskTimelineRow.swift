@@ -104,7 +104,7 @@ struct TaskTimelineRow_Previews: PreviewProvider {
                     worker: WorkerProfile(
                         id: "1",
                         name: "Kevin Dutan",
-                        email: "kevin@francosphere.com",
+                        email: "kevin@cyntientops.com",
                         phoneNumber: "555-0123",
                         role: .worker,
                         skills: [],
@@ -133,7 +133,7 @@ struct TaskTimelineRow_Previews: PreviewProvider {
                     worker: WorkerProfile(
                         id: "2",
                         name: "Maria Garcia",
-                        email: "maria@francosphere.com",
+                        email: "maria@cyntientops.com",
                         phoneNumber: "555-0124",
                         role: .worker,
                         skills: [],
@@ -162,7 +162,7 @@ struct TaskTimelineRow_Previews: PreviewProvider {
                     worker: WorkerProfile(
                         id: "1",
                         name: "Kevin Dutan",
-                        email: "kevin@francosphere.com",
+                        email: "kevin@cyntientops.com",
                         phoneNumber: "555-0123",
                         role: .worker,
                         skills: [],

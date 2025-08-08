@@ -80,7 +80,7 @@ public class NewAuthManager: ObservableObject {
     private var sessionTimer: Timer?
     
     // Keychain keys
-    private let keychainService = "com.francosphere.auth"
+    private let keychainService = "com.cyntientops.auth"
     private let sessionTokenKey = "sessionToken"
     private let refreshTokenKey = "refreshToken"
     private let biometricEnabledKey = "biometricEnabled"

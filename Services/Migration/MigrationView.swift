@@ -480,7 +480,7 @@ struct MigrationView: View {
     }
     
     private func contactSupport() {
-        if let url = URL(string: "mailto:support@francosphere.com?subject=Migration%20Error") {
+        if let url = URL(string: "mailto:support@cyntientops.com?subject=Migration%20Error") {
             UIApplication.shared.open(url)
         }
     }
