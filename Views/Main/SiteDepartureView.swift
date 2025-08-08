@@ -45,7 +45,10 @@ public struct SiteDepartureView: View {
             await viewModel.loadChecklist()
         }
         .sheet(isPresented: $showPhotoCapture) {
-            PhotoPicker(selectedImage: $viewModel.capturedPhoto)
+            FrancoImagePicker(
+                image: $viewModel.capturedPhoto,
+                sourceType: .camera
+            )
         }
         .alert("Emergency Departure", isPresented: $showEmergencyConfirmation) {
             Button("Confirm Emergency", role: .destructive) {
