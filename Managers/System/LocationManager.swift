@@ -48,8 +48,14 @@ public final class LocationManager: NSObject, ObservableObject {
     
     // Private initializer for singleton pattern.
     override private init() {
-        self.authorizationStatus = coreLocationManager.authorizationStatus
+        // Initialize with default value first
+        self.authorizationStatus = .notDetermined
+        
+        // Call super.init() before using self
         super.init()
+        
+        // Now we can safely access properties and set up delegates
+        self.authorizationStatus = coreLocationManager.authorizationStatus
         setupLocationManager()
         setupObservers()
     }
