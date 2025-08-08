@@ -88,7 +88,7 @@ struct WorkerDashboardMainView: View {
                         if let currentBuilding = viewModel.currentBuilding {
                             WorkerCurrentBuildingSection(
                                 building: currentBuilding,
-                                buildingTasks: viewModel.currentBuildingTasks,
+                                buildingTasks: viewModel.getTasksForBuilding(currentBuilding.id),
                                 onTaskTap: handleTaskTap,
                                 onBuildingTap: { showingBuildingSelector = true }
                             )
@@ -99,7 +99,7 @@ struct WorkerDashboardMainView: View {
                         // Today's Tasks Section
                         WorkerTodaysTasksSection(
                             tasks: viewModel.todaysTasks,
-                            completedTasks: viewModel.completedTasks,
+                            completedTasks: viewModel.todaysTasks.filter { $0.isCompleted },
                             onTaskTap: handleTaskTap,
                             requiresPhoto: viewModel.workerCapabilities?.requiresPhotoForSanitation ?? false
                         )
@@ -622,6 +622,7 @@ struct WorkerStatsCard: View {
         case .high: return .orange
         case .medium: return .blue
         case .low: return .gray
+        case .normal: return .blue
         }
     }
 }
@@ -635,6 +636,7 @@ struct WeatherAlertBanner: View {
         switch risk {
         case .extreme: return .red
         case .high: return .orange
+        case .moderate: return .yellow
         case .medium: return .yellow
         case .low: return .green
         }
@@ -1510,20 +1512,17 @@ struct WorkerDashboardMainView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
             // Standard Dashboard
-            WorkerDashboardMainView()
-                .environmentObject(NewAuthManager.shared)
-                .environmentObject(DashboardSyncService.shared)
+            // Preview requires ServiceContainer - placeholder for now
+            Text("WorkerDashboard Preview")
+                .foregroundColor(.white)
                 .preferredColorScheme(.dark)
                 .previewDisplayName("Standard Dashboard")
             
             // Simplified Dashboard
-            WorkerDashboardMainView()
-                .environmentObject(NewAuthManager.shared)
-                .environmentObject(DashboardSyncService.shared)
+            // Preview requires ServiceContainer - placeholder for now
+            Text("Simplified WorkerDashboard Preview")
+                .foregroundColor(.white)
                 .preferredColorScheme(.dark)
-                .onAppear {
-                    UserDefaults.standard.set(true, forKey: "workerSimplifiedMode")
-                }
                 .previewDisplayName("Simplified Dashboard")
         }
     }

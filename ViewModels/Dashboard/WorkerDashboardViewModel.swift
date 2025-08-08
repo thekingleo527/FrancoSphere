@@ -50,7 +50,7 @@ public class WorkerDashboardViewModel: ObservableObject {
     
     // Core State
     @Published public private(set) var isLoading = false
-    @Published public private(set) var errorMessage: String?
+    @Published public var errorMessage: String?
     @Published public private(set) var workerProfile: CoreTypes.WorkerProfile?
     @Published public private(set) var workerCapabilities: WorkerCapabilities?
     
@@ -321,6 +321,23 @@ public class WorkerDashboardViewModel: ObservableObject {
             try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second delay
             await self.refreshData()
         }
+    }
+    
+    // MARK: - Computed Properties for UI
+    
+    /// Count of completed tasks today
+    public var completedTasksCount: Int {
+        todaysTasks.filter { $0.isCompleted }.count
+    }
+    
+    /// Whether worker is currently clocked in
+    public var isCurrentlyClockedIn: Bool {
+        isClockedIn
+    }
+    
+    /// Count of urgent tasks today
+    public var urgentTasks: [CoreTypes.ContextualTask] {
+        todaysTasks.filter { $0.urgency == .urgent || $0.urgency == .critical }
     }
     
     // MARK: - Public Accessors

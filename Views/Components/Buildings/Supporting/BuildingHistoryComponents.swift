@@ -38,7 +38,7 @@ struct MaintenanceRecordRow: View {
                     .foregroundColor(CyntientOpsDesign.DashboardColors.secondaryText)
                 
                 if let cost = record.cost {
-                    Text("$\(cost, specifier: "%.2f")")
+                    Text("$\(cost.doubleValue, specifier: "%.2f")")
                         .font(.caption)
                         .fontWeight(.medium)
                         .foregroundColor(CyntientOpsDesign.DashboardColors.primaryAction)
@@ -79,7 +79,7 @@ struct MaintenanceHistoryCard: View {
             }
         }
         .francoCardPadding()
-        .francoCardBackground()
+        .francoGlassBackground()
     }
 }
 
@@ -536,7 +536,8 @@ struct HistoryFilterBar: View {
                     ForEach(FilterType.allCases, id: \.self) { type in
                         FilterChip(
                             title: type.rawValue,
-                            isSelected: selectedType == type,
+                            isActive: selectedType == type,
+                            count: getFilterCount(for: type),
                             action: {
                                 selectedType = type
                                 applyFilters()
@@ -552,7 +553,8 @@ struct HistoryFilterBar: View {
                     ForEach(DateRange.allCases, id: \.self) { range in
                         FilterChip(
                             title: range.rawValue,
-                            isSelected: selectedDateRange == range,
+                            isActive: selectedDateRange == range,
+                            count: getDateRangeCount(for: range),
                             action: {
                                 selectedDateRange = range
                                 applyFilters()
@@ -574,6 +576,38 @@ struct HistoryFilterBar: View {
             searchText: searchText
         )
         onFilterChanged(filter)
+    }
+    
+    private func getFilterCount(for type: FilterType) -> Int {
+        // Return estimated count - would be based on actual data in real implementation
+        switch type {
+        case .all:
+            return 25
+        case .maintenance:
+            return 8
+        case .compliance:
+            return 12
+        case .issues:
+            return 5
+        case .vendors:
+            return 3
+        }
+    }
+    
+    private func getDateRangeCount(for range: DateRange) -> Int {
+        // Return estimated count - would be based on actual data in real implementation
+        switch range {
+        case .today:
+            return 3
+        case .lastWeek:
+            return 8
+        case .lastMonth:
+            return 15
+        case .lastQuarter:
+            return 22
+        case .lastYear:
+            return 25
+        }
     }
 }
 

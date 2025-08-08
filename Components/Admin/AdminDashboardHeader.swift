@@ -20,6 +20,7 @@ struct AdminDashboardHeader: View {
         case .syncing: return .orange
         case .synced: return .green
         case .error: return .red
+        case .failed: return .red
         case .offline: return .gray
         }
     }

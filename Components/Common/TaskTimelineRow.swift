@@ -74,6 +74,8 @@ struct TaskTimelineRow: View {
             return .yellow
         case .low:
             return .green
+        case .normal:
+            return .blue
         }
     }
 }

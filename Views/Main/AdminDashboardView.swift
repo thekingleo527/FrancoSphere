@@ -134,7 +134,7 @@ struct AdminDashboardView: View {
                         adminQuickActions
                         
                         // Live Activity Feed
-                        if !viewModel.recentActivity.isEmpty {
+                        if !viewModel.crossDashboardUpdates.isEmpty {
                             liveActivitySection
                         }
                         
@@ -221,12 +221,7 @@ struct AdminDashboardView: View {
                 .onDisappear { currentContext = .dashboard }
         }
         .sheet(isPresented: $showingWorkerManagement) {
-            AdminWorkerManagementView(
-                workers: viewModel.workers,
-                onSelectWorker: { worker in
-                    selectedWorker = worker
-                }
-            )
+            AdminWorkerManagementView()
             .environmentObject(container)
             .onAppear { currentContext = .workerManagement }
             .onDisappear { currentContext = .dashboard }
@@ -347,8 +342,8 @@ struct AdminDashboardView: View {
             }
             
             VStack(spacing: 8) {
-                ForEach(viewModel.recentActivity.prefix(5)) { activity in
-                    AdminActivityRow(activity: activity)
+                ForEach(viewModel.crossDashboardUpdates.prefix(5)) { update in
+                    AdminActivityRow(update: update)
                 }
             }
         }
@@ -830,50 +825,41 @@ struct AdminHeroStatusCard: View {
                 GridItem(.flexible())
             ], spacing: 12) {
                 AdminMetricCard(
-                    value: "\(activeWorkers.filter { $0.isClockedIn }.count)/\(activeWorkers.count)",
-                    label: "Workers Active",
-                    subtitle: "\(activeWorkers.count - activeWorkers.filter { $0.isClockedIn }.count) on break",
-                    color: .green,
                     icon: "person.3.fill",
-                    onTap: onWorkersTap
+                    title: "Workers Active",
+                    value: "\(activeWorkers.filter { $0.isClockedIn }.count)/\(activeWorkers.count)",
+                    color: .green
                 )
                 
                 AdminMetricCard(
-                    value: "\(portfolio.totalBuildings)",
-                    label: "Buildings",
-                    subtitle: "\(portfolio.criticalIssues) need attention",
-                    color: .blue,
                     icon: "building.2.fill",
-                    onTap: onBuildingsTap
+                    title: "Buildings",
+                    value: "\(portfolio.totalBuildings)",
+                    color: .blue
                 )
                 
                 AdminMetricCard(
-                    value: "\(Int(complianceScore))%",
-                    label: "Compliance Score",
-                    subtitle: portfolio.criticalIssues > 0 ? "\(portfolio.criticalIssues) issues" : "Good standing",
-                    color: complianceScoreColor,
                     icon: "checkmark.shield.fill",
-                    onTap: onComplianceTap
+                    title: "Compliance Score",
+                    value: "\(Int(complianceScore))%",
+                    color: complianceScoreColor
                 )
                 
                 AdminMetricCard(
-                    value: "\(Int(portfolio.overallCompletionRate * 100))%",
-                    label: "Completion Rate",
-                    color: completionRateColor,
                     icon: "chart.line.uptrend.xyaxis",
-                    onTap: onTasksTap
+                    title: "Completion Rate",
+                    value: "\(Int(portfolio.overallCompletionRate * 100))%",
+                    color: completionRateColor
                 )
             }
             
             // Critical alerts
             if !criticalAlerts.isEmpty {
                 AdminMetricCard(
-                    value: "\(criticalAlerts.count)",
-                    label: "Critical Alerts",
-                    subtitle: "Action required",
-                    color: .red,
                     icon: "exclamationmark.triangle.fill",
-                    onTap: onAlertsTap
+                    title: "Critical Alerts",
+                    value: "\(criticalAlerts.count)",
+                    color: .red
                 )
             }
         }
@@ -1435,13 +1421,11 @@ struct AdminActivity: Identifiable {
 
 struct AdminDashboardView_Previews: PreviewProvider {
     static var previews: some View {
-        let container = ServiceContainer()
-        let viewModel = AdminDashboardViewModel(container: container)
-        
-        AdminDashboardView(viewModel: viewModel)
-            .environmentObject(container)
-            .environmentObject(NovaAIManager.shared)
-            .environmentObject(NewAuthManager.shared)
+        // For preview purposes, we'll need to handle the async container differently
+        Text("Admin Dashboard Preview")
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.black)
             .preferredColorScheme(.dark)
     }
 }

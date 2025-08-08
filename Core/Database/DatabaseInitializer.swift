@@ -807,14 +807,17 @@ public class DatabaseInitializer: ObservableObject {
             id: "op_\(operationalTask.taskName.hash)_\(workerId)",
             title: operationalTask.taskName,
             description: generateTaskDescription(operationalTask),
-            isCompleted: false,
-            completedDate: nil,
+            status: .pending,
+            completedAt: nil,
+            scheduledDate: nil,
             dueDate: calculateDueDate(for: operationalTask),
             category: mapToTaskCategory(operationalTask.category),
             urgency: mapToTaskUrgency(operationalTask.skillLevel),
             building: nil,
             worker: nil,
             buildingId: buildingId,
+            buildingName: nil,
+            assignedWorkerId: workerId,
             priority: mapToTaskUrgency(operationalTask.skillLevel)
         )
     }

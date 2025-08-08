@@ -49,12 +49,11 @@ struct CyntientOpsApp: App {
                 // ensuring the correct view is shown at each stage of the launch sequence.
                 if showingSplash {
                     SplashView()
-                        .onAppear {
+                        .task {
                             // Show splash for a brief period then transition.
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                withAnimation(.easeInOut(duration: 0.5)) {
-                                    showingSplash = false
-                                }
+                            try? await Task.sleep(nanoseconds: 2_000_000_000)
+                            withAnimation(.easeInOut(duration: 0.5)) {
+                                showingSplash = false
                             }
                         }
                 } else if !databaseInitializer.isInitialized {
@@ -403,6 +402,7 @@ struct CyntientOpsApp: App {
 
 // MARK: - Sentry Crash Reporter Wrapper (PRESERVED)
 
+@MainActor
 enum CrashReporter {
     static func captureError(_ error: Error, context: [String: Any]? = nil) {
         SentrySDK.capture(error: error) { scope in

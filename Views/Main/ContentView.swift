@@ -146,11 +146,10 @@ struct UndefinedRoleView: View {
                 }
                 .opacity(0)
                 .animation(.easeIn(duration: 0.3).delay(3), value: isRetrying)
-                .onAppear {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                        withAnimation {
-                            isRetrying = false
-                        }
+                .task {
+                    try? await Task.sleep(nanoseconds: 3_000_000_000)
+                    withAnimation {
+                        isRetrying = false
                     }
                 }
             }

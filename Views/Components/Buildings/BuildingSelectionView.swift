@@ -382,10 +382,11 @@ struct SelectedBuildingOverlay: View {
                 .padding(.top, 8)
             
             // Building card
-            MySitesCard(
+            PropertyCard(
                 building: building,
                 metrics: metrics,
-                style: .hero
+                mode: .admin,
+                onTap: onSelect
             )
             
             // Action button
