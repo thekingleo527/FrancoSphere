@@ -555,11 +555,11 @@ public class BuildingDetailViewModel: ObservableObject {
             await MainActor.run {
                 self.completionPercentage = Int(metrics.completionRate * 100)
                 self.workersOnSite = metrics.hasWorkerOnSite ? 1 : 0
-                self.workersPresent = metrics.activeWorkers
+                self.workersPresent = Array(0..<metrics.activeWorkers).map { "Worker \($0+1)" } // Convert Int to [String]
                 self.todaysTasks = (metrics.totalTasks, metrics.totalTasks - metrics.pendingTasks - metrics.overdueTasks)
                 self.nextCriticalTask = nil // Not available in BuildingMetrics
                 self.todaysSpecialNote = nil // Not available in BuildingMetrics  
-                self.efficiencyScore = metrics.overallScore
+                self.efficiencyScore = Int(metrics.overallScore * 100) // Convert Double to Int (0.0-1.0 → 0-100)
                 self.openIssues = metrics.overdueTasks
             }
         } catch {
@@ -931,21 +931,17 @@ public class BuildingDetailViewModel: ObservableObject {
     
     public func initiateReorder() {
         Task {
-            do {
-                let lowStockItems = inventoryItems.filter { item in
-                    item.currentStock <= item.minimumStock
-                }
-                
-                for item in lowStockItems {
-                    // TODO: Implement reorder request functionality
-                    print("📦 Reorder needed for \(item.name): \(item.maxStock - item.currentStock) units")
-                }
-                
-                await MainActor.run {
-                    self.todaysSpecialNote = "Reorder requests submitted for \(lowStockItems.count) items"
-                }
-            } catch {
-                print("❌ Error initiating reorder: \(error)")
+            let lowStockItems = inventoryItems.filter { item in
+                item.currentStock <= item.minimumStock
+            }
+            
+            for item in lowStockItems {
+                // TODO: Implement reorder request functionality
+                print("📦 Reorder needed for \(item.name): \(item.maxStock - item.currentStock) units")
+            }
+            
+            await MainActor.run {
+                self.todaysSpecialNote = "Reorder requests submitted for \(lowStockItems.count) items"
             }
         }
     }
